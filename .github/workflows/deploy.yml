@@ -40,6 +40,15 @@ jobs:
             npm install
           fi
 
+      - name: Check encoding (UTF-8 guard)
+        run: node scripts/check-encoding.mjs
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Tests
+        run: npm test
+
       - name: Build
         run: npm run build
 
