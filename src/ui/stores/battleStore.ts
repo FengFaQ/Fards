@@ -8,7 +8,19 @@
  *  - UI 只读 state，不缓存副本。
  */
 import { create } from 'zustand';
-import { applyCommand, createGame, legalActionsForCard, playCost } from '@/engine';
+import {
+  applyCommand,
+  createCardInstance,
+  createGame,
+  explainNoAttackTargets,
+  legalActionsForCard,
+  legalAttackTargets,
+  makeUnitFromInstance,
+  placeUnit,
+  playCost,
+  recomputeAuras,
+  unitActionBlockers,
+} from '@/engine';
 import type {
   EngineRegistry,
   GameCommand,
@@ -70,7 +82,7 @@ export interface BannerFx {
 }
 
 export interface Selection {
-  kind: 'play' | 'attack' | 'move';
+  kind: 'play' | 'attack' | 'move' | 'deploy' | 'unit';
   label: string;
   cardInstanceId?: string;
   attackerId?: string;
@@ -81,6 +93,8 @@ export interface Selection {
   count: number;
   chosen: TargetRef[];
   deployLines?: Line[];
+  /** 提示条附加说明（如不能攻击的原因） */
+  note?: string;
 }
 
 export interface BattleResult {
@@ -195,6 +209,8 @@ interface BattleStore {
   /** 调试/QA 入口：#/battle?autostart=1&deck=<deckId|faction>&faction=...&difficulty=...&seed=... */
   startFromQuery: (query: StartQuery) => Promise<void>;
   debugSimulate: (rounds: number) => void;
+  /** QA 场景：直接摆一个双方都有兵、可攻击/可布防/可移动的战场（#/battle?debug=duel） */
+  debugSetupScenario: () => void;
 
   /* ---------------- 局域网 ---------------- */
   /** host：挂监听（guest 指令/抉择/报到/视图镜像）。幂等 */
@@ -215,8 +231,12 @@ interface BattleStore {
   selectUnit: (unitId: string) => void;
   clickTarget: (ref: TargetRef) => void;
   chooseSlot: (line: Line) => void;
+  /** 布防模式：把待部署单位放到支援线第 slot 个位置（insert index） */
+  deployToSlot: (slot: number) => void;
   /** 攻击模式下追加「移动到前线 / 撤退至支援线」 */
   moveSelected: () => void;
+  /** 弹出操作提示（组件侧复用同一套 toast） */
+  notify: (text: string) => void;
   cancelSelection: () => void;
   endTurn: () => void;
   surrender: () => void;
@@ -954,6 +974,130 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       await get().startBattle({ deck, deckName, aiFaction, difficulty, seed });
     },
 
+    debugSetupScenario: () => {
+      const snapshot = get();
+      if (!snapshot.registry) return;
+      const cards = snapshot.cards;
+      const registry = snapshot.registry;
+      const hostDeck = buildQuickDeck('Germany', cards, 11);
+      const guestDeck = buildQuickDeck('Soviet', cards, 12);
+      const created = createGame(
+        {
+          seed: 424242,
+          firstPlayer: HUMAN,
+          players: [
+            {
+              name: '你',
+              faction: 'Germany',
+              allyFaction: null,
+              deck: hostDeck.cards,
+              isAI: false,
+            },
+            { name: 'AI', faction: 'Soviet', allyFaction: null, deck: guestDeck.cards, isAI: true },
+          ],
+        },
+        registry,
+      );
+      const work = structuredClone(created.state) as GameState;
+      const pickDefs = (faction: string, types: string[], n: number) =>
+        cards
+          .filter(
+            (card) =>
+              card.faction === faction &&
+              types.includes(card.type) &&
+              card.pool === 'active' &&
+              !card.isDerived,
+          )
+          .slice(0, n);
+      const place = (owner: PlayerIndex, cardId: string, line: Line, deployedTurn?: number) => {
+        const instance = createCardInstance(work, cardId, owner, 'created');
+        const unit = makeUnitFromInstance(work, registry, owner, instance, line, {
+          deployedTurn: deployedTurn ?? 0,
+        });
+        if (unit) placeUnit(work, unit, line);
+        return unit;
+      };
+      const myFront = pickDefs('Germany', ['infantry', 'tank'], 2);
+      const mySupport = pickDefs('Germany', ['infantry', 'artillery'], 3);
+      const isPlain = (card: UiCard) =>
+        !card.attributes.some((attr) => /guard|covert|ambush|smokescreen/i.test(attr));
+      const blitzCard = cards.find(
+        (card) =>
+          card.faction === 'Germany' &&
+          card.pool === 'active' &&
+          !card.isDerived &&
+          card.attributes.some((attr) => attr.toLowerCase().startsWith('blitz')),
+      );
+      const guardCard = cards.find(
+        (card) =>
+          card.faction === 'Soviet' &&
+          card.pool === 'active' &&
+          !card.isDerived &&
+          card.attributes.some((attr) => attr.toLowerCase().includes('guard')) &&
+          // 避开 covert（隐蔽单位不可被攻击，会掩盖「守护自身可被攻击」的演示效果）
+          !card.attributes.some((attr) => /covert|smokescreen|ambush/i.test(attr)),
+      );
+      const enemyPlain = cards
+        .filter(
+          (card) =>
+            card.faction === 'Soviet' &&
+            card.pool === 'active' &&
+            !card.isDerived &&
+            ['infantry', 'tank'].includes(card.type) &&
+            isPlain(card),
+        )
+        .slice(0, 2);
+      if (myFront[0]) place(HUMAN, myFront[0].cardId, 'frontline');
+      if (mySupport[0]) place(HUMAN, mySupport[0].cardId, 'support');
+      if (mySupport[1]) place(HUMAN, mySupport[1].cardId, 'support', work.turn); // 召唤病演示
+      if (blitzCard) place(HUMAN, blitzCard.cardId, 'support', work.turn); // 闪击：当回合可移动/攻击
+      // 敌方只有支援线：普通兵 / 守护 / 普通兵（守护保护左右相邻，自身可被攻击）
+      if (enemyPlain[0]) place(AI, enemyPlain[0].cardId, 'support');
+      if (guardCard) place(AI, guardCard.cardId, 'support');
+      if (enemyPlain[1]) place(AI, enemyPlain[1].cardId, 'support');
+      work.players[HUMAN].kredits = 10;
+      work.players[AI].kredits = 10;
+      recomputeAuras(work, registry);
+      get().stopAI();
+      get().lanDetach();
+      set({
+        state: work,
+        phase: 'playing',
+        mode: 'ai',
+        myIndex: HUMAN,
+        oppIndex: AI,
+        lanRole: null,
+        lanRoomCode: null,
+        lanStatus: 'idle',
+        lanError: null,
+        lanLegal: [],
+        lanSeq: 0,
+        lanPeerLeft: false,
+        selection: null,
+        result: null,
+        aiThinking: false,
+        playerDeck: {
+          faction: 'Germany',
+          allyFaction: null,
+          name: 'QA 测试战斗群',
+          count: hostDeck.cards.reduce((sum, entry) => sum + entry.count, 0),
+        },
+        banner: {
+          text: 'QA 场景',
+          sub: '双方各有兵：可攻击 / 可移动 / 可布防 / 可检视',
+          tone: 'system',
+          at: Date.now(),
+        },
+        fxByKey: {},
+        ghosts: [],
+        attacks: {},
+        hqHits: {},
+        hint: null,
+        shakeKey: null,
+        lastConfig: null,
+      });
+    },
+
     debugSimulate: (rounds) => {
       const snapshot = get();
       const registry = snapshot.registry;
@@ -1224,6 +1368,25 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
         return;
       }
 
+      const def = registry.cardDefs[handCard.cardId];
+      const isUnit = !!def && def.type !== 'order' && def.type !== 'countermeasure';
+      if (isUnit) {
+        // 单位卡：进入布防模式，由玩家点击支援线槽位决定位置
+        set({
+          selection: {
+            kind: 'deploy',
+            label: action.label,
+            cardInstanceId: instanceId,
+            refs: [],
+            count: 0,
+            chosen: [],
+            deployLines: action.deployLines ?? ['support'],
+          },
+        });
+        setHint('布防：点击我方支援线上的槽位放置单位（Esc / 右键取消）');
+        return;
+      }
+
       const changed = submitCommand({
         type: 'playCard',
         player: myIndex,
@@ -1241,59 +1404,40 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       if (state.pendingChoice || state.activePlayer !== myIndex) return;
       const unit = state.units[unitId];
       if (!unit) return;
-      if (unit.owner !== myIndex) {
-        const def = registry.cardDefs[unit.cardId];
-        setHint(
-          `${def?.nameZh ?? '单位'} · ${unit.attack}/${unit.hp}${unit.armor ? ` · 护甲 ${unit.armor}` : ''}`,
-        );
-        return;
-      }
+      if (unit.owner !== myIndex) return;
+      const def = registry.cardDefs[unit.cardId];
+      const nameZh = def?.nameZh ?? unit.cardId;
       const actions = currentActions();
       const action = actions.find((item) => item.kind === 'attack' && item.attackerId === unitId);
-      const moveAction = actions.find((item) => item.kind === 'moveUnit' && item.unitId === unitId);
-      if (!action) {
-        // 不能攻击时，若可移动就进入移动模式
-        if (moveAction) {
-          const toLine: Line = unit.line === 'support' ? 'frontline' : 'support';
-          set({
-            selection: {
-              kind: 'move',
-              label: moveAction.label,
-              unitId,
-              toLine,
-              refs: [],
-              count: 1,
-              chosen: [],
-            },
-          });
-          setHint(
-            `移动至${toLine === 'frontline' ? '前线' : '支援线'}：消耗 ${
-              moveAction.cost ?? 0
-            } 克雷迪特，点击${toLine === 'frontline' ? '前线空位' : '支援线'}确认`,
-          );
-          return;
-        }
-        let reason = '该单位本回合无法行动';
-        if (unit.statuses.pinned) reason = '单位被压制，本回合无法攻击';
-        else if ((unit.statuses.cannotAttackTurns ?? 0) > 0) reason = '单位处于无法攻击状态';
-        else if (unit.attacksUsed >= unit.maxAttacks) reason = '该单位本回合已行动';
-        else if (unit.deployedTurn === state.turn) reason = '部署当回合无法行动（无闪击）';
-        else if (state.config.attackCostsKredits && state.players[myIndex].kredits < unit.operationCost)
-          reason = `克雷迪特不足：行动需要 ${unit.operationCost}`;
-        else if (unit.hp <= 0) reason = '单位已阵亡';
-        setHint(reason);
+      if (action) {
+        set({
+          selection: {
+            kind: 'attack',
+            label: `${nameZh} · 选择攻击目标`,
+            attackerId: unitId,
+            refs: action.targets?.refs ?? [],
+            count: 1,
+            chosen: [],
+          },
+        });
         return;
       }
+      // 不能攻击：依然允许选中，展示可行动原因与建议（解决“闪击/攻击没反应”的困惑）
+      const reasons = unitActionBlockers(state, registry, unit);
+      const explain = explainNoAttackTargets(state, registry, unit);
+      const detail = [explain, ...reasons].filter(Boolean).join('；');
       set({
         selection: {
-          kind: 'attack',
-          label: action.label,
-          attackerId: unitId,
-          refs: action.targets?.refs ?? [],
-          count: 1,
+          kind: 'unit',
+          label: nameZh,
+          unitId,
+          refs: [],
+          count: 0,
           chosen: [],
+          note: detail || '该单位当前没有可用行动',
         },
       });
+      setHint(detail || '该单位当前没有可用行动');
     },
 
     clickTarget: (ref) => {
@@ -1326,6 +1470,25 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
         });
         if (!changed) setHint('攻击未能执行');
       } else if (selection.kind === 'play' && selection.cardInstanceId) {
+        const instance = state.cards[selection.cardInstanceId];
+        const def = instance ? registry.cardDefs[instance.cardId] : undefined;
+        const isUnit = !!def && def.type !== 'order' && def.type !== 'countermeasure';
+        if (isUnit) {
+          // 需要目标的单位卡：目标选完后再进入布防模式决定位置
+          set({
+            selection: {
+              kind: 'deploy',
+              label: def?.nameZh ?? selection.label,
+              cardInstanceId: selection.cardInstanceId,
+              refs: [],
+              count: 0,
+              chosen,
+              deployLines: selection.deployLines ?? ['support'],
+            },
+          });
+          setHint('目标已选定：点击我方支援线槽位决定部署位置');
+          return;
+        }
         changed = submitCommand({
           type: 'playCard',
           player: myIndex,
@@ -1371,6 +1534,23 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       if (!changed) setHint('该战场线无法部署');
       else get().kickAI();
     },
+
+    deployToSlot: (slot) => {
+      const snapshot = get();
+      const { selection, myIndex } = snapshot;
+      if (!selection || selection.kind !== 'deploy' || !selection.cardInstanceId) return;
+      const ok = submitCommand({
+        type: 'playCard',
+        player: myIndex,
+        instanceId: selection.cardInstanceId,
+        slot: Math.max(0, Math.floor(slot)),
+        targets: selection.chosen.length ? selection.chosen : undefined,
+      });
+      if (!ok) setHint('该位置无法部署');
+      else get().kickAI();
+    },
+
+    notify: (text) => setHint(text),
 
     moveSelected: () => {
       const snapshot = get();
@@ -1514,3 +1694,25 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
     },
   };
 });
+
+/* dev-only：把 store 挂到 window，便于无头回归与人工排查（生产构建会被摇掉） */
+if (import.meta.env.DEV && typeof window !== 'undefined') {
+  const globalAny = window as unknown as Record<string, unknown>;
+  globalAny.__fardsBattle = useBattleStore;
+  globalAny.__fardsBattleApi = {
+    legalActions: (player: PlayerIndex) => {
+      const s = useBattleStore.getState();
+      return s.state && s.registry ? visibleLegalActions(s.state, s.registry, player) : [];
+    },
+    attackTargets: (unitId: string) => {
+      const s = useBattleStore.getState();
+      const unit = s.state?.units[unitId];
+      return s.state && s.registry && unit ? legalAttackTargets(s.state, s.registry, unit) : [];
+    },
+    blockers: (unitId: string) => {
+      const s = useBattleStore.getState();
+      const unit = s.state?.units[unitId];
+      return s.state && s.registry && unit ? unitActionBlockers(s.state, s.registry, unit) : [];
+    },
+  };
+}

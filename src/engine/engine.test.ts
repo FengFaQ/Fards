@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { CardDef, CardScript, EngineRegistry, GameSetup } from './types';
-import { createGame, applyCommand, legalActions, getDef } from './index';
+import { createGame, applyCommand, legalActions, getDef, legalAttackTargets, makeUnit, placeUnit } from './index';
 
 function makeRegistry(): EngineRegistry {
   const def = (cardId: string, partial: Partial<CardDef> & Pick<CardDef, 'type'>): CardDef => {
@@ -29,6 +29,7 @@ function makeRegistry(): EngineRegistry {
     inf: def('inf', { type: 'infantry', kredits: 2, attack: 2, defense: 2, operationCost: 1 }),
     guard_inf: def('guard_inf', { type: 'infantry', kredits: 1, attack: 1, defense: 4, operationCost: 1, attributes: ['guard'] }),
     artillery: def('artillery', { type: 'artillery', kredits: 1, attack: 1, defense: 2, operationCost: 1 }),
+    blitz_tank: def('blitz_tank', { type: 'tank', kredits: 2, attack: 2, defense: 2, operationCost: 1, attributes: ['blitz'] }),
     order_dmg: def('order_dmg', { type: 'order', kredits: 1, attack: 0, defense: 0, operationCost: 0 }),
   };
   const scripts: Record<string, CardScript> = {
@@ -176,11 +177,115 @@ describe('引擎基础流程', () => {
     r = applyCommand(state, { type: 'playCard', player: 0, instanceId: card.instanceId }, reg2);
     state = r.state;
     const unit = Object.values(state.units)[0];
+    unit.deployedTurn = state.turn - 1; // 非闪击单位需下一回合才能移动
     r = applyCommand(state, { type: 'moveUnit', player: 0, unitId: unit.unitId, toLine: 'frontline' }, reg2);
     state = r.state;
     expect(state.frontlineController).toBe(0);
     expect(getDef(reg2, unit.cardId)?.type).toBe('infantry');
     // 支援线容量 4
     expect(state.players[0].support.length).toBeLessThanOrEqual(4);
+  });
+});
+
+describe('攻击目标 / 守护邻接 / 闪击（用户反馈回归）', () => {
+  const reg = makeRegistry();
+
+  function freshGame() {
+    const { state } = createGame(setup(), reg);
+    state.players[0].kredits = 20;
+    state.players[1].kredits = 20;
+    return state;
+  }
+
+  it('前线单位可以攻击敌方支援线单位；支援线单位可以攻击敌方前线单位', () => {
+    let state = freshGame();
+    const attacker = makeUnit(state, reg, 0, 'inf', 'frontline', { ready: true })!;
+    attacker.deployedTurn = state.turn - 1;
+    placeUnit(state, attacker, 'frontline');
+    const target = makeUnit(state, reg, 1, 'inf', 'support', { ready: true })!;
+    target.deployedTurn = state.turn - 1;
+    placeUnit(state, target, 'support');
+    let refs = legalAttackTargets(state, reg, attacker);
+    expect(refs.some((r) => r.kind === 'unit' && r.unitId === target.unitId)).toBe(true);
+
+    // 支援线攻击者 → 敌方前线单位
+    const supportAttacker = makeUnit(state, reg, 0, 'inf', 'support', { ready: true })!;
+    supportAttacker.deployedTurn = state.turn - 1;
+    placeUnit(state, supportAttacker, 'support');
+    const frontTarget = makeUnit(state, reg, 1, 'inf', 'frontline', { ready: true })!;
+    frontTarget.deployedTurn = state.turn - 1;
+    placeUnit(state, frontTarget, 'frontline');
+    refs = legalAttackTargets(state, reg, supportAttacker);
+    expect(refs.some((r) => r.kind === 'unit' && r.unitId === frontTarget.unitId)).toBe(true);
+  });
+
+  it('守护保护左右相邻单位，守护单位自身仍可被攻击；炮兵无视守护', () => {
+    // 敌方支援线：A(左) G(守护) B(右)
+    const state = freshGame();
+    const a = makeUnit(state, reg, 1, 'inf', 'support', { ready: true })!;
+    a.deployedTurn = state.turn - 1;
+    placeUnit(state, a, 'support');
+    const guard = makeUnit(state, reg, 1, 'guard_inf', 'support', { ready: true })!;
+    guard.deployedTurn = state.turn - 1;
+    placeUnit(state, guard, 'support', 1);
+    const b = makeUnit(state, reg, 1, 'inf', 'support', { ready: true })!;
+    b.deployedTurn = state.turn - 1;
+    placeUnit(state, b, 'support', 2);
+
+    const frontline = makeUnit(state, reg, 0, 'inf', 'frontline', { ready: true })!;
+    frontline.deployedTurn = state.turn - 1;
+    placeUnit(state, frontline, 'frontline');
+    let refs = legalAttackTargets(state, reg, frontline);
+    const ids = refs.filter((r) => r.kind === 'unit').map((r) => (r as { unitId: string }).unitId);
+    expect(ids).toContain(guard.unitId); // 守护自身可被攻击
+    expect(ids).not.toContain(a.unitId); // 左侧被守护
+    expect(ids).not.toContain(b.unitId); // 右侧被守护
+
+    // 炮兵无视守护，可攻击被守护的相邻单位
+    const artillery = makeUnit(state, reg, 0, 'artillery', 'support', { ready: true })!;
+    artillery.deployedTurn = state.turn - 1;
+    placeUnit(state, artillery, 'support');
+    refs = legalAttackTargets(state, reg, artillery);
+    const artIds = refs.filter((r) => r.kind === 'unit').map((r) => (r as { unitId: string }).unitId);
+    expect(artIds).toContain(a.unitId);
+    expect(artIds).toContain(b.unitId);
+  });
+
+  it('闪击单位部署当回合可以攻击/移动，普通单位不可以', () => {
+    // 闪击坦克（本回合部署）
+    let state = freshGame();
+    const blitz = makeUnit(state, reg, 0, 'blitz_tank', 'frontline', { ready: true })!;
+    placeUnit(state, blitz, 'frontline');
+    const enemy1 = makeUnit(state, reg, 1, 'inf', 'support', { ready: true })!;
+    enemy1.deployedTurn = state.turn - 1;
+    placeUnit(state, enemy1, 'support');
+    expect(legalAttackTargets(state, reg, blitz).some((r) => r.kind === 'unit')).toBe(true);
+    // 普通步兵本回合部署：不能攻击
+    const normal = makeUnit(state, reg, 0, 'inf', 'frontline', { ready: true })!;
+    placeUnit(state, normal, 'frontline');
+    expect(legalAttackTargets(state, reg, normal)).toEqual([]);
+    // 闪击可移动，普通不可
+    const actions = legalActions(state, reg, 0);
+    const moveUnitIds = actions.filter((a) => a.kind === 'moveUnit').map((a) => a.unitId);
+    expect(moveUnitIds).toContain(blitz.unitId);
+    expect(moveUnitIds).not.toContain(normal.unitId);
+  });
+});
+
+describe('部署位置（slot）', () => {
+  const reg = makeRegistry();
+  it('按选择的下标插入支援线', () => {
+    let { state } = createGame(setup(), reg);
+    state.players[0].kredits = 30;
+    const cards = state.players[0].hand.filter((c) => c.cardId === 'inf').slice(0, 3);
+    // 依次部署到 0、0、2 号位
+    state = applyCommand(state, { type: 'playCard', player: 0, instanceId: cards[0].instanceId, line: 'support', slot: 0 }, reg).state;
+    state = applyCommand(state, { type: 'playCard', player: 0, instanceId: cards[1].instanceId, line: 'support', slot: 0 }, reg).state;
+    state = applyCommand(state, { type: 'playCard', player: 0, instanceId: cards[2].instanceId, line: 'support', slot: 2 }, reg).state;
+    const order = state.players[0].support.map((id) => state.units[id].instanceId);
+    expect(order).toEqual([cards[1].instanceId, cards[0].instanceId, cards[2].instanceId]);
+    // position 字段同步
+    expect(state.units[state.players[0].support[0]].position).toBe(0);
+    expect(state.units[state.players[0].support[2]].position).toBe(2);
   });
 });

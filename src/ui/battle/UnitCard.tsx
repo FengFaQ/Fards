@@ -51,6 +51,8 @@ export interface UnitCardProps {
   shake?: boolean;
   floats?: FloatFx[];
   attackAt?: number;
+  /** 是否我方单位（客机模式下我方是玩家 1） */
+  isMine?: boolean;
   onClick?: () => void;
 }
 
@@ -86,28 +88,48 @@ function UnitCardInner({
   shake = false,
   floats = [],
   attackAt,
+  isMine,
   onClick,
 }: UnitCardProps) {
   const lunge = useOneShot(attackAt, 480);
   const faction = factionMeta(card?.faction ?? 'Neutral');
 
-  const sick = unit.deployedTurn === turn;
+  // 闪击/冲击：部署当回合即可行动，因此不算召唤病
+  const hasBlitz = (unit.keywords ?? []).some((keyword) => {
+    const id = keywordId(keyword);
+    return id === 'blitz' || id === 'shock';
+  });
+  const sick = unit.deployedTurn === turn && !hasBlitz;
   const exhausted = unit.attacksUsed >= unit.maxAttacks;
   const pinned = !!unit.statuses.pinned;
   const cannot = (unit.statuses.cannotAttackTurns ?? 0) > 0;
   const dim = exhausted || sick || pinned || cannot || unit.hp <= 0;
+  const mine = isMine ?? unit.owner === 0;
 
   const attackBuff = unit.attack - unit.baseAttack;
   const hpDamaged = unit.hp < unit.maxHp;
   const chips = keywordChips(unit);
 
-  const statusLabel = unit.hp <= 0 ? '阵亡' : pinned ? '压制' : cannot ? '瘫痪' : exhausted ? '已行动' : sick ? '待命' : null;
+  const statusLabel = unit.hp <= 0
+    ? '阵亡'
+    : pinned
+      ? '压制'
+      : cannot
+        ? '瘫痪'
+        : exhausted
+          ? '已行动'
+          : sick
+            ? '召唤病'
+            : null;
 
   const title = [
     card?.nameZh ?? unit.cardId,
     `${unit.attack}/${unit.hp}`,
     unit.armor > 0 ? `护甲 ${unit.armor}` : '',
     unit.keywords.length ? unit.keywords.join(' / ') : '',
+    sick ? '本回合无法行动（部署当回合，无闪击）' : hasBlitz && unit.deployedTurn === turn ? '闪击：本回合即可行动' : '',
+    exhausted ? '本回合已行动' : '',
+    pinned ? '被压制' : '',
   ]
     .filter(Boolean)
     .join(' · ');
@@ -116,7 +138,7 @@ function UnitCardInner({
     <div
       className={`battle-card-wrap fx-deploy ${shake ? 'fx-shake' : ''}`}
       data-dim={dim}
-      data-my={unit.owner === 0}
+      data-my={mine}
       data-targetable={targetable}
       data-selected={selected}
       style={{ width: 'var(--bcw)' }}
@@ -139,6 +161,12 @@ function UnitCardInner({
         style={{ transformOrigin: '50% 100%' } as CSSProperties}
       >
         <CardFace card={card} className="h-full w-full" imageClassName={dim ? 'opacity-80' : ''}>
+          {/* 闪击徽章：部署当回合即可行动 */}
+          {hasBlitz && (
+            <span className="pointer-events-none absolute top-[2px] left-1/2 z-[8] -translate-x-1/2 rounded-sm border border-brass-400/80 bg-brass-500/25 px-1 font-body text-[8px] leading-[12px] tracking-[0.12em] text-brass-100 shadow-[0_1px_4px_rgba(0,0,0,0.8)]">
+              闪击
+            </span>
+          )}
           {/* 关键字小徽章 */}
           {chips.length > 0 && (
             <span className="pointer-events-none absolute top-[2px] right-[3px] z-[7] flex flex-col items-end gap-[1px]">

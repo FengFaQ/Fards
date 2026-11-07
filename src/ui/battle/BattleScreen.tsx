@@ -2,15 +2,20 @@
  * 战场主界面：顶部信息条 / 双方玩家条 / 三条战线 / 手牌区 / 日志抽屉 / 各类弹窗。
  * 只读 store，所有交互经 store 里的 legalActions 校验后提交引擎。
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { hasKeyword, keywordId } from '@/engine';
 import { legalActions } from '@/engine';
-import type { LegalAction } from '@/engine/types';
+import type { LegalAction, PlayerIndex, TargetRef } from '@/engine/types';
 import type { UiCard } from '../lib/dataBridge';
 import { cardTypeMeta, factionMeta, factionZh, rarityMeta } from '../lib/format';
-import { IconAlert, IconArrowRight, IconPlay, IconSwords, IconX } from '../components/icons';
+import { IconAlert, IconArrowRight, IconCards, IconPlay, IconSwords, IconX } from '../components/icons';
+import CardInspectPanel, {
+  inspectFromCard,
+  type InspectCardData,
+} from '../components/CardInspectPanel';
 import Dialog from '../components/Dialog';
-import { AI, HUMAN, useBattleStore } from '../stores/battleStore';import BattleRows, { refsToKeys } from './BattleRows';
+import { useBattleStore } from '../stores/battleStore';import BattleRows, { refsToKeys } from './BattleRows';
 import CardFace from './CardFace';
 import ChoiceDialog from './ChoiceDialog';
 import GameOverDialog from './GameOverDialog';
@@ -29,6 +34,13 @@ const EMPTY_KEYS = new Set<string>();
 const DIFFICULTY_ZH: Record<string, string> = { easy: '新兵', normal: '老兵', hard: '王牌' };
 
 const moveCostLabel = (cost?: number): string => (cost && cost > 0 ? ` · ${cost} 克` : ' · 免费');
+
+/** 检视面板的数据源：手牌/单位/HQ */
+type InspectTarget =
+  | { kind: 'card'; cardId: string }
+  | { kind: 'unit'; unitId: string }
+  | { kind: 'hq'; player: PlayerIndex }
+  | null;
 
 function CardInspector({ card, fallback }: { card: UiCard | null; fallback: React.ReactNode }) {
   if (!card) return <>{fallback}</>;
@@ -103,6 +115,26 @@ export function BattleScreen() {
 
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<null | 'surrender' | 'exit'>(null);
+  /** 右下角卡片检视面板（点击任意卡 / 悬停 1 秒触发） */
+  const [inspect, setInspect] = useState<InspectTarget>(null);
+  const inspectTimer = useRef<number | null>(null);
+
+  const clearInspectTimer = () => {
+    if (inspectTimer.current !== null) {
+      window.clearTimeout(inspectTimer.current);
+      inspectTimer.current = null;
+    }
+  };
+
+  /** 悬停 1 秒后才弹出，避免扫过卡片时闪烁 */
+  const hoverInspect = (target: InspectTarget) => {
+    clearInspectTimer();
+    if (!target) return;
+    inspectTimer.current = window.setTimeout(() => {
+      inspectTimer.current = null;
+      setInspect(target);
+    }, 1000);
+  };
 
   const legal = useMemo(() => {
     if (!state || !registry || phase !== 'playing') return EMPTY_LEGAL;
@@ -126,17 +158,101 @@ export function BattleScreen() {
     [selection],
   );
   const moveTarget = selection?.kind === 'move' ? selection.toLine ?? null : null;
-  const selectedMoveAction =
-    selection?.kind === 'attack' && selection.attackerId
-      ? legal.moveByUnit.get(selection.attackerId)
-      : undefined;
-  const selectedMoveUnit =
-    selection?.kind === 'attack' && selection.attackerId
-      ? state?.units[selection.attackerId]
-      : undefined;
+  const selectedUnitId =
+    selection?.kind === 'attack'
+      ? selection.attackerId
+      : selection?.kind === 'unit'
+        ? selection.unitId
+        : undefined;
+  const selectedMoveAction = selectedUnitId ? legal.moveByUnit.get(selectedUnitId) : undefined;
+  const selectedMoveUnit = selectedUnitId ? state?.units[selectedUnitId] : undefined;
   const moveLabel = selectedMoveUnit?.line === 'frontline' ? '撤退至支援线' : '移动到前线';
   const chooseSlot = useBattleStore((s) => s.chooseSlot);
   const moveSelected = useBattleStore((s) => s.moveSelected);
+  const deployToSlot = useBattleStore((s) => s.deployToSlot);
+  const notify = useBattleStore((s) => s.notify);
+  const deployMode = selection?.kind === 'deploy';
+
+  /** 统一单位点击：攻击目标 > 选中己方单位 > 检视 */
+  const handleUnitClick = (unitId: string) => {
+    const unit = state?.units[unitId];
+    setInspect({ kind: 'unit', unitId });
+    if (selection) {
+      const ref: TargetRef = { kind: 'unit', unitId };
+      const legalTarget = selection.refs.some(
+        (item) => item.kind === 'unit' && item.unitId === unitId,
+      );
+      if (legalTarget && selection.kind === 'attack') {
+        clickTarget(ref);
+        return;
+      }
+      if (legalTarget) return;
+      notify('该单位不是当前合法目标（可能被守护 / 烟幕 / 伏击 / 隐蔽保护，或战线不相邻）');
+      return;
+    }
+    if (unit && unit.owner === myIndex) selectUnit(unitId);
+  };
+
+  /** 统一 HQ 点击：可攻击时作为目标；否则检视/提示 */
+  const handleHqClick = (player: PlayerIndex) => {
+    setInspect({ kind: 'hq', player });
+    if (targetKeys.has(`hq:${player}`)) {
+      clickTarget({ kind: 'hq', player });
+      return;
+    }
+    if (player === myIndex) notify('我方总部：不可选中 / 移动');
+    else notify('敌方总部：地面单位需位于前线才能攻击（炮兵/空军不受限）');
+  };
+
+  const inspectData = useMemo<InspectCardData | null>(() => {
+    if (!inspect || !state) return null;
+    if (inspect.kind === 'card') {
+      const card = byId.get(inspect.cardId);
+      return card ? inspectFromCard(card) : null;
+    }
+    if (inspect.kind === 'unit') {
+      const unit = state.units[inspect.unitId];
+      if (!unit) return null;
+      const card = byId.get(unit.cardId);
+      if (!card) return null;
+      const notes: string[] = [];
+      if (unit.statuses.pinned) notes.push('被压制');
+      if ((unit.statuses.cannotAttackTurns ?? 0) > 0) notes.push('无法攻击');
+      if (unit.attacksUsed >= unit.maxAttacks) notes.push('本回合已行动');
+      const blitz = hasKeyword(unit, 'blitz') || hasKeyword(unit, 'shock');
+      if (unit.deployedTurn === state.turn && !blitz) notes.push('召唤病：本回合无法行动');
+      if (unit.deployedTurn === state.turn && blitz) notes.push('闪击：本回合可行动');
+      if (unit.movedThisTurn) notes.push('本回合已移动');
+      return inspectFromCard(card, {
+        attack: unit.attack,
+        hp: unit.hp,
+        maxHp: unit.maxHp,
+        armor: unit.armor,
+        keywords: unit.keywords,
+        note: notes.join(' · '),
+        side: unit.owner === myIndex ? 'self' : 'enemy',
+        isUnit: true,
+      });
+    }
+    const info = state.players[inspect.player];
+    const faction = factionMeta(info.faction);
+    return {
+      cardId: `hq:${inspect.player}`,
+      nameZh: `${faction.zh} 总部`,
+      factionZh: faction.zh,
+      typeZh: '总部',
+      keywords: [],
+      kredits: 0,
+      operationCost: 0,
+      hp: info.hq.hp,
+      maxHp: info.hq.maxHp,
+      armor: info.hq.armor,
+      description: '总部耐久归零即告负。总部不可被移动或主动选中；敌方地面单位需位于前线才能攻击（炮兵/空军不受限）。',
+      isUnit: false,
+      side: inspect.player === myIndex ? 'self' : 'enemy',
+      note: `耐久 ${info.hq.hp}/${info.hq.maxHp}${info.hq.armor > 0 ? ` · 装甲 ${info.hq.armor}` : ''}`,
+    };
+  }, [inspect, state, byId, myIndex]);
 
   useEffect(() => {
     const timer = window.setInterval(() => pruneFx(Date.now()), 700);
@@ -147,6 +263,8 @@ export function BattleScreen() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         cancelSelection();
+        clearInspectTimer();
+        setInspect(null);
         return;
       }
       if (event.code !== 'Space' || event.repeat) return;
@@ -173,6 +291,16 @@ export function BattleScreen() {
   return (
     <div
       className="battle-root relative flex h-screen w-full flex-col overflow-hidden text-field-100 select-none"
+      onClick={(event) => {
+        const target = event.target as HTMLElement | null;
+        if (
+          target?.closest(
+            '.unit-card, .hand-card, .fards-hq-card, .fards-inspect-panel, [role="dialog"], button',
+          )
+        )
+          return;
+        setInspect(null);
+      }}
       onContextMenu={(event) => {
         if (selection) {
           event.preventDefault();
@@ -271,16 +399,21 @@ export function BattleScreen() {
             targetable={hqTargetEnemy}
             hqHitAt={hqHits[`hq:${oppIndex}`]}
             floats={fxByKey[`hq:${oppIndex}`]}
-            onClick={() => clickTarget({ kind: 'hq', player: oppIndex })}
+            onClick={() => handleHqClick(oppIndex)}
           />
 
           <BattleRows
             targetKeys={targetKeys}
-            onUnitClick={selectUnit}
+            onUnitClick={handleUnitClick}
             moveTarget={moveTarget}
             onSlotClick={chooseSlot}
             myIndex={myIndex}
             oppIndex={oppIndex}
+            deployMode={deployMode}
+            onDeploySlot={deployToSlot}
+            onHqClick={handleHqClick}
+            onUnitHover={(unitId) => hoverInspect(unitId ? { kind: 'unit', unitId } : null)}
+            onHqHover={(player) => hoverInspect(player !== null ? { kind: 'hq', player } : null)}
           />
 
           <PlayerBar
@@ -290,7 +423,7 @@ export function BattleScreen() {
             targetable={hqTargetSelf}
             hqHitAt={hqHits[`hq:${myIndex}`]}
             floats={fxByKey[`hq:${myIndex}`]}
-            onClick={() => clickTarget({ kind: 'hq', player: myIndex })}
+            onClick={() => handleHqClick(myIndex)}
           />
         </div>
 
@@ -307,10 +440,10 @@ export function BattleScreen() {
               <div className="text-field-500">
                 <p className="fards-label text-[9px] text-brass-500">战术提示</p>
                 <p className="mt-1 font-body text-[10px] leading-relaxed">
-                  点击手牌部署到支援线；点击我方单位可发起攻击或移动到前线。
+                  点手牌进入布防，再点支援线槽位决定位置；点我方单位可攻击/移动。
                 </p>
                 <p className="mt-1 font-body text-[9px] leading-relaxed text-field-600">
-                  只有前线单位（炮兵/空军除外）才能攻击敌方总部。高亮金框 = 合法目标 · 右键或 Esc 取消
+                  点击/悬停 1 秒可检视任意卡（右下角面板）。支援线单位只能打敌方前线；闪击单位部署当回合即可行动。
                 </p>
               </div>
             }
@@ -322,7 +455,10 @@ export function BattleScreen() {
           <HandFan
             legalByCard={legal.byCard}
             byId={byId}
-            onHover={setHoveredId}
+            onHover={(cardId) => {
+              setHoveredId(cardId);
+              hoverInspect(cardId ? { kind: 'card', cardId } : null);
+            }}
             hoveredId={hoveredId}
           />
         </div>
@@ -381,29 +517,65 @@ export function BattleScreen() {
         </div>
       )}
 
-      {/* 选目标 / 移动提示 */}
+      {/* 选目标 / 移动 / 布防提示条 */}
       {selection && (
         <div className="pointer-events-none absolute inset-x-0 bottom-[calc(clamp(150px,21vh,206px)+10px)] z-40 flex justify-center">
-          <div className="flex items-center gap-3 rounded-sm border border-brass-500/70 bg-field-950/92 px-3 py-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.6)]">
-            {selection.kind === 'move' ? (
+          <div className="flex max-w-[min(96vw,900px)] items-center gap-3 rounded-sm border border-brass-500/70 bg-field-950/92 px-3 py-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.6)]">
+            {selection.kind === 'deploy' ? (
               <>
-                <IconArrowRight size={13} className="text-brass-400" />
-                <span className="font-body text-[10px] tracking-[0.14em] text-brass-200">{selection.label}</span>
+                <IconCards size={13} className="shrink-0 text-brass-400" />
+                <span className="shrink-0 font-body text-[10px] tracking-[0.14em] text-brass-200">
+                  {selection.label}
+                </span>
+                <span className="font-body text-[10px] text-field-300">
+                  布防中：点击我方支援线 1–4 号槽位决定部署位置
+                </span>
+              </>
+            ) : selection.kind === 'move' ? (
+              <>
+                <IconArrowRight size={13} className="shrink-0 text-brass-400" />
+                <span className="shrink-0 font-body text-[10px] tracking-[0.14em] text-brass-200">
+                  {selection.label}
+                </span>
                 <span className="font-body text-[10px] text-field-300">
                   点击高亮的{selection.toLine === 'frontline' ? '前线' : '支援线'}确认移动
                 </span>
                 <button
                   type="button"
                   onClick={() => chooseSlot(selection.toLine ?? 'frontline')}
-                  className="pointer-events-auto rounded-sm border border-brass-500/70 bg-brass-500/15 px-2 py-[2px] font-body text-[9px] tracking-[0.14em] text-brass-200 transition-colors hover:bg-brass-500/25"
+                  className="pointer-events-auto shrink-0 rounded-sm border border-brass-500/70 bg-brass-500/15 px-2 py-[2px] font-body text-[9px] tracking-[0.14em] text-brass-200 transition-colors hover:bg-brass-500/25"
                 >
                   确认移动
                 </button>
               </>
+            ) : selection.kind === 'unit' ? (
+              <>
+                <IconAlert size={13} className="shrink-0 text-amber-400" />
+                <span className="shrink-0 font-body text-[10px] tracking-[0.14em] text-brass-200">
+                  {selection.label}
+                </span>
+                <span className="line-clamp-2 font-body text-[10px] leading-snug text-field-300">
+                  {selection.note ?? '该单位当前没有可攻击目标'}
+                </span>
+                {selectedMoveAction && (
+                  <button
+                    type="button"
+                    onClick={moveSelected}
+                    className="pointer-events-auto flex shrink-0 items-center gap-1 rounded-sm border border-brass-500/70 bg-brass-500/15 px-2 py-[2px] font-body text-[9px] tracking-[0.14em] text-brass-200 transition-colors hover:bg-brass-500/25"
+                    title="移动到前线（消耗行动花费）后即可攻击敌方支援线/总部"
+                  >
+                    <IconArrowRight size={11} />
+                    {moveLabel}
+                    {moveCostLabel(selectedMoveAction.cost)}
+                  </button>
+                )}
+              </>
             ) : (
               <>
-                <IconSwords size={13} className="text-brass-400" />
-                <span className="font-body text-[10px] tracking-[0.14em] text-brass-200">{selection.label}</span>
+                <IconSwords size={13} className="shrink-0 text-brass-400" />
+                <span className="shrink-0 font-body text-[10px] tracking-[0.14em] text-brass-200">
+                  {selection.label}
+                </span>
                 <span className="font-body text-[10px] text-field-300">
                   选择目标 <span className="font-display text-brass-300">{selection.chosen.length}</span>/
                   {selection.count}
@@ -412,7 +584,7 @@ export function BattleScreen() {
                   <button
                     type="button"
                     onClick={moveSelected}
-                    className="pointer-events-auto flex items-center gap-1 rounded-sm border border-field-500/70 bg-field-800/80 px-2 py-[2px] font-body text-[9px] tracking-[0.14em] text-field-200 transition-colors hover:border-brass-500/70 hover:text-brass-200"
+                    className="pointer-events-auto flex shrink-0 items-center gap-1 rounded-sm border border-field-500/70 bg-field-800/80 px-2 py-[2px] font-body text-[9px] tracking-[0.14em] text-field-200 transition-colors hover:border-brass-500/70 hover:text-brass-200"
                     title={selectedMoveUnit?.line === 'frontline' ? '撤退回支援线（免费）' : '改为移动到前线（消耗行动花费）'}
                   >
                     <IconArrowRight size={11} />
@@ -422,7 +594,7 @@ export function BattleScreen() {
                 )}
               </>
             )}
-            <span className="font-body text-[9px] tracking-[0.1em] text-field-500">右键 / Esc 取消</span>
+            <span className="shrink-0 font-body text-[9px] tracking-[0.1em] text-field-500">右键 / Esc 取消</span>
           </div>
         </div>
       )}
@@ -461,6 +633,8 @@ export function BattleScreen() {
           </div>
         </div>
       )}
+
+      <CardInspectPanel card={inspectData} onClose={() => setInspect(null)} />
 
       <ChoiceDialog />
       <GameOverDialog />

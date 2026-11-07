@@ -1,12 +1,15 @@
 /**
  * 战场阵列（按官方规则）：
- *  - 敌方支援线 4 槽
- *  - 前线：共享 5 槽，同一时间只有一方占领（另一方单位不能进入）
- *  - 我方支援线 4 槽
- * HQ 各自挂在支援线外侧（见 PlayerBar）。
- * 死亡单位在本行用幽灵卡淡出。
+ *  - 敌方支援线 4 槽 + 敌方总部卡（支援线最外侧）
+ *  - 前线：共享 5 槽，同一时间只有一方占领
+ *  - 我方支援线 4 槽 + 我方总部卡
+ * 交互扩展：
+ *  - 布防模式（deployMode）：高亮我方支援线 4 个槽位，点击即按该位置部署（insert index）
+ *  - 检视/攻击点击统一交给 onUnitClick / onHqClick
  */
 import type { Line, PlayerIndex, TargetRef, Unit } from '@/engine/types';
+import HqCard from '../components/HqCard';
+import { factionMeta } from '../lib/format';
 import { useBattleStore, targetKey, type FloatFx } from '../stores/battleStore';
 import CardFace from './CardFace';
 import UnitCard from './UnitCard';
@@ -26,6 +29,7 @@ function EmptySlot({ index, hot }: { index: number; hot: boolean }) {
     </div>
   );
 }
+
 function RowLabel({ text }: { text: string }) {
   return (
     <span
@@ -77,6 +81,18 @@ interface RowProps {
   onSlotClick?: (line: Line) => void;
 }
 
+interface UnitRowProps extends RowProps {
+  owner: PlayerIndex;
+  slots: number;
+  label: string;
+  myIndex: PlayerIndex;
+  /** 布防模式：该行所有槽位可点击部署 */
+  deployEnabled?: boolean;
+  onDeploySlot?: (slot: number) => void;
+  /** 悬停 1 秒触发检视 */
+  onUnitHover?: (unitId: string | null) => void;
+}
+
 function UnitRow({
   owner,
   slots,
@@ -86,7 +102,10 @@ function UnitRow({
   moveTarget = null,
   onSlotClick,
   myIndex,
-}: RowProps & { owner: PlayerIndex; slots: number; label: string; myIndex: PlayerIndex }) {
+  deployEnabled = false,
+  onDeploySlot,
+  onUnitHover,
+}: UnitRowProps) {
   const state = useBattleStore((s) => s.state);
   const byId = useBattleStore((s) => s.byId);
   const ghosts = useBattleStore((s) => s.ghosts);
@@ -100,16 +119,18 @@ function UnitRow({
     .map((unitId) => state.units[unitId])
     .filter((unit): unit is Unit => !!unit);
   const rowGhosts = ghosts.filter((ghost) => ghost.owner === owner && ghost.line === 'support');
-  const hot = owner === myIndex && moveTarget === 'support';
+  const moveHot = owner === myIndex && moveTarget === 'support';
 
   return (
     <div
-      className={`relative flex items-center justify-center gap-[var(--row-gap)] rounded-sm ${hot ? 'cursor-pointer bg-brass-500/5 ring-1 ring-brass-500/40' : ''}`}
-      onClick={hot ? () => onSlotClick?.('support') : undefined}
-      role={hot ? 'button' : undefined}
-      tabIndex={hot ? 0 : undefined}
+      className={`relative flex items-center justify-center gap-[var(--row-gap)] rounded-sm ${
+        moveHot ? 'cursor-pointer bg-brass-500/5 ring-1 ring-brass-500/40' : ''
+      }`}
+      onClick={moveHot ? () => onSlotClick?.('support') : undefined}
+      role={moveHot ? 'button' : undefined}
+      tabIndex={moveHot ? 0 : undefined}
       onKeyDown={
-        hot
+        moveHot
           ? (event) => {
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
@@ -122,21 +143,49 @@ function UnitRow({
       <RowLabel text={label} />
       {Array.from({ length: slots }).map((_, index) => {
         const unit = units[index];
-        if (!unit) return <EmptySlot key={`slot-${owner}-${index}`} index={index} hot={hot} />;
-        const key = `u:${unit.unitId}`;
+        const key = unit ? `u:${unit.unitId}` : null;
         return (
-          <UnitCard
-            key={unit.unitId}
-            unit={unit}
-            card={byId.get(unit.cardId)}
-            turn={state.turn}
-            targetable={targetKeys.has(key)}
-            selected={!!selection && selection.kind === 'attack' && selection.attackerId === unit.unitId}
-            shake={shakeKey === `unit:${unit.unitId}`}
-            floats={(fxByKey[key] ?? []) as FloatFx[]}
-            attackAt={attacks[unit.unitId]}
-            onClick={() => onUnitClick(unit.unitId)}
-          />
+          <div
+            key={`slot-${owner}-${index}`}
+            className="relative"
+            style={{ width: 'var(--bcw)', height: 'calc(var(--bcw) * 1.404)' }}
+            onMouseEnter={unit && onUnitHover ? () => onUnitHover(unit.unitId) : undefined}
+            onMouseLeave={unit && onUnitHover ? () => onUnitHover(null) : undefined}
+          >
+            {unit ? (
+              <UnitCard
+                unit={unit}
+                card={byId.get(unit.cardId)}
+                turn={state.turn}
+                targetable={!!key && targetKeys.has(key)}
+                selected={!!selection && selection.kind === 'attack' && selection.attackerId === unit.unitId}
+                shake={shakeKey === `unit:${unit.unitId}`}
+                floats={(fxByKey[`u:${unit.unitId}`] ?? []) as FloatFx[]}
+                attackAt={attacks[unit.unitId]}
+                isMine={unit.owner === myIndex}
+                onClick={() => onUnitClick(unit.unitId)}
+              />
+            ) : (
+              <EmptySlot index={index} hot={deployEnabled || moveHot} />
+            )}
+
+            {/* 布防模式：整个槽位可点击（含已有单位之间的插入位置） */}
+            {deployEnabled && (
+              <button
+                type="button"
+                aria-label={`部署到支援线第 ${index + 1} 位`}
+                className="absolute inset-0 z-30 cursor-pointer rounded-[4px] border-2 border-dashed border-brass-400/70 bg-brass-500/10 transition-colors hover:bg-brass-500/25 hover:border-brass-300"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onDeploySlot?.(index);
+                }}
+              >
+                <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center font-body text-[9px] tracking-[0.18em] text-brass-200/90">
+                  部署 {index + 1}
+                </span>
+              </button>
+            )}
+          </div>
         );
       })}
       <GhostLayer ghosts={rowGhosts} byId={byId} slots={slots} baseIndex={0} />
@@ -145,7 +194,15 @@ function UnitRow({
 }
 
 /** 前线：共享 5 槽，同一时间只有一方占领 */
-function FrontlineRow({ targetKeys, onUnitClick, moveTarget = null, onSlotClick, myIndex, oppIndex }: RowProps & { myIndex: PlayerIndex; oppIndex: PlayerIndex }) {
+function FrontlineRow({
+  targetKeys,
+  onUnitClick,
+  moveTarget = null,
+  onSlotClick,
+  myIndex,
+  oppIndex,
+  onUnitHover,
+}: RowProps & { myIndex: PlayerIndex; oppIndex: PlayerIndex; onUnitHover?: (unitId: string | null) => void }) {
   const state = useBattleStore((s) => s.state);
   const byId = useBattleStore((s) => s.byId);
   const ghosts = useBattleStore((s) => s.ghosts);
@@ -192,7 +249,6 @@ function FrontlineRow({ targetKeys, onUnitClick, moveTarget = null, onSlotClick,
           : undefined
       }
     >
-      {/* 共享战区底纹 */}
       <span
         className="fards-hazard pointer-events-none absolute inset-x-8 top-1/2 -z-10 h-[calc(100%-8px)] -translate-y-1/2 rounded-sm border-y border-field-700/50 opacity-[0.16]"
         aria-hidden="true"
@@ -201,33 +257,35 @@ function FrontlineRow({ targetKeys, onUnitClick, moveTarget = null, onSlotClick,
 
       {Array.from({ length: totalSlots }).map((_, index) => {
         const entry = display[index];
-        if (!entry) return <EmptySlot key={`slot-front-${index}`} index={index} hot={false} />;
+        if (!entry) return <EmptySlot key={`slot-front-${index}`} index={index} hot={hot} />;
         const { unit } = entry;
         const key = `u:${unit.unitId}`;
         return (
-          <UnitCard
+          <div
             key={unit.unitId}
-            unit={unit}
-            card={byId.get(unit.cardId)}
-            turn={state.turn}
-            targetable={targetKeys.has(key)}
-            selected={!!selection && selection.kind === 'attack' && selection.attackerId === unit.unitId}
-            shake={shakeKey === `unit:${unit.unitId}`}
-            floats={(fxByKey[key] ?? []) as FloatFx[]}
-            attackAt={attacks[unit.unitId]}
-            onClick={() => onUnitClick(unit.unitId)}
-          />
+            className="relative"
+            style={{ width: 'var(--bcw)', height: 'calc(var(--bcw) * 1.404)' }}
+            onMouseEnter={onUnitHover ? () => onUnitHover(unit.unitId) : undefined}
+            onMouseLeave={onUnitHover ? () => onUnitHover(null) : undefined}
+          >
+            <UnitCard
+              unit={unit}
+              card={byId.get(unit.cardId)}
+              turn={state.turn}
+              targetable={targetKeys.has(key)}
+              selected={!!selection && selection.kind === 'attack' && selection.attackerId === unit.unitId}
+              shake={shakeKey === `unit:${unit.unitId}`}
+              floats={(fxByKey[key] ?? []) as FloatFx[]}
+              attackAt={attacks[unit.unitId]}
+              isMine={unit.owner === myIndex}
+              onClick={() => onUnitClick(unit.unitId)}
+            />
+          </div>
         );
       })}
 
-      <GhostLayer
-        ghosts={frontlineGhosts}
-        byId={byId}
-        slots={totalSlots}
-        baseIndex={0}
-      />
+      <GhostLayer ghosts={frontlineGhosts} byId={byId} slots={totalSlots} baseIndex={0} />
 
-      {/* 占领状态 */}
       <span
         className="absolute top-1/2 right-2 -translate-y-1/2 rounded-sm border px-1.5 py-[1px] font-body text-[8px] tracking-[0.16em]"
         style={{ color: controllerColor, borderColor: `${controllerColor}77`, backgroundColor: `${controllerColor}14` }}
@@ -247,9 +305,17 @@ export interface BattleRowsProps {
   /** 我方/对方玩家下标（AI 对局 0/1；局域网客机 1/0） */
   myIndex: PlayerIndex;
   oppIndex: PlayerIndex;
+  /** 布防模式：选中单位卡后，点击我方支援线槽位决定部署位置 */
+  deployMode?: boolean;
+  onDeploySlot?: (slot: number) => void;
+  /** 点击总部卡（敌方 HQ 在可攻击目标内时由上层执行攻击；否则用于检视） */
+  onHqClick?: (player: PlayerIndex) => void;
+  /** 悬停 1 秒触发检视 */
+  onUnitHover?: (unitId: string | null) => void;
+  onHqHover?: (player: PlayerIndex | null) => void;
 }
 
-/** 敌方支援线 + 共享前线 + 我方支援线 */
+/** 敌方支援线 + HQ + 共享前线 + 我方支援线 + HQ */
 export function BattleRows({
   targetKeys,
   onUnitClick,
@@ -257,10 +323,45 @@ export function BattleRows({
   onSlotClick,
   myIndex,
   oppIndex,
+  deployMode = false,
+  onDeploySlot,
+  onHqClick,
+  onUnitHover,
+  onHqHover,
 }: BattleRowsProps) {
+  const state = useBattleStore((s) => s.state);
+  const hqHits = useBattleStore((s) => s.hqHits);
+  if (!state) return null;
+
+  const deployLine = deployMode ? 'support' : null;
+
+  const renderHq = (player: PlayerIndex, side: 'self' | 'enemy') => {
+    const info = state.players[player];
+    return (
+      <div
+        className="relative shrink-0"
+        style={{ width: 'var(--bcw)' }}
+        onMouseEnter={onHqHover ? () => onHqHover(player) : undefined}
+        onMouseLeave={onHqHover ? () => onHqHover(null) : undefined}
+      >
+        <HqCard
+          side={side}
+          factionZh={factionMeta(info.faction).zh}
+          hp={info.hq.hp}
+          maxHp={info.hq.maxHp}
+          armor={info.hq.armor}
+          targetable={targetKeys.has(`hq:${player}`)}
+          onClick={() => onHqClick?.(player)}
+          flashAt={hqHits[`hq:${player}`]}
+          className="w-full"
+        />
+      </div>
+    );
+  };
+
   return (
     <div className="relative flex min-h-0 flex-1 flex-col justify-between overflow-hidden py-[2px]">
-      <div className="relative flex flex-1 items-center justify-center">
+      <div className="relative flex flex-1 items-center justify-center gap-3">
         <UnitRow
           owner={oppIndex}
           slots={SUPPORT_SLOTS}
@@ -270,7 +371,9 @@ export function BattleRows({
           moveTarget={moveTarget}
           onSlotClick={onSlotClick}
           myIndex={myIndex}
+          onUnitHover={onUnitHover}
         />
+        {renderHq(oppIndex, 'enemy')}
       </div>
 
       <FrontlineRow
@@ -280,9 +383,10 @@ export function BattleRows({
         onSlotClick={onSlotClick}
         myIndex={myIndex}
         oppIndex={oppIndex}
+        onUnitHover={onUnitHover}
       />
 
-      <div className="relative flex flex-1 items-center justify-center">
+      <div className="relative flex flex-1 items-center justify-center gap-3">
         <UnitRow
           owner={myIndex}
           slots={SUPPORT_SLOTS}
@@ -292,7 +396,11 @@ export function BattleRows({
           moveTarget={moveTarget}
           onSlotClick={onSlotClick}
           myIndex={myIndex}
+          deployEnabled={deployMode}
+          onDeploySlot={onDeploySlot}
+          onUnitHover={onUnitHover}
         />
+        {renderHq(myIndex, 'self')}
       </div>
     </div>
   );

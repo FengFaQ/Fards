@@ -401,6 +401,8 @@ function resolveMove(
   if (!unit || unit.owner !== cmd.player) return;
   if (unit.line === cmd.toLine) return;
   if (unit.movedThisTurn) return;
+  // 召唤病：部署当回合不能移动/攻击，除非具有闪击（或冲击）
+  if (unit.deployedTurn === state.turn && !hasKeyword(unit, 'blitz') && !hasKeyword(unit, 'shock')) return;
   if (cmd.toLine === 'frontline' && !canDeployToFrontline(state, cmd.player)) return;
   // 官方规则：支援线→前线需要支付行动花费；前线→支援线（撤退）免费
   const cost = state.config.moveCostsKredits && cmd.toLine === 'frontline' ? getOperationCost(unit) : 0;

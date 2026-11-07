@@ -202,34 +202,40 @@ export function canAttackHQ(state: GameState, reg: EngineRegistry, attacker: Uni
 export function legalAttackTargets(state: GameState, reg: EngineRegistry, attacker: Unit): TargetRef[] {
   if (!canUnitAttack(state, attacker)) return [];
   const enemy = opponentOf(attacker.owner);
-  const guards = guardUnitsOf(state, reg, enemy);
   const attackerKind = attackerType(reg, attacker);
-  // 炮兵/轰炸机无视守护
+  // 炮兵/轰炸机无视守护（官方规则）
   const ignoresGuard = attackerKind === 'artillery' || attackerKind === 'bomber';
-  const isGuarded = (unit: Unit): boolean => {
-    if (!guards.some((g) => g.unitId === unit.unitId)) {
-      // 与守护单位相邻的单位同样受到保护
-      const lineArr = state.players[unit.owner][unit.line];
-      const idx = lineArr.indexOf(unit.unitId);
-      const neighbors = [lineArr[idx - 1], lineArr[idx + 1]].filter((id): id is string => !!id);
-      return neighbors.some((id) => guards.some((g) => g.unitId === id));
-    }
-    return true;
-  };
+  // 用户规则：守护词条的卡片使其「左右两侧」的单位被守护、无法被攻击；守护单位自身仍可被攻击。
+  const protectedIds = ignoresGuard ? new Set<string>() : guardedNeighborIds(state, enemy);
   const targets: TargetRef[] = [];
   for (const unit of playerUnits(state, enemy)) {
     if (!canAttackUnitTarget(state, reg, attacker, unit)) continue;
-    if (!ignoresGuard && guards.length > 0) {
-      const guardSelf = guards.some((g) => g.unitId === unit.unitId);
-      if (!guardSelf) continue;
-    }
+    if (protectedIds.has(unit.unitId)) continue;
     targets.push({ kind: 'unit', unitId: unit.unitId });
   }
-  void isGuarded;
   if (canAttackHQ(state, reg, attacker)) {
     targets.push({ kind: 'hq', player: enemy });
   }
   return targets;
+}
+
+/** 被守护的相邻单位（守护词条保护左右两侧，不含守护单位自身） */
+export function guardedNeighborIds(state: GameState, owner: PlayerIndex): Set<string> {
+  const out = new Set<string>();
+  for (const line of ['frontline', 'support'] as Line[]) {
+    const arr = state.players[owner][line];
+    for (let i = 0; i < arr.length; i++) {
+      const unit = state.units[arr[i]];
+      if (!unit || !hasKeyword(unit, 'guard')) continue;
+      for (const offset of [-1, 1]) {
+        const neighborId = arr[i + offset];
+        if (!neighborId) continue;
+        const neighbor = state.units[neighborId];
+        if (neighbor && !hasKeyword(neighbor, 'guard')) out.add(neighborId);
+      }
+    }
+  }
+  return out;
 }
 
 // ============================================================
@@ -377,6 +383,8 @@ export function legalActions(state: GameState, reg: EngineRegistry, player: Play
   for (const unit of playerUnits(state, player)) {
     if (unit.movedThisTurn) continue;
     if (unit.hp <= 0) continue;
+    // 召唤病：部署当回合不能移动，除非具有闪击（或冲击）
+    if (unit.deployedTurn === state.turn && !hasKeyword(unit, 'blitz') && !hasKeyword(unit, 'shock')) continue;
     const cost = state.config.moveCostsKredits ? getOperationCost(unit) : 0;
     if (p.kredits < cost) continue;
     const toLine: Line | null =
@@ -440,4 +448,55 @@ export function isAir(reg: EngineRegistry, unit: Unit): boolean {
 
 export function isGround(reg: EngineRegistry, unit: Unit): boolean {
   return isGroundType(attackerType(reg, unit));
+}
+
+/** 解释某个单位当前为什么不能行动（供 UI 提示） */
+export function unitActionBlockers(
+  state: GameState,
+  reg: EngineRegistry,
+  unit: Unit,
+): string[] {
+  const reasons: string[] = [];
+  const player = state.players[unit.owner];
+  if (state.status !== 'playing') reasons.push('对局已结束');
+  if (state.activePlayer !== unit.owner) reasons.push('不是你的回合');
+  if (unit.attacksUsed >= unit.maxAttacks) reasons.push('本回合已行动');
+  if (unit.deployedTurn === state.turn && !hasKeyword(unit, 'blitz') && !hasKeyword(unit, 'shock')) {
+    reasons.push('本回合部署（无闪击，无法行动）');
+  }
+  if (unit.statuses.pinned) reasons.push('被压制，无法行动');
+  if (state.config.attackCostsKredits && player.kredits < getOperationCost(unit)) {
+    reasons.push(`克雷迪特不足（行动花费 ${getOperationCost(unit)}）`);
+  }
+  return reasons;
+}
+
+/** 解释攻击目标为空的原因（供 UI 提示） */
+export function explainNoAttackTargets(
+  state: GameState,
+  reg: EngineRegistry,
+  unit: Unit,
+): string {
+  const enemy = opponentOf(unit.owner);
+  const enemyUnits = playerUnits(state, enemy);
+  const attackerKind = attackerType(reg, unit);
+  const enemyFront = enemyUnits.filter((u) => u.line === 'frontline');
+  const enemySupport = enemyUnits.filter((u) => u.line === 'support');
+  const reasons: string[] = [];
+  if (enemyUnits.length === 0) reasons.push('敌方场上没有单位');
+  if (attackerKind === 'infantry' || attackerKind === 'tank') {
+    if (unit.line === 'support' && enemyFront.length === 0) {
+      reasons.push('你在支援线：只能攻击敌方前线单位；先把本单位移动到前线，才能攻击敌方支援线/总部');
+    }
+    if (unit.line === 'support' && enemySupport.length > 0 && enemyFront.length === 0) {
+      reasons.push('敌方单位都在支援线，被前排保护');
+    }
+    if (state.config.hqAttackRequiresFrontline && unit.line !== 'frontline') {
+      reasons.push('攻击总部需要本单位位于前线');
+    }
+  }
+  if (enemyUnits.length > 0 && legalAttackTargets(state, reg, unit).length === 0) {
+    reasons.push('当前没有合法目标（可能被守护/烟幕/伏击保护，或战线不相邻）');
+  }
+  return reasons.join('；') || '没有可攻击的目标';
 }

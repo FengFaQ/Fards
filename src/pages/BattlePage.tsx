@@ -82,8 +82,10 @@ export default function BattlePage() {
   const roleParam = params.get('role');
   const roomParam = params.get('room');
   const nameParam = params.get('name');
+  const debugArg = params.get('debug');
   const autoStarted = useRef(false);
   const lanInitRef = useRef(false);
+  const debugRef = useRef(false);
 
   useEffect(() => {
     void init();
@@ -164,6 +166,14 @@ export default function BattlePage() {
       }
     })();
   }, [modeParam, roleParam, roomParam, deckArg, nameParam, seedArg, hasRegistry]);
+
+  // QA 场景：#/battle?debug=duel —— 直接摆一个双方都有兵、可攻击/布防/检视的战场
+  useEffect(() => {
+    if (debugArg !== 'duel' || debugRef.current) return;
+    if (modeParam === 'lan' || !hasRegistry) return;
+    debugRef.current = true;
+    useBattleStore.getState().debugSetupScenario();
+  }, [debugArg, modeParam, hasRegistry]);
 
   const mode = useBattleStore((state) => state.mode);
   const storeState = useBattleStore((state) => state.state);
