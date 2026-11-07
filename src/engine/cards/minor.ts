@@ -210,4 +210,96 @@ export const MINOR_CARD_SCRIPTS: Record<string, CardScript> = {
       },
     ],
   },
+
+  // ==== B 类批次（META top100）====
+
+  // ---- META #64 ----
+  // 中文原文：预报。对 1 个单位造成 2 点伤害。若从手中最左侧使用，改为造成 3 点伤害。
+  task_force_44: {
+    cardId: 'task_force_44',
+    abilities: [
+      {
+        trigger: 'order',
+        target: { kind: 'query', side: 'any', line: 'any', limit: 1 },
+        effects: [
+          { op: 'custom', id: 'revealIntel', params: { count: 1 } },
+          {
+            op: 'conditional',
+            condition: { kind: 'custom', id: 'usedFromLeftmostHandCard' },
+            then: [{ op: 'damage', target: { kind: 'chosen' }, amount: 3 }],
+            else: [{ op: 'damage', target: { kind: 'chosen' }, amount: 2 }],
+          },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #86 ----
+  // 中文原文：将 3 张“抵抗”加入敌方卡组。使友方总部获得 +6 防御力。
+  liberation: {
+    cardId: 'liberation',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'custom', id: 'addCardToEnemyDeck', params: { cardId: 'resistance_b', count: 3 } },
+          { op: 'custom', id: 'gainHqDefense', params: { side: 'self', amount: 6 } },
+        ],
+      },
+    ],
+  },
+
+  // ==== B 类批次 2（META #101-150）====
+
+  // ---- META #105 ----
+  // 中文原文：使友方总部获得 +3 防御力。额外获得 1 个指挥点槽。
+  nzans: {
+    cardId: 'nzans',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'custom', id: 'gainHqDefense', params: { side: 'self', amount: 3 } },
+          { op: 'custom', id: 'gainKreditSlots', params: { side: 'self', amount: 1 } },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #110 ----
+  // 中文原文：对所有敌方目标造成 2 点伤害。抽 2 张牌。额外获得 2 个指挥点槽。
+  the_anzac_spirit: {
+    cardId: 'the_anzac_spirit',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'damage', target: { kind: 'query', side: 'enemy', line: 'any' }, amount: 2 },
+          { op: 'damage', target: { kind: 'hq', side: 'enemy' }, amount: 2 },
+          { op: 'draw', side: 'self', count: 2 },
+          { op: 'custom', id: 'gainKreditSlots', params: { side: 'self', amount: 2 } },
+        ],
+      },
+    ],
+  },
+
+  // ==== P2 批次（META #151-200 的 B 类）====
+
+  // ---- META #175 ----
+  // 中文原文：随机复制敌方卡组中的 1 张指令，使友方总部获得等同于其花费的防御力。
+  orp_byskawica: {
+    cardId: 'orp_byskawica',
+    abilities: [
+      { trigger: 'order', effects: [{ op: 'custom', id: 'copyRandomEnemyOrderAndGainHqDefense' }] },
+    ],
+  },
+
+  // ---- META #193 ----
+  // 中文原文：从敌方 3 张手牌中选择 1 张并弃掉，将 1 张复制加入友方手牌。
+  sabotage: {
+    cardId: 'sabotage',
+    abilities: [
+      { trigger: 'order', effects: [{ op: 'custom', id: 'discardChosenEnemyHandCardCopyToHand', params: { from: 3 } }] },
+    ],
+  },
 };

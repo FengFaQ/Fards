@@ -12,7 +12,7 @@
  * - `|`    ：阵营头与卡牌区的分隔符
  * - `;`    ：按"副本数"分组的分隔符；第 i 组（0 基）里的每张卡都是 i+1 张
  * - 短码    ：每张卡 2 位 base62（= API 字段 `import_id`），组内直接拼接
- * - 尾部空组省略（卡组里没有 4 张卡时只有 3 组）
+ * - **总是 4 组**（3 个 `;`）：没有 4 张卡时以 `;` 结尾，如 `%%36|…;…;tQsZ;`
  *
  * 例：`%%51|bCbEbm…yv;oPv7vhvUzd;cz;oX`
  *     → 美国主 + 德国盟；22 张各 1 张，5 张卡各 2 张，1 张卡 3 张，1 张卡 4 张（合计 39）
@@ -240,15 +240,12 @@ export function encodeDeckCode(deck: EncodableDeck): string {
     groups[count - 1].push(importId);
   }
 
-  let lastNonEmpty = -1;
-  for (let i = groups.length - 1; i >= 0; i--) {
-    if (groups[i].length) {
-      lastNonEmpty = i;
-      break;
-    }
-  }
-  const body = lastNonEmpty < 0 ? '' : groups.slice(0, lastNonEmpty + 1).map((g) => g.join('')).join(GROUP_SEP);
-  return `${DECK_CODE_HEAD}${mainCode}${allyCode}${body ? HEADER_SEP + body : ''}`;
+  // 官方编码器**总是输出 4 组**（3 个 ';'），即使尾部组为空：
+  //   %%51|g0;g1;cz;oX（4 组都有卡）
+  //   %%36|g0;g1;tQsZ;  （第 4 组为空 → 以 ';' 结尾）
+  // 因此这里不裁剪尾部空组，否则与官方码不逐字符相等（1950 个公开卡组里 691 例差异即此）。
+  const body = groups.map((g) => g.join('')).join(GROUP_SEP);
+  return `${DECK_CODE_HEAD}${mainCode}${allyCode}${HEADER_SEP}${body}`;
 }
 
 /** 按 cardId 排序后编码（同一卡组输出稳定，便于 diff/缓存） */

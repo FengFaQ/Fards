@@ -84,30 +84,27 @@ describe('引擎基础流程', () => {
 
   it('结束回合→资源增长→部署与攻击', () => {
     let { state } = createGame(setup(), reg);
-    // 玩家0 结束回合
     let r = applyCommand(state, { type: 'endTurn', player: 0 }, reg);
     state = r.state;
     expect(state.activePlayer).toBe(1);
     expect(state.players[1].kredits).toBe(1);
-    expect(state.players[1].hand).toHaveLength(4); // 摸一张
-    // 玩家1 结束回合
+    expect(state.players[1].hand).toHaveLength(4);
     r = applyCommand(state, { type: 'endTurn', player: 1 }, reg);
     state = r.state;
     expect(state.activePlayer).toBe(0);
     expect(state.players[0].kredits).toBe(2);
     expect(state.players[0].maxKredits).toBe(2);
 
-    // 部署 2 费步兵
+    // 部署 2 费步兵到前线（空前线可抢占；只有前线单位能攻击敌方总部）
     const card = state.players[0].hand.find((c) => c.cardId === 'inf')!;
-    r = applyCommand(state, { type: 'playCard', player: 0, instanceId: card.instanceId, line: 'support' }, reg);
+    r = applyCommand(state, { type: 'playCard', player: 0, instanceId: card.instanceId, line: 'frontline' }, reg);
     state = r.state;
-    const units = Object.values(state.units);
-    expect(units).toHaveLength(1);
+    expect(Object.values(state.units)).toHaveLength(1);
+    expect(state.frontlineController).toBe(0);
     expect(state.players[0].kredits).toBe(0);
 
     // 没克雷迪特，无法攻击（行动花费=1）
-    const actions = legalActions(state, reg, 0);
-    expect(actions.filter((a) => a.kind === 'attack')).toHaveLength(0);
+    expect(legalActions(state, reg, 0).filter((a) => a.kind === 'attack')).toHaveLength(0);
 
     // 过一回合再攻击
     r = applyCommand(state, { type: 'endTurn', player: 0 }, reg);
@@ -124,21 +121,17 @@ describe('引擎基础流程', () => {
 
   it('指令结算伤害与目标合法性', () => {
     let { state } = createGame(setup(), reg);
-    // 直接塞一张指令入手牌，费用充足
     state.players[0].kredits = 5;
-    // 玩家1 先部署一个单位（用指令目标）
-    const p2card = state.players[1].hand[0];
     let r = applyCommand(state, { type: 'endTurn', player: 0 }, reg);
     state = r.state;
+    const p2card = state.players[1].hand[0];
     state.players[1].kredits = 5;
     r = applyCommand(state, { type: 'playCard', player: 1, instanceId: p2card.instanceId, line: 'support' }, reg);
     state = r.state;
     const enemyUnit = Object.values(state.units)[0];
-    // 轮到玩家0
     r = applyCommand(state, { type: 'endTurn', player: 1 }, reg);
     state = r.state;
     state.players[0].kredits = 5;
-    // 加一张指令牌
     const orderInstance = { instanceId: 'c_order_test', cardId: 'order_dmg', owner: 0 as const, source: 'created' as const };
     state.cards[orderInstance.instanceId] = orderInstance;
     state.players[0].hand.push(orderInstance);
@@ -165,18 +158,11 @@ describe('引擎基础流程', () => {
     state = r.state;
     r = applyCommand(state, { type: 'endTurn', player: 1 }, reg2);
     state = r.state;
-    // 玩家0 部署 2/2 步兵
+    // 玩家0 部署 2/2 步兵到前线
     const inf = state.players[0].hand.find((c) => c.cardId === 'inf')!;
-    r = applyCommand(state, { type: 'playCard', player: 0, instanceId: inf.instanceId, line: 'support' }, reg2);
-    state = r.state;
-    r = applyCommand(state, { type: 'endTurn', player: 0 }, reg2);
-    state = r.state;
-    // 玩家1 部署 guard
-    state.players[1].kredits = 5;
-    const p1guard = state.players[1].hand.find((c) => c.cardId === 'inf')!;
-    r = applyCommand(state, { type: 'playCard', player: 1, instanceId: p1guard.instanceId, line: 'frontline' }, reg2);
-    // 上面用的是 inf（无 guard），再放一张 guard
+    r = applyCommand(state, { type: 'playCard', player: 0, instanceId: inf.instanceId, line: 'frontline' }, reg2);
     state = r.state;
     expect(getDef(reg2, state.units[Object.keys(state.units)[0]].cardId)).toBeTruthy();
+    expect(state.frontlineController).toBe(0);
   });
 });

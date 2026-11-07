@@ -251,8 +251,18 @@ export interface ChoiceOption {
   disabled?: boolean;
 }
 
-export interface PendingChoice {
-  choiceId: string;
+/** 延迟触发的效果（例如“下个友方回合开始时抽 1 张”） */
+export interface ScheduledEffect {
+  id: string;
+  player: PlayerIndex;
+  when: 'selfTurnStart' | 'selfTurnEnd' | 'opponentTurnStart';
+  /** 指定回合数（不填则下一次触发） */
+  turn?: number;
+  effects: EffectOp[];
+  sourceCardId?: string;
+}
+
+export interface PendingChoice {  choiceId: string;
   /** 需要做决定的玩家 */
   player: PlayerIndex;
   prompt: string;
@@ -288,11 +298,13 @@ export interface GameConfig {
   startingKredits: number;
   /** 后手额外克雷迪特 */
   secondPlayerKredits: number;
-  /** 克雷迪特上限 */
+  /** 克雷迪特基础上限（自然增长封顶） */
   kreditCap: number;
+  /** 克雷迪特绝对上限（跳费卡可超过基础上限） */
+  kreditHardCap: number;
   /** 每回合克雷迪特增长 */
   kreditGrowth: number;
-  /** 前线每方槽位 */
+  /** 前线共享槽位（同一时间只有一方占领） */
   frontlineSlots: number;
   /** 支援线每方槽位 */
   supportSlots: number;
@@ -348,6 +360,8 @@ export interface GameState {
   /** 前线控制者（null = 无人控制/争夺中） */
   frontlineController: PlayerIndex | null;
   pendingChoice: PendingChoice | null;
+  /** 延迟效果队列 */
+  scheduled: ScheduledEffect[];
   log: GameLogEntry[];
   nextId: number;
 }
@@ -572,7 +586,10 @@ export type TriggerKind =
   | 'counter' // 反制触发
   | 'unitDeployed' // 任意单位部署（可过滤友方/敌方）
   | 'unitDestroyed'
-  | 'cardPlayed'
+  | 'cardPlayed' // 任意卡牌被使用后
+  | 'orderPlayed' // 指令被使用后
+  | 'unitActed' // 单位攻击或移动后
+  | 'healed' // 单位被治疗后
   | 'cardDrawn'
   | 'damageDealt'
   | 'healed'
@@ -666,15 +683,16 @@ export const DEFAULT_CONFIG: GameConfig = {
   startingKredits: 1,
   secondPlayerKredits: 0,
   kreditCap: 12,
+  kreditHardCap: 24,
   kreditGrowth: 1,
-  frontlineSlots: 2,
+  frontlineSlots: 5,
   supportSlots: 4,
   fatigueBase: 1,
   attacksPerTurn: 1,
   attackCostsKredits: true,
   moveCostsKredits: true,
   supportCanAttack: true,
-  hqAttackRequiresFrontline: false,
+  hqAttackRequiresFrontline: true,
   guardAnyLine: false,
   firstTurnSkipsDraw: true,
 };

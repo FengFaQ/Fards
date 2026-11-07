@@ -19,7 +19,7 @@ import type {
   UnitFilter,
   UnitId,
 } from './types';
-import { getDef, getScript, opponentOf, playerUnits, randomValue } from './state';
+import { getDef, getScript, opponentOf, playerUnits, randomValue, frontlineUsed } from './state';
 import { hasKeyword, isAirType, isGroundType, isRangedType } from './keywords';
 
 export function resolveSide(controller: PlayerIndex, side: PlayerSide | 'any'): PlayerIndex[] {
@@ -152,13 +152,19 @@ export function canAttackUnitTarget(state: GameState, reg: EngineRegistry, attac
   }
   const atkType = attackerType(reg, attacker);
   const tgtType = attackerType(reg, target);
-  // 空军单位只能被战斗机（或对空炮兵，暂不建模）攻击
+  // 空军单位只能被战斗机攻击
   if (isAirType(tgtType) && atkType !== 'fighter') return false;
-  // 轰炸机无法攻击空军单位
-  if (atkType === 'bomber' && isAirType(tgtType)) return false;
-  // 远程单位可越过前线攻击支援线；地面近战单位只能打前线
-  if (!isRangedType(atkType) && target.line === 'support') return false;
-  // 支援线单位攻击前线：允许（受 supportCanAttack 控制）
+  // 轰炸机受敌方同战线战斗机封锁
+  if (atkType === 'bomber') {
+    const enemyFighters = playerUnits(state, target.owner).filter(
+      (u) => attackerType(reg, u) === 'fighter' && u.line === target.line,
+    );
+    if (enemyFighters.length > 0) return false;
+  }
+  // 炮兵/空军：可打任意战线
+  if (isRangedType(atkType)) return true;
+  // 步兵/坦克：只能打相邻战线（支援线→敌方前线；前线→敌方支援线）
+  if (attacker.line === 'support') return target.line === 'frontline';
   return true;
 }
 
@@ -178,24 +184,28 @@ export function guardUnitsOf(state: GameState, reg: EngineRegistry, player: Play
 }
 
 export function canAttackHQ(state: GameState, reg: EngineRegistry, attacker: Unit): boolean {
-  if (state.config.hqAttackRequiresFrontline && attacker.line !== 'frontline') return false;
   const enemy = opponentOf(attacker.owner);
-  if (guardUnitsOf(state, reg, enemy).length > 0) return false;
-  // 空军可以轰炸总部；地面/炮兵也可以（由指令/能力另行限制）
-  return true;
+  const atkType = attackerType(reg, attacker);
+  if (atkType === 'bomber') {
+    const enemyFighters = playerUnits(state, enemy).filter((u) => attackerType(reg, u) === 'fighter');
+    if (enemyFighters.length > 0) return false;
+  }
+  if (isRangedType(atkType)) return true;
+  return !state.config.hqAttackRequiresFrontline || attacker.line === 'frontline';
 }
 
 export function legalAttackTargets(state: GameState, reg: EngineRegistry, attacker: Unit): TargetRef[] {
   if (!canUnitAttack(state, attacker)) return [];
   const enemy = opponentOf(attacker.owner);
   const guards = guardUnitsOf(state, reg, enemy);
+  const ignoresGuard = attackerType(reg, attacker) === 'artillery';
   const targets: TargetRef[] = [];
   for (const unit of playerUnits(state, enemy)) {
     if (!canAttackUnitTarget(state, reg, attacker, unit)) continue;
-    if (guards.length > 0 && !guards.some((g) => g.unitId === unit.unitId)) continue;
+    if (!ignoresGuard && guards.length > 0 && !guards.some((g) => g.unitId === unit.unitId)) continue;
     targets.push({ kind: 'unit', unitId: unit.unitId });
   }
-  if (guards.length === 0 && canAttackHQ(state, reg, attacker)) {
+  if ((ignoresGuard || guards.length === 0) && canAttackHQ(state, reg, attacker)) {
     targets.push({ kind: 'hq', player: enemy });
   }
   return targets;
@@ -206,14 +216,14 @@ export function legalAttackTargets(state: GameState, reg: EngineRegistry, attack
 // ============================================================
 
 export function lineSpace(state: GameState, player: PlayerIndex, line: Line): number {
-  const cap = line === 'frontline' ? state.config.frontlineSlots : state.config.supportSlots;
-  return Math.max(0, cap - state.players[player][line].length);
+  if (line === 'frontline') return Math.max(0, state.config.frontlineSlots - frontlineUsed(state));
+  return Math.max(0, state.config.supportSlots - state.players[player].support.length);
 }
 
 export function canDeployToFrontline(state: GameState, player: PlayerIndex): boolean {
   if (lineSpace(state, player, 'frontline') <= 0) return false;
-  // 前线控制者可以继续增兵；无人控制（空或争夺）时也可部署
-  return state.frontlineController === player || state.frontlineController === null;
+  // 前线无人占领（空）时可以抢占；已有占领者时只有占领者能继续增兵
+  return frontlineUsed(state) === 0 || state.frontlineController === player;
 }
 
 export function legalDeployLines(state: GameState, player: PlayerIndex): Line[] {
@@ -334,6 +344,28 @@ export function legalActions(state: GameState, reg: EngineRegistry, player: Play
       label: `${nameOfUnit(state, reg, unit)}`,
       attackerId: unit.unitId,
       targets: { mode: 'target', refs, count: 1 },
+    });
+  }
+  // 移动（每单位每回合一次；花费见 config.moveCostsKredits）
+  for (const unit of playerUnits(state, player)) {
+    if (unit.movedThisTurn) continue;
+    if (unit.hp <= 0) continue;
+    const cost = state.config.moveCostsKredits ? getOperationCost(unit) : 0;
+    if (p.kredits < cost) continue;
+    const toLine: Line | null =
+      unit.line === 'support'
+        ? canDeployToFrontline(state, player)
+          ? 'frontline'
+          : null
+        : lineSpace(state, player, 'support') > 0
+          ? 'support'
+          : null;
+    if (!toLine) continue;
+    actions.push({
+      kind: 'moveUnit',
+      label: `移动：${getDef(reg, unit.cardId)?.nameZh ?? unit.cardId} → ${toLine === 'frontline' ? '前线' : '支援线'}`,
+      unitId: unit.unitId,
+      cost,
     });
   }
   actions.push({ kind: 'endTurn', label: '结束回合' });

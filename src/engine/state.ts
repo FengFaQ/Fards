@@ -130,7 +130,7 @@ export function payKredits(state: GameState, player: PlayerIndex, amount: number
 export function gainKredits(state: GameState, player: PlayerIndex, amount: number, permanent = false): void {
   const p = state.players[player];
   p.kredits += amount;
-  if (permanent) p.maxKredits = Math.min(state.config.kreditCap, p.maxKredits + amount);
+  if (permanent) p.maxKredits = Math.min(state.config.kreditHardCap, p.maxKredits + amount);
 }
 
 // ============================================================
@@ -240,6 +240,7 @@ export function placeUnit(
   arr.splice(index, 0, unit.unitId);
   unit.line = line;
   refreshPositions(state, unit.owner, line);
+  updateFrontlineController(state);
 }
 
 function refreshPositions(state: GameState, player: PlayerIndex, line: 'frontline' | 'support'): void {
@@ -257,7 +258,20 @@ export function removeUnitFromBoard(state: GameState, unitId: UnitId): Unit | nu
   if (idx >= 0) arr.splice(idx, 1);
   refreshPositions(state, unit.owner, unit.line);
   delete state.units[unitId];
+  updateFrontlineController(state);
   return unit;
+}
+
+/** 前线共享 5 槽、同一时间只有一方占领 */
+export function updateFrontlineController(state: GameState): void {
+  const a = state.players[0].frontline.length;
+  const b = state.players[1].frontline.length;
+  state.frontlineController = a > 0 && b === 0 ? 0 : b > 0 && a === 0 ? 1 : null;
+}
+
+/** 前线已被占用的槽位总数 */
+export function frontlineUsed(state: GameState): number {
+  return state.players[0].frontline.length + state.players[1].frontline.length;
 }
 
 /** 把卡牌实例放入弃牌堆（衍生物直接消失） */
@@ -352,10 +366,12 @@ export function damageUnitInternal(
   unitId: UnitId,
   amount: number,
   events: GameEvent[],
+  options: { ignoreArmor?: boolean } = {},
 ): { dealt: number; killed: boolean } {
   const unit = state.units[unitId];
   if (!unit || state.status === 'finished') return { dealt: 0, killed: false };
-  const reduction = (unit.trackers.damageReduction ?? 0) + unit.armor;
+  const armor = options.ignoreArmor ? 0 : unit.armor;
+  const reduction = armor + (unit.trackers.damageReduction ?? 0);
   const dealt = Math.max(0, amount - reduction);
   if (dealt <= 0) return { dealt: 0, killed: false };
   unit.hp -= dealt;
@@ -464,6 +480,7 @@ export function createGame(setup: GameSetup, reg: EngineRegistry): { state: Game
     cards: {},
     frontlineController: null,
     pendingChoice: null,
+    scheduled: [],
     log: [],
     nextId: 0,
   };
@@ -520,8 +537,7 @@ export function startTurnInternal(
     p.maxKredits = state.config.startingKredits + (player === state.firstPlayer ? 0 : state.config.secondPlayerKredits);
   } else {
     p.maxKredits = Math.min(state.config.kreditCap, p.maxKredits + state.config.kreditGrowth);
-  }
-  p.kredits = p.maxKredits;
+  }  p.kredits = p.maxKredits;
   p.kreditsSpentThisTurn = 0;
   p.drawnThisTurn = 0;
   p.deployedThisTurn = 0;

@@ -234,7 +234,12 @@ export const GERMANY_CARD_SCRIPTS: Record<string, CardScript> = {
   blue_legion: {
     cardId: 'blue_legion',
     abilities: [
-      { trigger: 'any', effects: [{ op: 'custom', id: 'onFriendlyUnitActedBuffPerOperatingCost' }] },
+      {
+        // unitActed：chosen = 行动单位；按该单位行动花费的次数增益（原语待实现）
+        trigger: 'unitActed',
+        effects: [{ op: 'custom', id: 'onFriendlyUnitActedBuffPerOperatingCost' }],
+        text: '友方单位行动后，行动每花费 1 个指挥点，使其获得一次 +1+1',
+      },
     ],
   },
 
@@ -400,6 +405,246 @@ export const GERMANY_CARD_SCRIPTS: Record<string, CardScript> = {
   // TODO(原语): 需执行器维护“本单位累计行动次数”并支持行动后钩子 → 当前不生效。
   panther_a_zimmerit: {
     cardId: 'panther_a_zimmerit',
-    abilities: [{ trigger: 'any', effects: [{ op: 'custom', id: 'onActedGainAttackPerActionCount' }] }],
+    abilities: [
+      {
+        trigger: 'unitActed',
+        effects: [{ op: 'custom', id: 'onActedGainAttackPerActionCount' }],
+        text: '本单位行动后，获得等同于本局对战本单位行动次数的数值',
+      },
+    ],
+  },
+
+  // ==== B 类批次（META top100）====
+
+  // ---- META #15 ----
+  // 中文原文：对敌方总部造成 4 点伤害。下个敌方回合中，敌方无法部署单位。
+  km_tirpitz: {
+    cardId: 'km_tirpitz',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'damage', target: { kind: 'hq', side: 'enemy' }, amount: 4 },
+          { op: 'custom', id: 'restrictAction', params: { action: 'deploy', scope: 'enemyNextTurn' } },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #17 ----
+  // 中文原文：对抗陆军和总部时，具有 +2 攻击力。部署：与 1 个敌方单位战斗。
+  henschel_hs_129: {
+    cardId: 'henschel_hs_129',
+    abilities: [
+      {
+        trigger: 'deploy',
+        target: { kind: 'query', side: 'enemy', line: 'any', limit: 1 },
+        effects: [{ op: 'custom', id: 'forcedFight' }],
+      },
+      {
+        // TODO(原语): “对抗指定类型目标时 +N 攻击力”需要伤害计算钩子 → 当前不生效
+        trigger: 'any',
+        effects: [{ op: 'custom', id: 'attackBonusVsTypes', params: { types: ['infantry', 'tank', 'artillery', 'hq'], attack: 2 } }],
+      },
+    ],
+  },
+
+  // ---- META #28 ----
+  // 中文原文：在第四回合抽取。使卡组中的所有奇数花费的德国卡牌获得 -1 花费。
+  front_and_homeland: {
+    cardId: 'front_and_homeland',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          // 近似：只按阵营过滤（modifyCost 暂不支持 faction+parity 组合）
+          { op: 'custom', id: 'modifyCost', params: { target: 'faction', faction: 'Germany', amount: -1 } },
+          { op: 'custom', id: 'drawAtTurn', params: { turn: 4 } },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #68 ----
+  // 中文原文：开发 1 张德国轻型坦克。将 1 张“竞争战法”加入手牌。
+  blitz_doctrine: {
+    cardId: 'blitz_doctrine',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'custom', id: 'discoverFrom', params: { faction: 'Germany', type: 'tank', maxCost: 3 } },
+          { op: 'addCardToHand', side: 'self', cardId: 'contest_doctrine' },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #85 ----
+  // 中文原文：本单位攻击后，移除本单位，直到下个友方回合开始。
+  salamander: {
+    cardId: 'salamander',
+    abilities: [
+      { trigger: 'attack', effects: [{ op: 'custom', id: 'phaseOutUntilNextTurn', params: { of: 'self' } }] },
+    ],
+  },
+
+  // ---- META #94 ----
+  // 中文原文：部署：若有友方步兵，获得 -1 行动花费。
+  panzer_35t: {
+    cardId: 'panzer_35t',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'conditional',
+            condition: {
+              kind: 'count',
+              target: { kind: 'query', side: 'self', line: 'any', filter: { type: 'infantry' } },
+              op: 'gt',
+              value: 0,
+            },
+            then: [{ op: 'custom', id: 'modifyOperationCost', params: { amount: -1 } }],
+          },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #99 ----
+  // 中文原文：使友方总部的防御力为 25。从卡组顶移除 10 张牌。
+  alpenfestung: {
+    cardId: 'alpenfestung',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'custom', id: 'setHqDefense', params: { side: 'self', value: 25 } },
+          { op: 'mill', side: 'self', count: 10 },
+        ],
+      },
+    ],
+  },
+
+  // ==== B 类批次 2（META #101-150）====
+
+  // ---- META #106 ----
+  // 中文原文：使前线所有友方单位获得 +3 攻击力和 -1 行动花费，直到回合结束。
+  blitzkrieg: {
+    cardId: 'blitzkrieg',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'buff', target: { kind: 'query', side: 'self', line: 'frontline' }, attack: 3, permanent: false },
+          { op: 'custom', id: 'modifyOperationCostArea', params: { side: 'self', line: 'frontline', amount: -1 } },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #120 ----
+  // 中文原文：将 1 个友方单位返回手牌。使其花费为 0，直到回合结束。
+  shifting_attack: {
+    cardId: 'shifting_attack',
+    abilities: [
+      {
+        trigger: 'order',
+        target: { kind: 'query', side: 'self', line: 'any', limit: 1 },
+        effects: [{ op: 'custom', id: 'returnChosenToHandAndCostZero' }],
+      },
+    ],
+  },
+
+  // ---- META #139 ----
+  // 中文原文：将 1 个单位返回手牌。下个敌方回合开始时，敌方无法增加指挥点槽或抽牌。
+  km_admiral_hipper: {
+    cardId: 'km_admiral_hipper',
+    abilities: [
+      {
+        trigger: 'order',
+        target: { kind: 'query', side: 'any', line: 'any', limit: 1 },
+        effects: [
+          { op: 'custom', id: 'moveUnitZone', params: { of: 'chosen', to: 'hand' } },
+          { op: 'custom', id: 'restrictAction', params: { action: 'kreditSlot', scope: 'enemyNextTurn' } },
+          { op: 'custom', id: 'restrictAction', params: { action: 'draw', scope: 'enemyNextTurn' } },
+        ],
+      },
+    ],
+  },
+
+  // ==== P2 批次（META #151-200 的 B 类）====
+
+  // ---- META #160 ----
+  // 中文原文：移除 1 个德国陆军。下个敌方回合结束时，将其返回并复制。
+  second_front: {
+    cardId: 'second_front',
+    abilities: [
+      {
+        trigger: 'order',
+        target: { kind: 'query', side: 'self', line: 'any', filter: { faction: 'Germany', type: ['infantry', 'tank', 'artillery'] }, limit: 1 },
+        effects: [{ op: 'custom', id: 'phaseOutUnitReturnNextTurnEndAndCopy' }],
+      },
+    ],
+  },
+
+  // ---- META #165 ----
+  // 中文原文：部署：开发 1 张德国反制。
+  '15_aufklrung': {
+    cardId: '15_aufklrung',
+    abilities: [
+      { trigger: 'deploy', effects: [{ op: 'custom', id: 'discoverFrom', params: { faction: 'Germany', type: 'countermeasure' } }] },
+    ],
+  },
+
+  // ---- META #166 ----
+  // 中文原文：友方德国单位行动后，本单位获得 -1 行动花费。
+  // TODO(原语): 需要“友方单位行动后”钩子 → 当前不生效
+  '30_infantry_regiment': {
+    cardId: '30_infantry_regiment',
+    abilities: [
+      {
+        // 需要判断“行动单位是友方德国单位” → 用 custom 条件 + modifyOperationCost 作用于自身
+        trigger: 'unitActed',
+        condition: { kind: 'custom', id: 'actedUnitIsFriendlyFaction', params: { faction: 'Germany' } },
+        effects: [{ op: 'custom', id: 'modifyOperationCost', params: { amount: -1 } }],
+        text: '友方德国单位行动后，本单位获得 -1 行动花费',
+      },
+    ],
+  },
+
+  // ---- META #167 ----
+  // 中文原文：本单位攻击并消灭单位后，能再次行动。
+  windhund_division: {
+    cardId: 'windhund_division',
+    abilities: [
+      {
+        trigger: 'attack',
+        condition: { kind: 'custom', id: 'attackKilledTarget' },
+        effects: [{ op: 'custom', id: 'extraAction' }],
+        text: '本单位攻击并消灭单位后，能再次行动',
+      },
+    ],
+  },
+
+  // ---- META #180 ----
+  // 中文原文：使 1 个单位撤退。若卡组顶是海军牌，抽 1 张牌。
+  u16: {
+    cardId: 'u16',
+    abilities: [
+      {
+        trigger: 'order',
+        target: { kind: 'query', side: 'any', line: 'any', limit: 1 },
+        effects: [
+          { op: 'custom', id: 'moveUnitZone', params: { of: 'chosen', to: 'hand' } },
+          {
+            op: 'conditional',
+            condition: { kind: 'custom', id: 'deckTopIsNaval' },
+            then: [{ op: 'draw', side: 'self', count: 1 }],
+          },
+        ],
+      },
+    ],
   },
 };

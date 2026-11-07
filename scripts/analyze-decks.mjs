@@ -161,33 +161,50 @@ const totals = parsed.map((p) => p.total);
 const totalDist = dist(totals);
 const totalSorted = [...totals].sort((a, b) => a - b);
 
+/**
+ * "干净样本"：排除异常卡组（快照张数 != 39，或单卡副本 > 4，或存在数据集外的卡）。
+ * 公开卡组广场里有少量脏数据（例如 39 张同一张卡的 meme/坏码卡组），
+ * 规则推断必须基于干净样本，否则上界会被污染。
+ */
+const isClean = (p) => p.total === 39 && p.maxCopies <= 4 && p.missing === 0 && p.groupCount === 4;
+const clean = parsed.filter(isClean);
+const dirty = parsed.filter((p) => !isClean(p));
+
 /* ------------------------------------------------------------------ T2 副本数 */
 
 const copyDistAll = {};
-for (const p of parsed) for (const [k, v] of Object.entries(p.copyDist)) copyDistAll[k] = (copyDistAll[k] ?? 0) + v;
-// 单个 cardId 在卡组中的副本数（不是"副本数分布"，而是"同名卡张数分布"）
+for (const p of clean) for (const [k, v] of Object.entries(p.copyDist)) copyDistAll[k] = (copyDistAll[k] ?? 0) + v;
+// 同名卡在单个卡组中的张数分布（统计单位 = "卡组内的一张卡"）
 const perCardCounts = new Map();
+const perCardCountsAll = new Map();
 for (const deck of decks) {
   if (!deck.deck_code) continue;
-  for (const item of deck.cards_snapshot ?? []) {
-    const key = item.count;
-    perCardCounts.set(key, (perCardCounts.get(key) ?? 0) + 1);
+  const snapshot = deck.cards_snapshot ?? [];
+  const total = snapshot.reduce((s, c) => s + (c.count ?? 0), 0);
+  const dirtyDeck = total !== 39 || snapshot.some((c) => (c.count ?? 0) > 4);
+  for (const item of snapshot) {
+    perCardCountsAll.set(item.count, (perCardCountsAll.get(item.count) ?? 0) + 1);
+    if (!dirtyDeck) perCardCounts.set(item.count, (perCardCounts.get(item.count) ?? 0) + 1);
   }
 }
-const maxCopyPerDeck = Math.max(...parsed.map((p) => p.maxCopies));
+const maxCopyPerDeck = Math.max(...clean.map((p) => p.maxCopies), 0);
+const maxCopyAll = Math.max(...parsed.map((p) => p.maxCopies), 0);
 
 /* ------------------------------------------------------------------ T3 精英 */
 
-const eliteDist = dist(parsed.map((p) => p.eliteCards));
-const eliteDistinctDist = dist(parsed.map((p) => p.eliteDistinct));
+const eliteDist = dist(clean.map((p) => p.eliteCards));
+const eliteDistinctDist = dist(clean.map((p) => p.eliteDistinct));
 // 精英单卡副本数（是否有 >1）
 let eliteCopyViolations = 0;
 const eliteCopyDist = {};
 for (const deck of decks) {
   if (!deck.deck_code) continue;
+  const total = (deck.cards_snapshot ?? []).reduce((s, c) => s + (c.count ?? 0), 0);
+  const dirtyDeck = total !== 39 || (deck.cards_snapshot ?? []).some((c) => (c.count ?? 0) > 4);
   for (const item of deck.cards_snapshot ?? []) {
     const card = byId.get(item.card_id);
     if (card?.rarity === 'Elite') {
+      if (dirtyDeck) continue;
       eliteCopyDist[item.count] = (eliteCopyDist[item.count] ?? 0) + 1;
       if (item.count > 1) eliteCopyViolations++;
     }
@@ -196,12 +213,12 @@ for (const deck of decks) {
 
 /* ------------------------------------------------------------------ T4/T5 阵营 */
 
-const allyCardsArr = parsed.map((p) => p.allyCards);
-const mainCardsArr = parsed.map((p) => p.mainCards);
+const allyCardsArr = clean.map((p) => p.allyCards);
+const mainCardsArr = clean.map((p) => p.mainCards);
 const allySorted = [...allyCardsArr].sort((a, b) => a - b);
 const mainSorted = [...mainCardsArr].sort((a, b) => a - b);
-const noAlly = parsed.filter((p) => !p.ally).length;
-const sameFaction = parsed.filter((p) => p.ally && p.ally === p.main).length;
+const noAlly = clean.filter((p) => !p.ally).length;
+const sameFaction = clean.filter((p) => p.ally && p.ally === p.main).length;
 
 /* ------------------------------------------------------------------ T6 组合 */
 
@@ -235,22 +252,23 @@ const report = {
   generatedAt: new Date().toISOString(),
   decksFile: opt.decks,
   decksAnalyzed: N,
-  T1_deckSize: { distribution: totalDist, mean: mean(totals), quantiles: quantiles(totalSorted), exact39: parsed.filter((p) => p.total === 39).length, exact40: parsed.filter((p) => p.total === 40).length },
-  T2_copies: { perCardCountDistribution: Object.fromEntries(Object.entries(perCardCounts).sort((a, b) => Number(a[0]) - Number(b[0]))), maxCopyPerDeck, copyDistAll },
-  T3_elite: { perDeckEliteDistribution: eliteDist, perDeckEliteDistinctDistribution: eliteDistinctDist, eliteCopyCountDistribution: eliteCopyDist, eliteCopyViolations },
-  T4_ally: { distribution: dist(allyCardsArr), max: allySorted[allySorted.length - 1], p95: quantiles(allySorted).p95, mean: mean(allyCardsArr) },
+  cleanSample: { count: clean.length, dirtyCount: dirty.length, dirtyExamples: dirty.slice(0, 8).map((p) => ({ id: p.id, name: p.name, total: p.total, maxCopies: p.maxCopies, missing: p.missing })) },
+  T1_deckSize: { distribution: totalDist, cleanDistribution: dist(clean.map((p) => p.total)), mean: mean(clean.map((p) => p.total)), quantiles: quantiles([...clean.map((p) => p.total)].sort((a, b) => a - b)), exact39: clean.filter((p) => p.total === 39).length, exact40: clean.filter((p) => p.total === 40).length },
+  T2_copies: {
+    distributionClean: Object.fromEntries([...perCardCounts.entries()].sort((a, b) => Number(a[0]) - Number(b[0]))),
+    distributionAll: Object.fromEntries([...perCardCountsAll.entries()].sort((a, b) => Number(a[0]) - Number(b[0]))),
+    maxCopyPerDeckClean: maxCopyPerDeck,
+    maxCopyPerDeckAll: maxCopyAll,
+    copyDistAll,
+  },
+  T3_elite: { perDeckEliteDistribution: eliteDist, perDeckEliteDistinctDistribution: eliteDistinctDist, eliteCopyCountDistribution: eliteCopyDist, eliteCopyViolations, decksWithZeroElite: eliteDist[0] ?? 0, meanElitePerDeck: mean(clean.map((p) => p.eliteCards)) },
+  T4_ally: { distribution: dist(allyCardsArr), max: allySorted[allySorted.length - 1], p95: quantiles(allySorted).p95, mean: mean(allyCardsArr), decksAtMax: allyCardsArr.filter((v) => v === allySorted[allySorted.length - 1]).length },
   T5_main: { distribution: dist(mainCardsArr), min: mainSorted[0], p05: quantiles(mainSorted).p5, mean: mean(mainCardsArr) },
   T6_combos: { count: combos.size, top: [...combos.entries()].sort((a, b) => b[1] - a[1]).slice(0, 40), noAlly, sameFaction },
-  T7_curve: {
-    kredits: (() => {
-      const m = new Map();
-      for (const p of parsed) void p;
-      return m;
-    })(),
-  },
+  T7_curve: {},
   T8_factionCode: { headerMismatches: headerMismatch.length, headerMismatchExamples: headerMismatch.slice(0, 5).map((p) => p.code), mainDigitDistribution: codeMainDist, allyDigitDistribution: codeAllyDist },
   T9_reserve: { decksWithReserved: reserveDecks, pct: pct(reserveDecks, N), distribution: reservedDist },
-  T10_structure: { groupCountDistribution: groupCountDist, maxCardsInSingleGroup: maxGroupCards, uniqueCardsPerDeckMean: mean(parsed.map((p) => p.unique)), unitsMean: unitsAvg, cardsNotInDataset: missingCards },
+  T10_structure: { groupCountDistribution: groupCountDist, maxCardsInSingleGroup: maxGroupCards, uniqueCardsPerDeckMean: mean(parsed.map((p) => p.unique)), unitsMean: unitsAvg, cardsNotInDataset: missingCards, cleanUniqueMean: mean(clean.map((p) => p.unique)) },
 };
 
 // T7 费用曲线：全局平均
@@ -281,17 +299,19 @@ await writeFile(resolve(ROOT, opt.json), JSON.stringify(report, null, 2), 'utf8'
 /* ---------------- 控制台摘要 ---------------- */
 const show = (label, obj) => console.log(`${label}: ${JSON.stringify(obj)}`);
 console.log('='.repeat(72));
-console.log(`公开卡组统计（样本 ${N} 个，来源 ${opt.decks}）`);
+console.log(`公开卡组统计（样本 ${N} 个，干净样本 ${clean.length} 个 / 脏数据 ${dirty.length} 个，来源 ${opt.decks}）`);
 console.log('='.repeat(72));
-show('T1 卡组总张数分布', report.T1_deckSize.distribution);
-show('   ⌐ 39 张占比', `${report.T1_deckSize.exact39}/${N} ${pct(report.T1_deckSize.exact39, N)}；40 张 ${report.T1_deckSize.exact40} 个`);
-show('T2 同名卡副本数分布', report.T2_copies.perCardCountDistribution);
-show('   ⌐ 单卡组内最大副本数', report.T2_copies.maxCopyPerDeck);
-show('T3 每卡组精英张数分布', report.T3_elite.perDeckEliteDistribution);
-show('   ⌐ 精英单卡副本数分布', report.T3_elite.eliteCopyCountDistribution);
-show('T4 盟军张数分布', report.T4_ally.distribution);
-show('   ⌐ 盟军最大 / p95 / 均值', `${report.T4_ally.max} / ${report.T4_ally.p95} / ${report.T4_ally.mean.toFixed(2)}`);
-show('T5 主阵营张数分布', report.T5_main.distribution);
+if (dirty.length) console.log(`脏数据示例：${JSON.stringify(report.cleanSample.dirtyExamples.slice(0, 3))}`);
+show('T1 卡组总张数分布（全部）', report.T1_deckSize.distribution);
+show('   ⌐ 干净样本 39 张占比', `${report.T1_deckSize.exact39}/${clean.length} ${pct(report.T1_deckSize.exact39, clean.length)}；40 张 ${report.T1_deckSize.exact40} 个`);
+show('T2 同名卡张数分布（干净）', report.T2_copies.distributionClean);
+show('   ⌐ 干净样本单卡组内最大副本数', report.T2_copies.maxCopyPerDeckClean);
+show('T3 每卡组精英张数分布（干净）', report.T3_elite.perDeckEliteDistribution);
+show('   ⌐ 精英单卡副本数分布（干净）', report.T3_elite.eliteCopyCountDistribution);
+show('   ⌐ 无精英卡组 / 平均精英张数', `${report.T3_elite.decksWithZeroElite} / ${report.T3_elite.meanElitePerDeck.toFixed(2)}`);
+show('T4 盟军张数分布（干净）', report.T4_ally.distribution);
+show('   ⌐ 盟军最大 / p95 / 均值 / 恰好最大值的卡组数', `${report.T4_ally.max} / ${report.T4_ally.p95} / ${report.T4_ally.mean.toFixed(2)} / ${report.T4_ally.decksAtMax}`);
+show('T5 主阵营张数分布（干净）', report.T5_main.distribution);
 show('   ⌐ 主阵营最小 / p05 / 均值', `${report.T5_main.min} / ${report.T5_main.p05} / ${report.T5_main.mean.toFixed(2)}`);
 show('T6 阵营组合数', `${report.T6_combos.count} 种；无盟军 ${report.T6_combos.noAlly}；同阵营 ${report.T6_combos.sameFaction}`);
 show('T7 费用曲线', report.T7_curve.kreditsPct);
@@ -301,6 +321,6 @@ show('T8 阵营码头部不匹配', `${report.T8_factionCode.headerMismatches} �
 show('   ⌐ 盟军码分布', report.T8_factionCode.allyDigitDistribution);
 show('T9 使用预备池卡牌的卡组', `${report.T9_reserve.decksWithReserved}/${N} ${report.T9_reserve.pct}`);
 show('T10 分组数分布', report.T10_structure.groupCountDistribution);
-show('   ⌐ 单组最大卡数 / 卡组唯一卡数均值', `${report.T10_structure.maxCardsInSingleGroup} / ${report.T10_structure.uniqueCardsPerDeckMean.toFixed(2)}`);
-show('   ⌐ 数据集中不存在的卡', report.T10_structure.cardsNotInDataset);
+show('   ⌐ 单组最大卡数 / 干净样本唯一卡数均值', `${report.T10_structure.maxCardsInSingleGroup} / ${report.T10_structure.cleanUniqueMean.toFixed(2)}`);
+show('   ⌐ 数据集中不存在的卡（副本数）', report.T10_structure.cardsNotInDataset);
 console.log(`\n完整 JSON：${opt.json}`);

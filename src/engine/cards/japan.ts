@@ -312,4 +312,252 @@ export const JAPAN_CARD_SCRIPTS: Record<string, CardScript> = {
       { trigger: 'order', effects: [{ op: 'custom', id: 'destroyUnitAndSameName', params: { maxAttack: 2 } }] },
     ],
   },
+
+  // ==== B 类批次（META top100）====
+
+  // ---- META #8 ----
+  // 中文原文：对所有敌方目标造成 2 点伤害。友方失去 1 个指挥点槽。
+  desperate_measures: {
+    cardId: 'desperate_measures',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'damage', target: { kind: 'query', side: 'enemy', line: 'any' }, amount: 2 },
+          { op: 'damage', target: { kind: 'hq', side: 'enemy' }, amount: 2 },
+          { op: 'custom', id: 'loseKreditSlots', params: { side: 'self', amount: 1 } },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #19 ----
+  // 中文原文：部署：预报。若指挥点数为 0，抽 1 张牌。
+  yokosuka_e14y: {
+    cardId: 'yokosuka_e14y',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          { op: 'custom', id: 'revealIntel', params: { count: 1 } },
+          {
+            op: 'conditional',
+            condition: { kind: 'stat', of: 'selfHQ', stat: 'kredits', op: 'eq', value: 0 },
+            then: [{ op: 'draw', side: 'self', count: 1 }],
+          },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #58 ----
+  // 中文原文：消灭 1 个步兵。若其攻击力大于友方指挥点槽数，失去 1 个指挥点槽。
+  ferocious_assault: {
+    cardId: 'ferocious_assault',
+    abilities: [
+      {
+        trigger: 'order',
+        target: { kind: 'query', side: 'any', line: 'any', filter: { type: 'infantry' }, limit: 1 },
+        effects: [
+          { op: 'destroy', target: { kind: 'chosen' } },
+          {
+            op: 'conditional',
+            condition: { kind: 'custom', id: 'chosenAttackGtMaxKredits' },
+            then: [{ op: 'custom', id: 'loseKreditSlots', params: { side: 'self', amount: 1 } }],
+          },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #76 ----
+  // 中文原文：部署：抽 2 张花费为 1 的单位。
+  ki46_dinah_iii: {
+    cardId: 'ki46_dinah_iii',
+    abilities: [
+      { trigger: 'deploy', effects: [{ op: 'custom', id: 'drawUnitByCost', params: { cost: 1, count: 2 } }] },
+    ],
+  },
+
+  // ---- META #77 ----
+  // 中文原文：若指挥点槽数不大于 3，造成双倍伤害。
+  // TODO(原语): 需要“条件性伤害翻倍”钩子 → 当前不生效
+  '238th_regiment': {
+    cardId: '238th_regiment',
+    abilities: [{ trigger: 'any', effects: [{ op: 'custom', id: 'doubleDamageWhileMaxKreditsLte', params: { maxKredits: 3 } }] }],
+  },
+
+  // ---- META #78 ----
+  // 中文原文：友方使用海军牌时，获得 +1+1。亡计：洗切卡组，抽 1 张牌。
+  '5th_sasebo_snlf': {
+    cardId: '5th_sasebo_snlf',
+    abilities: [
+      {
+        // TODO(原语): 需要“友方使用海军牌”钩子（cardPlayed + naval 判定）→ 当前不生效
+        trigger: 'any',
+        effects: [{ op: 'custom', id: 'onFriendlyNavalCardPlayedBuffSelf', params: { attack: 1, hp: 1 } }],
+      },
+      { trigger: 'death', effects: [{ op: 'draw', side: 'self', count: 1 }] },
+    ],
+  },
+
+  // ---- META #82 ----
+  // 中文原文：额外获得 1 个指挥点槽。敌方失去 1 个指挥点槽。
+  southern_plan: {
+    cardId: 'southern_plan',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'custom', id: 'gainKreditSlots', params: { side: 'self', amount: 1 } },
+          { op: 'custom', id: 'loseKreditSlots', params: { side: 'enemy', amount: 1 } },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #95 ----
+  // 中文原文：失去 1 个指挥点槽。使所有友方单位获得：“亡计：对敌方总部造成 1 点伤害。获得 1 个指挥点槽。”
+  special_attack: {
+    cardId: 'special_attack',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'custom', id: 'loseKreditSlots', params: { side: 'self', amount: 1 } },
+          { op: 'custom', id: 'grantDeathTriggerToAllies', params: { amount: 1 } },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #100 ----
+  // 中文原文：敌方使用指令时，对其总部造成 1 点伤害。
+  // TODO(原语): 需要“敌方使用指令”钩子（卡牌事件类触发）→ 当前不生效
+  shibata_regiment: {
+    cardId: 'shibata_regiment',
+    abilities: [
+      {
+        trigger: 'orderPlayed',
+        anySide: true,
+        effects: [{ op: 'damage', target: { kind: 'hq', side: 'enemy' }, amount: 1 }],
+        text: '敌方使用指令时，对其总部造成 1 点伤害',
+      },
+    ],
+  },
+
+  // ==== B 类批次 2（META #101-150）====
+
+  // ---- META #118 ----
+  // 中文原文：敌方使用指令时，获得 +1+1 和 -1 行动花费。
+  // TODO(原语): 需要“敌方使用指令”钩子 → 当前不生效
+  j2m_raiden: {
+    cardId: 'j2m_raiden',
+    abilities: [
+      {
+        trigger: 'orderPlayed',
+        anySide: true,
+        condition: { kind: 'custom', id: 'playedByEnemy' },
+        effects: [
+          { op: 'buff', target: { kind: 'self' }, attack: 1, hp: 1, permanent: true },
+          { op: 'custom', id: 'modifyOperationCost', params: { amount: -1 } },
+        ],
+        text: '敌方使用指令时，获得 +1+1 和 -1 行动花费',
+      },
+    ],
+  },
+
+  // ---- META #135 ----
+  // 中文原文：消灭所有单位。双方失去 6 个指挥点槽。使双方卡组中的单位获得 +3 攻击力。
+  last_ditch_force: {
+    cardId: 'last_ditch_force',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'destroy', target: { kind: 'query', side: 'any', line: 'any' } },
+          { op: 'custom', id: 'loseKreditSlots', params: { side: 'self', amount: 6 } },
+          { op: 'custom', id: 'loseKreditSlots', params: { side: 'enemy', amount: 6 } },
+          { op: 'custom', id: 'buffUnitsInBothDecks', params: { attack: 3 } },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #141 ----
+  // 中文原文：消灭 1 个攻击力不大于友方指挥点槽数的单位。失去 1 个指挥点槽。
+  commit_the_reserves: {
+    cardId: 'commit_the_reserves',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'custom', id: 'destroyUnitByMaxKredits', params: { side: 'any', count: 1 } },
+          { op: 'custom', id: 'loseKreditSlots', params: { side: 'self', amount: 1 } },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #144 ----
+  // 中文原文：友方预报时，抽 1 张牌。部署：预报。
+  kawanishi_h8k: {
+    cardId: 'kawanishi_h8k',
+    abilities: [
+      // TODO(原语): 需要“友方预报/情报”钩子 → 当前仅部署时的预报生效
+      { trigger: 'any', effects: [{ op: 'custom', id: 'onFriendlyRevealDraw', params: { count: 1 } }] },
+      { trigger: 'deploy', effects: [{ op: 'custom', id: 'revealIntel', params: { count: 1 } }] },
+    ],
+  },
+
+  // ==== P2 批次（META #151-200 的 B 类）====
+
+  // ---- META #174 ----
+  // 中文原文：部署：移除 1 个敌方单位，直到本单位离开战场。
+  kyoto_regiment: {
+    cardId: 'kyoto_regiment',
+    abilities: [
+      {
+        trigger: 'deploy',
+        target: { kind: 'query', side: 'enemy', line: 'any', limit: 1 },
+        effects: [{ op: 'custom', id: 'phaseOutEnemyUnitUntilSelfLeaves' }],
+      },
+    ],
+  },
+
+  // ---- META #186 ----
+  // 中文原文：开发 1 张卡组中的牌。失去 1 个指挥点槽。
+  air_land_sea: {
+    cardId: 'air_land_sea',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'custom', id: 'discoverFromDeck', params: { side: 'self', count: 1 } },
+          { op: 'custom', id: 'loseKreditSlots', params: { side: 'self', amount: 1 } },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #197 ----
+  // 中文原文：压制 1 个单位并预报。若指挥点数为 0，具有情报 3。
+  cruiser_scouts: {
+    cardId: 'cruiser_scouts',
+    abilities: [
+      {
+        trigger: 'order',
+        target: { kind: 'query', side: 'any', line: 'any', limit: 1 },
+        effects: [
+          { op: 'pin', target: { kind: 'chosen' } },
+          {
+            op: 'conditional',
+            condition: { kind: 'stat', of: 'selfHQ', stat: 'kredits', op: 'eq', value: 0 },
+            then: [{ op: 'custom', id: 'revealIntel', params: { count: 3 } }],
+            else: [{ op: 'custom', id: 'revealIntel', params: { count: 1 } }],
+          },
+        ],
+      },
+    ],
+  },
 };

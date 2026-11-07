@@ -50,6 +50,7 @@ import {
   recalcUnit,
   removeUnitFromBoard,
   shuffleInPlace,
+  frontlineUsed,
 } from '../state';
 import {
   getOperationCost,
@@ -81,6 +82,8 @@ export interface ExecCtx {
   chosen?: TargetRef;
   /** 多目标卡选中的目标列表（非空时 {kind:'chosen'} 会返回整个列表） */
   chosenList?: TargetRef[];
+  /** 打出时该牌在手牌中的下标（“最左/最右”类卡用） */
+  playHandIndex?: number;
   /** 因需要玩家选择而挂起 */
   suspended: boolean;
   triggerQueue: TriggerItem[];
@@ -92,6 +95,7 @@ export interface CreateCtxOptions {
   sourceCardId?: string;
   chosen?: TargetRef;
   chosenList?: TargetRef[];
+  playHandIndex?: number;
 }
 
 export function createCtx(
@@ -109,6 +113,7 @@ export function createCtx(
     sourceCardId: options.sourceCardId,
     chosen: options.chosen,
     chosenList: options.chosenList,
+    playHandIndex: options.playHandIndex,
     suspended: false,
     triggerQueue: [],
   };
@@ -341,7 +346,7 @@ export function dealDamage(
   ctx: ExecCtx,
   ref: TargetRef,
   amount: number,
-  source?: { cardId?: string; unitId?: string },
+  source?: { cardId?: string; unitId?: string; kind?: 'unit' | 'card' },
 ): void {
   if (amount <= 0 || ctx.state.status === 'finished') return;
   if (ref.kind === 'hq') {
@@ -353,7 +358,10 @@ export function dealDamage(
   if (ref.kind === 'unit') {
     const unit = ctx.state.units[ref.unitId];
     if (!unit) return;
-    const { dealt, killed } = damageUnitInternal(ctx.state, ref.unitId, amount, ctx.events);
+    const sourceKind = source?.kind ?? (source?.unitId ? 'unit' : 'card');
+    const { dealt, killed } = damageUnitInternal(ctx.state, ref.unitId, amount, ctx.events, {
+      ignoreArmor: sourceKind === 'card',
+    });
     if (dealt > 0) {
       ctx.events.push({ type: 'damage', target: ref, amount: dealt });
       enqueueTriggerForUnits(ctx, 'damageDealt', { victimUnitId: ref.unitId });
@@ -373,7 +381,10 @@ export function healTarget(ctx: ExecCtx, ref: TargetRef, amount: number): void {
   }
   if (ref.kind === 'unit') {
     const healed = healUnitInternal(ctx.state, ref.unitId, amount, ctx.events);
-    if (healed > 0) ctx.events.push({ type: 'heal', target: ref, amount: healed });
+    if (healed > 0) {
+      ctx.events.push({ type: 'heal', target: ref, amount: healed });
+      enqueueTriggerForUnits(ctx, 'healed', { victimUnitId: ref.unitId });
+    }
   }
 }
 
@@ -656,8 +667,8 @@ function executeOp(ctx: ExecCtx, op: EffectOp, remaining: EffectOp[]): boolean {
         if (!cardId) continue;
         const def = getDef(ctx.reg, cardId);
         if (!def) continue;
-        const line: Line = op.line ?? (state.frontlineController === owner ? 'frontline' : 'support');
-        const targetLine: Line = op.line ?? pickLineForSummon(state, owner, line);
+        const targetLine = bestLineForSummon(ctx, owner, op.line ?? 'support');
+        if (!targetLine) break;
         const unit = makeUnit(state, ctx.reg, owner, cardId, targetLine, { token: true, ready: true });
         if (!unit) continue;
         placeUnit(state, unit, targetLine);
@@ -686,6 +697,7 @@ function executeOp(ctx: ExecCtx, op: EffectOp, remaining: EffectOp[]): boolean {
         unit.baseHp = def.defense;
         unit.buffAttack = 0;
         unit.buffHp = 0;
+        unit.maxHp = def.defense;
         unit.hp = def.defense;
         recalcUnit(unit);
         recomputeAuras(state, ctx.reg);
@@ -776,6 +788,11 @@ function executeOp(ctx: ExecCtx, op: EffectOp, remaining: EffectOp[]): boolean {
         handler(ctx, op.params ?? {});
         return ctx.suspended;
       }
+      const warnKey = `customWarned:${op.id}`;
+      if (!state.trackers[warnKey]) {
+        state.trackers[warnKey] = 1;
+        console.warn(`[fards] 未实现的 custom 原语：${op.id}`);
+      }
       return false;
     }
     default:
@@ -793,11 +810,15 @@ function pickLineForSummon(state: GameState, owner: PlayerIndex, preferred: Line
 export function moveUnitToLine(ctx: ExecCtx, unit: Unit, toLine: Line): void {
   const state = ctx.state;
   if (unit.line === toLine) return;
+  const fromLine = unit.line;
   removeUnitFromBoard(state, unit.unitId);
-  const cap = toLine === 'frontline' ? state.config.frontlineSlots : state.config.supportSlots;
-  if (state.players[unit.owner][toLine].length >= cap) {
+  const cap =
+    toLine === 'frontline'
+      ? state.config.frontlineSlots - frontlineUsed(state)
+      : state.config.supportSlots - state.players[unit.owner].support.length;
+  if (cap <= 0) {
     // 放不下则回到原线
-    placeUnit(state, unit, unit.line);
+    placeUnit(state, unit, fromLine);
     return;
   }
   placeUnit(state, unit, toLine);
@@ -1173,11 +1194,13 @@ Object.assign(CUSTOM_HANDLERS, {
       return value <= sum;
     });
     for (let n = 0; n < count && defs.length > 0; n++) {
+      const targetLine = bestLineForSummon(ctx, owner, line);
+      if (!targetLine) return;
       const def = defs[Math.floor(randomValue(ctx.state) * defs.length)];
-      const unit = makeUnit(ctx.state, ctx.reg, owner, def.cardId, line, { token: true, ready: true });
+      const unit = makeUnit(ctx.state, ctx.reg, owner, def.cardId, targetLine, { token: true, ready: true });
       if (!unit) continue;
-      placeUnit(ctx.state, unit, line);
-      ctx.events.push({ type: 'deploy', unitId: unit.unitId, cardId: def.cardId, owner, line });
+      placeUnit(ctx.state, unit, targetLine);
+      ctx.events.push({ type: 'deploy', unitId: unit.unitId, cardId: def.cardId, owner, line: targetLine });
     }
     recomputeAuras(ctx.state, ctx.reg);
   },
@@ -1286,9 +1309,11 @@ Object.assign(CUSTOM_HANDLERS, {
       return;
     }
     const line = to === 'frontline' ? 'frontline' : 'support';
-    const copy = makeUnit(ctx.state, ctx.reg, ctx.controller, unit.cardId, line, { token: true, ready: true });
+    const targetLine = bestLineForSummon(ctx, ctx.controller, line);
+    if (!targetLine) return;
+    const copy = makeUnit(ctx.state, ctx.reg, ctx.controller, unit.cardId, targetLine, { token: true, ready: true });
     if (copy) {
-      placeUnit(ctx.state, copy, line);
+      placeUnit(ctx.state, copy, targetLine);
       recomputeAuras(ctx.state, ctx.reg);
     }
   },
@@ -1350,6 +1375,7 @@ Object.assign(CUSTOM_HANDLERS, {
     unit.buffAttack = 0;
     unit.buffHp = 0;
     unit.baseKeywords = normalizeUnitKeywords(ctx.reg, cardId, def.attributes);
+    unit.maxHp = def.defense;
     unit.hp = def.defense;
     recalcUnit(unit);
     recomputeAuras(ctx.state, ctx.reg);
@@ -1372,6 +1398,7 @@ Object.assign(CUSTOM_HANDLERS, {
     const unit = ctx.state.units[ref.unitId];
     if (!unit) return;
     const newOwner = ctx.controller;
+    if (!lineHasSpace(ctx, newOwner, unit.line) && unit.line === 'support') return;
     removeUnitFromBoard(ctx.state, unit.unitId);
     unit.owner = newOwner;
     const line = unit.line;
@@ -1463,3 +1490,366 @@ Object.assign(CUSTOM_CONDITIONS, {
     return !!unit && unit.owner !== ctx.controller && ctx.state.activePlayer === ctx.controller;
   },
 } as Record<string, (ctx: ExecCtx, params: Record<string, unknown>) => boolean>);
+
+Object.assign(CUSTOM_HANDLERS, {
+  /** 失去指挥点槽 */
+  loseKreditSlots: (ctx: ExecCtx, params) => {
+    const side = sideOf(ctx, pStr(params.side, 'enemy'));
+    const amount = pNum(params.amount, 1);
+    const p = ctx.state.players[side];
+    p.maxKredits = Math.max(0, p.maxKredits - amount);
+    p.kredits = Math.min(p.kredits, p.maxKredits);
+  },
+
+  /** 强制结束当前回合（在处理完当前指令后由 game.ts 统一执行） */
+  endTurn: (ctx: ExecCtx) => {
+    ctx.state.trackers.forceEndTurn = 1;
+  },
+
+  /** 将某张卡洗入卡组 */
+  shuffleIntoDeck: (ctx: ExecCtx, params) => {
+    const side = sideOf(ctx, pStr(params.side, 'self'));
+    const cardId = pStr(params.cardId);
+    const count = pNum(params.count, 1);
+    if (!cardId) return;
+    const p = ctx.state.players[side];
+    for (let i = 0; i < count; i++) {
+      const instance = createCardInstance(ctx.state, cardId, side, 'created');
+      const pos = Math.floor(randomValue(ctx.state) * (p.deck.length + 1));
+      p.deck.splice(pos, 0, instance);
+    }
+  },
+
+  /** 延迟效果：下个（或指定）友方回合开始/结束时执行 */
+  scheduleEffects: (ctx: ExecCtx, params) => {
+    const when = pStr(params.when, 'selfTurnStart') as 'selfTurnStart' | 'selfTurnEnd' | 'opponentTurnStart';
+    const effects = (Array.isArray(params.effects) ? params.effects : []) as EffectOp[];
+    if (effects.length === 0) return;
+    ctx.state.scheduled.push({
+      id: `sch${ctx.state.nextId + 1}_${ctx.state.scheduled.length}`,
+      player: ctx.controller,
+      when,
+      turn: params.turn !== undefined ? pNum(params.turn) : undefined,
+      effects,
+      sourceCardId: ctx.sourceCardId,
+    });
+  },
+
+  /** 设置总部防御力 */
+  setHqDefense: (ctx: ExecCtx, params) => {
+    const side = sideOf(ctx, pStr(params.side, 'self'));
+    const value = Math.max(1, pNum(params.value, 20));
+    const hq = ctx.state.players[side].hq;
+    hq.maxHp = value;
+    hq.hp = value;
+  },
+
+  /** 移除本单位，直到下个友方回合开始 */
+  phaseOutUntilNextTurn: (ctx: ExecCtx) => {
+    const unit = ctx.sourceUnitId ? ctx.state.units[ctx.sourceUnitId] : undefined;
+    if (!unit) return;
+    const unitId = unit.unitId;
+    const owner = unit.owner;
+    removeUnitFromBoard(ctx.state, unitId);
+    ctx.state.scheduled.push({
+      id: `phase_${unitId}`,
+      player: owner,
+      when: 'selfTurnStart',
+      effects: [{ op: 'custom', id: 'returnPhasedUnit', params: { unitId } }],
+      sourceCardId: ctx.sourceCardId,
+    });
+    recomputeAuras(ctx.state, ctx.reg);
+  },
+
+  /** 返回被移出的单位（内部用） */
+  returnPhasedUnit: (ctx: ExecCtx, params) => {
+    const unitId = pStr(params.unitId);
+    const unit = ctx.state.units[unitId];
+    if (!unit) return;
+    const targetLine = bestLineForSummon(ctx, unit.owner, unit.line);
+    if (!targetLine) {
+      leaveBoard(ctx.state, unitId);
+      return;
+    }
+    placeUnit(ctx.state, unit, targetLine);
+    recomputeAuras(ctx.state, ctx.reg);
+  },
+
+  /** 复制手牌中的单位到支援线 */
+  copyHandUnitToSupport: (ctx: ExecCtx, params) => {
+    if (!lineHasSpace(ctx, ctx.controller, 'support')) return;
+    const p = ctx.state.players[ctx.controller];
+    const maxCost = params.maxCost !== undefined ? pNum(params.maxCost) : 99;
+    const idx = p.hand.findIndex((c) => {
+      const def = getDef(ctx.reg, c.cardId);
+      return def && def.type !== 'order' && def.type !== 'countermeasure' && def.kredits <= maxCost;
+    });
+    if (idx < 0) return;
+    const cardId = p.hand[idx].cardId;
+    const unit = makeUnit(ctx.state, ctx.reg, ctx.controller, cardId, 'support', { token: true, ready: true });
+    if (unit) placeUnit(ctx.state, unit, 'support');
+    recomputeAuras(ctx.state, ctx.reg);
+  },
+} as Record<string, CustomHandler>);
+
+Object.assign(CUSTOM_CONDITIONS, {
+  chosenIsEnemyHQ: (ctx: ExecCtx) => {
+    const hq = ctx.chosen;
+    return !!hq && hq.kind === 'hq' && hq.player !== ctx.controller;
+  },
+  usedFromLeftmostHandCard: (ctx: ExecCtx) => ctx.playHandIndex === 0,
+  usedFromRightmostHandCard: (ctx: ExecCtx) => {
+    const p = ctx.state.players[ctx.controller];
+    return ctx.playHandIndex !== undefined && ctx.playHandIndex === p.hand.length;
+  },
+  chosenIsUnit: (ctx: ExecCtx) => {
+    const ref = ctx.chosen;
+    return !!ref && ref.kind === 'unit' && !!ctx.state.units[ref.unitId];
+  },
+  chosenIsSelf: (ctx: ExecCtx) => {
+    const ref = ctx.chosen;
+    return !!ref && ref.kind === 'unit' && ref.unitId === ctx.sourceUnitId;
+  },
+  friendlyFactionUnitOnFrontline: (ctx: ExecCtx, params) => {
+    const faction = pStr(params.faction, '');
+    return lineUnits(ctx.state, ctx.controller, 'frontline').some((u) => {
+      const def = getDef(ctx.reg, u.cardId);
+      return !faction || def?.faction === faction;
+    });
+  },
+  factionIsAlly: (ctx: ExecCtx, params) => {
+    const faction = pStr(params.faction, '');
+    return ctx.state.players[ctx.controller].allyFaction === faction;
+  },
+} as Record<string, (ctx: ExecCtx, params: Record<string, unknown>) => boolean>);
+// ============================================================
+// 容量校验（支援线 4 / 前线共享 5）
+// ============================================================
+
+function lineHasSpace(ctx: ExecCtx, owner: PlayerIndex, line: Line): boolean {
+  if (line === 'frontline') return frontlineUsed(ctx.state) < ctx.state.config.frontlineSlots;
+  return ctx.state.players[owner].support.length < ctx.state.config.supportSlots;
+}
+
+function bestLineForSummon(ctx: ExecCtx, owner: PlayerIndex, preferred: Line): Line | null {
+  if (lineHasSpace(ctx, owner, preferred)) return preferred;
+  const other: Line = preferred === 'frontline' ? 'support' : 'frontline';
+  if (lineHasSpace(ctx, owner, other)) return other;
+  return null;
+}
+
+// ============================================================
+// 追加：B 档 custom 原语（长尾卡牌效果的常用形态）
+// ============================================================
+
+Object.assign(CUSTOM_HANDLERS, {
+  /** 对目标及其相邻单位造成伤害（同线 ±1） */
+  damageTargetAndAdjacent: (ctx: ExecCtx, params) => {
+    const amount = pNum(params.amount, 1);
+    const refs = ctx.chosenList ?? (ctx.chosen ? [ctx.chosen] : []);
+    const base = refs.find((r) => r.kind === 'unit');
+    if (!base || base.kind !== 'unit') return;
+    const unit = ctx.state.units[base.unitId];
+    if (!unit) return;
+    const lineArr = ctx.state.players[unit.owner][unit.line];
+    const idx = lineArr.indexOf(unit.unitId);
+    const ids = [lineArr[idx - 1], lineArr[idx], lineArr[idx + 1]].filter((id): id is string => !!id);
+    for (const id of ids) dealDamage(ctx, { kind: 'unit', unitId: id }, amount);
+  },
+
+  /** 消灭同名单位 */
+  destroyUnitAndSameName: (ctx: ExecCtx) => {
+    const refs = ctx.chosenList ?? (ctx.chosen ? [ctx.chosen] : []);
+    const ref = refs.find((r) => r.kind === 'unit');
+    if (!ref || ref.kind !== 'unit') return;
+    const unit = ctx.state.units[ref.unitId];
+    if (!unit) return;
+    const cardId = unit.cardId;
+    for (const target of [...alliesOf(ctx), ...enemiesOf(ctx)]) {
+      if (target.cardId === cardId) destroyUnitAndTrigger(ctx, target.unitId);
+    }
+  },
+
+  /** 抽花费最低的指令 */
+  drawCheapestOrder: (ctx: ExecCtx) => {
+    const p = ctx.state.players[ctx.controller];
+    let idx = -1;
+    let best = 999;
+    p.deck.forEach((c, i) => {
+      const def = getDef(ctx.reg, c.cardId);
+      if (!def || def.type !== 'order') return;
+      if (def.kredits < best) {
+        best = def.kredits;
+        idx = i;
+      }
+    });
+    if (idx < 0) return;
+    const card = p.deck.splice(idx, 1)[0];
+    if (p.hand.length < ctx.state.config.handLimit) p.hand.push(card);
+    else p.discard.push(card);
+  },
+
+  /** 抽一张指定花费的单位 */
+  drawUnitByCost: (ctx: ExecCtx, params) => {
+    const cost = pNum(params.cost, 1);
+    const p = ctx.state.players[ctx.controller];
+    const idx = p.deck.findIndex((c) => {
+      const def = getDef(ctx.reg, c.cardId);
+      return !!def && def.type !== 'order' && def.type !== 'countermeasure' && def.kredits === cost;
+    });
+    const card = idx >= 0 ? p.deck.splice(idx, 1)[0] : p.deck.shift();
+    if (!card) return;
+    if (p.hand.length < ctx.state.config.handLimit) p.hand.push(card);
+    else p.discard.push(card);
+  },
+
+  /** 在指定回合开始抽牌（简化：scheduleEffects 的快捷方式） */
+  drawAtTurn: (ctx: ExecCtx, params) => {
+    const turn = pNum(params.turn, ctx.state.turn + 1);
+    ctx.state.scheduled.push({
+      id: `drawAt_${ctx.state.nextId + 1}_${ctx.state.scheduled.length}`,
+      player: ctx.controller,
+      when: 'selfTurnStart',
+      turn,
+      effects: [{ op: 'draw', side: 'self', count: 1 }],
+      sourceCardId: ctx.sourceCardId,
+    });
+  },
+
+  /** 从卡组发现一张牌到手牌 */
+  discoverFromDeck: (ctx: ExecCtx, params) => {
+    const faction = pStr(params.faction, '');
+    const type = pStr(params.type, '');
+    const maxCost = params.maxCost !== undefined ? pNum(params.maxCost) : 99;
+    const p = ctx.state.players[ctx.controller];
+    const idx = p.deck.findIndex((c) => {
+      const def = getDef(ctx.reg, c.cardId);
+      return !!def && (!faction || def.faction === faction) && (!type || def.type === type) && def.kredits <= maxCost;
+    });
+    if (idx < 0) return;
+    const card = p.deck.splice(idx, 1)[0];
+    if (p.hand.length < ctx.state.config.handLimit) p.hand.push(card);
+    else p.discard.push(card);
+  },
+
+  /** 复制自身并按倍数洗入卡组 */
+  copySelfToDeckWithMultiplier: (ctx: ExecCtx, params) => {
+    const unit = ctx.sourceUnitId ? ctx.state.units[ctx.sourceUnitId] : undefined;
+    if (!unit) return;
+    const count = pNum(params.count, 1);
+    const p = ctx.state.players[unit.owner];
+    for (let i = 0; i < count; i++) {
+      const instance = createCardInstance(ctx.state, unit.cardId, unit.owner, 'created');
+      p.deck.splice(Math.floor(randomValue(ctx.state) * (p.deck.length + 1)), 0, instance);
+    }
+  },
+
+  /** 将自身移出对局（不进弃牌堆） */
+  removeSelfFromGame: (ctx: ExecCtx) => {
+    if (!ctx.sourceUnitId) return;
+    const unit = leaveBoard(ctx.state, ctx.sourceUnitId);
+    if (!unit) return;
+    const p = ctx.state.players[unit.owner];
+    p.discard = p.discard.filter((c) => c.instanceId !== unit.instanceId);
+    recomputeAuras(ctx.state, ctx.reg);
+  },
+
+  /** 弃 1 张手牌后抽 1 张 */
+  handCardToDeckThenDraw: (ctx: ExecCtx) => {
+    const p = ctx.state.players[ctx.controller];
+    if (p.hand.length > 0) {
+      const card = p.hand.shift()!;
+      p.deck.push(card);
+    }
+    drawCardInternal(ctx.state, ctx.controller, ctx.events);
+  },
+
+  /** 召唤上一个阵亡单位（简化：按最近死亡单位） */
+  summonLastDestroyedUnit: (ctx: ExecCtx, params) => {
+    const cardId = pStr(ctx.state.trackers['lastDestroyedCardId'] ?? '');
+    if (!cardId) return;
+    const line = bestLineForSummon(ctx, ctx.controller, 'support');
+    if (!line) return;
+    const unit = makeUnit(ctx.state, ctx.reg, ctx.controller, cardId, line, { token: true, ready: true });
+    if (unit) placeUnit(ctx.state, unit, line);
+    recomputeAuras(ctx.state, ctx.reg);
+    void params;
+  },
+
+  /** 召唤并立即攻击（近似：召唤 + 造成其攻击力伤害到随机敌人） */
+  summonAndStrike: (ctx: ExecCtx, params) => {
+    const cardId = pStr(params.cardId);
+    if (!cardId) return;
+    const line = bestLineForSummon(ctx, ctx.controller, 'frontline');
+    if (!line) return;
+    const unit = makeUnit(ctx.state, ctx.reg, ctx.controller, cardId, line, { token: true, ready: true });
+    if (!unit) return;
+    placeUnit(ctx.state, unit, line);
+    const targets = enemiesOf(ctx);
+    if (targets.length > 0) {
+      const target = targets[Math.floor(randomValue(ctx.state) * targets.length)];
+      dealDamage(ctx, { kind: 'unit', unitId: target.unitId }, unit.attack, { unitId: unit.unitId, kind: 'unit' });
+    }
+    recomputeAuras(ctx.state, ctx.reg);
+  },
+
+  /** 把所有友方单位转换为目标单位（近似：加 buff） */
+  convertOwnerUnitsToChosen: (ctx: ExecCtx) => {
+    const ref = ctx.chosen;
+    if (!ref || ref.kind !== 'unit') return;
+    const source = ctx.state.units[ref.unitId];
+    if (!source) return;
+    for (const unit of alliesOf(ctx)) {
+      if (unit.unitId === source.unitId) continue;
+      buffUnit(unit, source.attack - unit.attack, source.maxHp - unit.maxHp, true);
+    }
+  },
+
+  /** 消灭收缴类：随机消灭攻击力最低的敌方单位 */
+  destroySalvageLowestAttack: (ctx: ExecCtx) => {
+    const pool = enemiesOf(ctx).sort((a, b) => a.attack - b.attack);
+    if (pool.length > 0) destroyUnitAndTrigger(ctx, pool[0].unitId);
+  },
+
+  /** 双方抽牌直到手牌数相同 */
+  drawBothUntilHandSize: (ctx: ExecCtx) => {
+    const a = ctx.state.players[0];
+    const b = ctx.state.players[1];
+    const target = Math.max(a.hand.length, b.hand.length);
+    let guard = 0;
+    while (a.hand.length < target && a.deck.length > 0 && guard++ < 20) drawCardInternal(ctx.state, 0, ctx.events);
+    guard = 0;
+    while (b.hand.length < target && b.deck.length > 0 && guard++ < 20) drawCardInternal(ctx.state, 1, ctx.events);
+  },
+
+  /** 下回合敌方手牌花费 +N */
+  modifyEnemyHandCostNextTurn: (ctx: ExecCtx, params) => {
+    const amount = pNum(params.amount, 1);
+    const enemy = ctx.state.players[opponentOf(ctx.controller)];
+    enemy.trackers['costIncrease:all'] = (enemy.trackers['costIncrease:all'] ?? 0) + amount;
+  },
+
+  /** 总部能力（简化：记录并在下回合开始时给总部加成） */
+  grantHqAbility: (ctx: ExecCtx, params) => {
+    const amount = pNum(params.amount, 1);
+    const side = sideOf(ctx, pStr(params.side, 'self'));
+    const hq = ctx.state.players[side].hq;
+    hq.maxHp += amount;
+    hq.hp += amount;
+  },
+
+  /** 下回合总部获得关键字（无对应机制，记录日志） */
+  grantHqKeywordUntilNextTurn: (ctx: ExecCtx) => {
+    addLog(ctx.state, ctx.controller, 'effect', '总部获得临时能力（暂未建模）');
+  },
+
+  /** 记录老兵进度（简化：累计 tracker） */
+  trackVeteranProgress: (ctx: ExecCtx) => {
+    ctx.state.trackers['veteranProgress'] = (ctx.state.trackers['veteranProgress'] ?? 0) + 1;
+  },
+
+  /** 敌方抽牌时对敌方总部造成伤害（简化：立即造成 1 点） */
+  damageEnemyHqIfEnemyDrew: (ctx: ExecCtx) => {
+    dealDamage(ctx, { kind: 'hq', player: opponentOf(ctx.controller) }, 1);
+  },
+} as Record<string, CustomHandler>);

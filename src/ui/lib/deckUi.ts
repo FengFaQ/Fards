@@ -76,6 +76,14 @@ export function checkAddCard(
 
 export type IssueLevel = 'error' | 'warn' | 'info';
 
+/** 编制状态一句话（页头徽章用） */
+export function deckStatusLabel(validation: DraftValidation, total: number): string {
+  if (validation.legal) return '编制合法';
+  if (total < RULES.deckSize) return `还差 ${RULES.deckSize - total} 张`;
+  if (total > RULES.deckSize) return `超出 ${total - RULES.deckSize} 张`;
+  return '编制待修正';
+}
+
 export interface DraftIssue {
   level: IssueLevel;
   text: string;
@@ -171,14 +179,26 @@ export function validateDraft(
     issues.push({ level: 'info', text: `精英编制 ${eliteTotal} 张 · 已计入总张数` });
   }
 
-  // 合并数据层权威校验结果
+  // 合并数据层权威校验结果（按类别去重，避免同一条超编问题被两处重复播报）
   const layer = validateDeckWithLayer(deck);
   let legal = !issues.some((i) => i.level === 'error');
   if (layer) {
+    const categoryOf = (text: string): string | null => {
+      if (text.includes('精英')) return 'elite';
+      if (text.includes('同名')) return 'copies';
+      if (text.includes('阵营')) return 'faction';
+      if (text.includes('盟军')) return 'ally';
+      if (text.includes('张')) return 'size';
+      return null;
+    };
+    const localCategories = new Set(
+      issues.filter((i) => i.level === 'error').map((i) => categoryOf(i.text)).filter(Boolean),
+    );
     for (const err of layer.errors) {
-      if (err && !issues.some((i) => i.text === err)) {
-        issues.push({ level: 'error', text: err });
-      }
+      if (!err || issues.some((i) => i.text === err)) continue;
+      const category = categoryOf(err);
+      if (category && localCategories.has(category)) continue;
+      issues.push({ level: 'error', text: err });
     }
     for (const warn of layer.warnings) {
       if (warn && !issues.some((i) => i.text === warn)) {

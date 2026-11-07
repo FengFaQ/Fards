@@ -1,0 +1,398 @@
+/**
+ * 战场主界面：顶部信息条 / 双方玩家条 / 三条战线 / 手牌区 / 日志抽屉 / 各类弹窗。
+ * 只读 store，所有交互经 store 里的 legalActions 校验后提交引擎。
+ */
+import { useEffect, useMemo, useState } from 'react';
+import { legalActions } from '@/engine';
+import type { LegalAction } from '@/engine/types';
+import type { UiCard } from '../lib/dataBridge';
+import { cardTypeMeta, factionMeta, factionZh, rarityMeta } from '../lib/format';
+import { IconAlert, IconPlay, IconSwords, IconX } from '../components/icons';
+import Dialog from '../components/Dialog';
+import { AI, HUMAN, useBattleStore } from '../stores/battleStore';
+import BattleRows, { refsToKeys } from './BattleRows';
+import CardFace from './CardFace';
+import ChoiceDialog from './ChoiceDialog';
+import GameOverDialog from './GameOverDialog';
+import HandFan from './HandFan';
+import LogPanel from './LogPanel';
+import PlayerBar from './PlayerBar';
+
+const EMPTY_LEGAL: {
+  byCard: Map<string, LegalAction>;
+  byUnit: Map<string, LegalAction>;
+} = { byCard: new Map(), byUnit: new Map() };
+
+const EMPTY_KEYS = new Set<string>();
+
+const DIFFICULTY_ZH: Record<string, string> = { easy: '新兵', normal: '老兵', hard: '王牌' };
+
+function CardInspector({ card, fallback }: { card: UiCard | null; fallback: React.ReactNode }) {
+  if (!card) return <>{fallback}</>;
+  const faction = factionMeta(card.faction);
+  const rarity = rarityMeta(card.rarity);
+  return (
+    <div className="flex gap-2.5">
+      <div className="h-[92px] w-[66px] shrink-0">
+        <CardFace card={card} className="h-full w-full" eager />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate font-display text-[12px] tracking-[0.06em] text-field-100">{card.nameZh}</p>
+        <p className="mt-0.5 truncate font-body text-[9px] tracking-[0.1em] text-field-500">
+          <span style={{ color: faction.color }}>{faction.zh}</span> · {cardTypeMeta(card.type).zh} ·{' '}
+          {rarity.zh} · {card.kredits} 费
+        </p>
+        <p className="mt-1 line-clamp-4 font-body text-[10px] leading-snug text-field-400">
+          {card.description || '无特殊效果'}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export function BattleScreen() {
+  const state = useBattleStore((s) => s.state);
+  const registry = useBattleStore((s) => s.registry);
+  const byId = useBattleStore((s) => s.byId);
+  const phase = useBattleStore((s) => s.phase);
+  const selection = useBattleStore((s) => s.selection);
+  const aiThinking = useBattleStore((s) => s.aiThinking);
+  const banner = useBattleStore((s) => s.banner);
+  const hint = useBattleStore((s) => s.hint);
+  const difficulty = useBattleStore((s) => s.difficulty);
+  const playerDeck = useBattleStore((s) => s.playerDeck);
+  const fxByKey = useBattleStore((s) => s.fxByKey);
+  const hqHits = useBattleStore((s) => s.hqHits);
+  const logOpen = useBattleStore((s) => s.logOpen);
+
+  const selectUnit = useBattleStore((s) => s.selectUnit);
+  const clickTarget = useBattleStore((s) => s.clickTarget);
+  const cancelSelection = useBattleStore((s) => s.cancelSelection);
+  const endTurn = useBattleStore((s) => s.endTurn);
+  const surrender = useBattleStore((s) => s.surrender);
+  const toggleLog = useBattleStore((s) => s.toggleLog);
+  const pruneFx = useBattleStore((s) => s.pruneFx);
+  const quitToSetup = useBattleStore((s) => s.quitToSetup);
+
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [confirm, setConfirm] = useState<null | 'surrender' | 'exit'>(null);
+
+  const legal = useMemo(() => {
+    if (!state || !registry || phase !== 'playing') return EMPTY_LEGAL;
+    if (state.pendingChoice || state.activePlayer !== HUMAN) return EMPTY_LEGAL;
+    const actions = legalActions(state, registry, HUMAN);
+    const byCard = new Map<string, LegalAction>();
+    const byUnit = new Map<string, LegalAction>();
+    for (const action of actions) {
+      if (action.kind === 'playCard' && action.cardInstanceId) byCard.set(action.cardInstanceId, action);
+      else if (action.kind === 'attack' && action.attackerId) byUnit.set(action.attackerId, action);
+    }
+    return { byCard, byUnit };
+  }, [state, registry, phase]);
+
+  const targetKeys = useMemo(
+    () => (selection ? refsToKeys(selection.refs) : EMPTY_KEYS),
+    [selection],
+  );
+
+  useEffect(() => {
+    const timer = window.setInterval(() => pruneFx(Date.now()), 700);
+    return () => window.clearInterval(timer);
+  }, [pruneFx]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        cancelSelection();
+        return;
+      }
+      if (event.code !== 'Space' || event.repeat) return;
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName ?? '';
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
+      event.preventDefault();
+      endTurn();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [cancelSelection, endTurn]);
+
+  if (!state) return null;
+
+  const me = state.players[HUMAN];
+  const enemy = state.players[AI];
+  const myTurn = phase === 'playing' && state.activePlayer === HUMAN && !state.pendingChoice;
+  const hoveredCard = hoveredId ? byId.get(hoveredId) ?? null : null;
+  const enemyFaction = factionMeta(aiFactionSafe(enemy.faction, state));
+  const myFaction = factionMeta(me.faction);
+  const hqTargetEnemy = targetKeys.has('hq:1');
+  const hqTargetSelf = targetKeys.has('hq:0');
+
+  return (
+    <div
+      className="battle-root relative flex h-screen w-full flex-col overflow-hidden text-field-100 select-none"
+      onContextMenu={(event) => {
+        if (selection) {
+          event.preventDefault();
+          cancelSelection();
+        }
+      }}
+    >
+      {/* ---------------- 顶部信息条 ---------------- */}
+      <header className="relative z-20 flex h-11 shrink-0 items-center justify-between gap-3 border-b border-brass-600/25 bg-field-950/90 px-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => setConfirm('exit')}
+            className="flex items-center gap-1 rounded-sm border border-field-600/60 px-2 py-1 font-body text-[9px] tracking-[0.18em] text-field-400 uppercase transition-colors hover:border-brass-500/60 hover:text-brass-300"
+            title="撤离战场（放弃本局）"
+          >
+            <IconX size={11} />
+            撤离
+          </button>
+          <span className="hidden h-4 w-px bg-field-700 sm:block" />
+          <span className="fards-title text-[12px] leading-none">FARDS · 战场</span>
+          <span className="hidden max-w-[240px] truncate font-body text-[9px] tracking-[0.1em] text-field-500 md:block">
+            <span style={{ color: myFaction.color }}>{factionZh(me.faction)}</span>
+            {playerDeck ? ` · ${playerDeck.name}` : ''}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="hidden items-center gap-1.5 rounded-sm border border-field-700/60 bg-field-900/60 px-2 py-[3px] font-body text-[9px] tracking-[0.14em] text-field-400 sm:flex">
+            回合 <span className="text-field-100">{state.turn}</span>
+            <span className="text-field-700">·</span>
+            轮 <span className="text-field-100">{state.round}</span>
+          </span>
+          <span
+            className={`flex items-center gap-1.5 rounded-sm border px-2 py-[3px] font-body text-[9px] tracking-[0.16em] ${
+              state.activePlayer === HUMAN
+                ? 'border-brass-500/60 bg-brass-500/10 text-brass-200'
+                : 'border-ink-red/50 bg-ink-red/10 text-red-300'
+            }`}
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${state.activePlayer === HUMAN ? 'bg-brass-400' : 'bg-ink-red'} ${aiThinking ? 'battle-pulse-dot' : ''}`}
+            />
+            {state.activePlayer === HUMAN ? '我方行动' : '敌方行动'}
+          </span>
+          {aiThinking && (
+            <span className="flex items-center gap-1.5 rounded-sm border border-field-600/60 bg-field-950/80 px-2 py-[3px] font-body text-[9px] tracking-[0.16em] text-field-300">
+              <span className="battle-pulse-dot h-1.5 w-1.5 rounded-full bg-brass-400" />
+              AI 行动中
+            </span>
+          )}
+          <span className="hidden rounded-sm border border-field-700/60 px-2 py-[3px] font-body text-[9px] tracking-[0.14em] text-field-500 sm:block">
+            {DIFFICULTY_ZH[difficulty] ?? difficulty}
+          </span>
+          <button
+            type="button"
+            onClick={toggleLog}
+            className={`flex items-center gap-1 rounded-sm border px-2 py-1 font-body text-[9px] tracking-[0.16em] uppercase transition-colors ${
+              logOpen
+                ? 'border-brass-500/60 bg-brass-500/10 text-brass-200'
+                : 'border-field-600/60 text-field-400 hover:border-brass-500/60 hover:text-brass-300'
+            }`}
+          >
+            日志
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirm('surrender')}
+            className="flex items-center gap-1 rounded-sm border border-ink-red/50 px-2 py-1 font-body text-[9px] tracking-[0.16em] text-red-300/90 uppercase transition-colors hover:border-ink-red hover:bg-ink-red/15 hover:text-red-200"
+          >
+            投降
+          </button>
+        </div>
+      </header>
+
+      {/* ---------------- 战场主体 ---------------- */}
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <PlayerBar
+          player={enemy}
+          isSelf={false}
+          isActive={state.activePlayer === AI}
+          targetable={hqTargetEnemy}
+          hqHitAt={hqHits['hq:1']}
+          floats={fxByKey['hq:1']}
+          onClick={() => clickTarget({ kind: 'hq', player: AI })}
+        />
+
+        <BattleRows targetKeys={targetKeys} onUnitClick={selectUnit} />
+
+        <PlayerBar
+          player={me}
+          isSelf
+          isActive={state.activePlayer === HUMAN}
+          targetable={hqTargetSelf}
+          hqHitAt={hqHits['hq:0']}
+          floats={fxByKey['hq:0']}
+          onClick={() => clickTarget({ kind: 'hq', player: HUMAN })}
+        />
+
+        <LogPanel />
+
+        {/* 敌方身份角标（右上，日志抽屉收起时可见） */}
+        <div
+          className="pointer-events-none absolute top-[2px] left-1/2 z-10 -translate-x-1/2"
+          style={{ color: enemyFaction.color }}
+        >
+          <span className="font-body text-[8px] tracking-[0.34em] opacity-70">
+            {enemyFaction.zh} · {enemy.name}
+          </span>
+        </div>
+      </div>
+
+      {/* ---------------- 手牌区 ---------------- */}
+      <section className="hand-tray relative z-20 flex h-[clamp(150px,21vh,206px)] shrink-0 items-end">
+        {/* 左侧：卡牌检视 */}
+        <div className="absolute bottom-2 left-3 z-30 w-[272px] rounded-sm border border-field-700/70 bg-field-950/80 p-2 backdrop-blur-sm">
+          <CardInspector
+            card={hoveredCard}
+            fallback={
+              <div className="text-field-500">
+                <p className="fards-label text-[9px] text-brass-500">战术提示</p>
+                <p className="mt-1 font-body text-[10px] leading-relaxed">
+                  悬停手牌查看详情；点击手牌打出，点击我方单位发起攻击。
+                </p>
+                <p className="mt-1 font-body text-[9px] leading-relaxed text-field-600">
+                  高亮金框 = 合法目标 / 可行动 · 右键或 Esc 取消选择
+                </p>
+              </div>
+            }
+          />
+        </div>
+
+        {/* 手牌扇形 */}
+        <div className="absolute inset-y-0 right-[196px] left-[288px]">
+          <HandFan
+            legalByCard={legal.byCard}
+            byId={byId}
+            onHover={setHoveredId}
+            hoveredId={hoveredId}
+          />
+        </div>
+
+        {/* 右侧：结束回合 */}
+        <div className="absolute right-3 bottom-2 z-30 flex flex-col items-end gap-1.5">
+          <div className="text-right">
+            <p className="fards-label text-[9px] text-field-500">可用克雷迪特</p>
+            <p className="font-display text-lg leading-none text-brass-300">
+              {me.kredits}
+              <span className="text-xs text-field-600">/{me.maxKredits}</span>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={endTurn}
+            disabled={!myTurn}
+            className="fards-btn fards-btn-primary min-w-[132px] px-5 py-2"
+            title="结束回合（空格）"
+          >
+            <IconPlay size={13} />
+            结束回合
+          </button>
+          <p className="font-body text-[8px] tracking-[0.14em] text-field-600">空格键 = 结束回合</p>
+        </div>
+      </section>
+
+      {/* ---------------- 覆盖层 ---------------- */}
+      {banner && (
+        <div
+          key={banner.at}
+          className="fx-banner pointer-events-none absolute inset-x-0 top-[26%] z-40 flex justify-center"
+        >
+          <div className="flex flex-col items-center gap-1">
+            <span
+              className={`h-px w-40 ${
+                banner.tone === 'enemy' ? 'bg-gradient-to-r from-transparent via-ink-red/70 to-transparent' : 'bg-gradient-to-r from-transparent via-brass-500/80 to-transparent'
+              }`}
+            />
+            <p
+              className={`font-display text-[clamp(22px,3.4vh,38px)] leading-none tracking-[0.26em] drop-shadow-[0_4px_14px_rgba(0,0,0,0.9)] ${
+                banner.tone === 'enemy' ? 'text-red-300' : banner.tone === 'self' ? 'text-brass-200' : 'text-field-200'
+              }`}
+            >
+              {banner.text}
+            </p>
+            {banner.sub && (
+              <p className="font-body text-[10px] tracking-[0.22em] text-field-400/90">{banner.sub}</p>
+            )}
+            <span
+              className={`h-px w-40 ${
+                banner.tone === 'enemy' ? 'bg-gradient-to-r from-transparent via-ink-red/70 to-transparent' : 'bg-gradient-to-r from-transparent via-brass-500/80 to-transparent'
+              }`}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* 选目标提示 */}
+      {selection && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-[calc(clamp(150px,21vh,206px)+10px)] z-40 flex justify-center">
+          <div className="flex items-center gap-3 rounded-sm border border-brass-500/70 bg-field-950/92 px-3 py-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.6)]">
+            <IconSwords size={13} className="text-brass-400" />
+            <span className="font-body text-[10px] tracking-[0.14em] text-brass-200">{selection.label}</span>
+            <span className="font-body text-[10px] text-field-300">
+              选择目标 <span className="font-display text-brass-300">{selection.chosen.length}</span>/
+              {selection.count}
+            </span>
+            <span className="font-body text-[9px] tracking-[0.1em] text-field-500">右键 / Esc 取消</span>
+          </div>
+        </div>
+      )}
+
+      {/* 非法操作提示 */}
+      {hint && (
+        <div className="pointer-events-none absolute inset-x-0 top-[16%] z-40 flex justify-center">
+          <div key={hint.at} className="flex items-center gap-2 rounded-sm border border-ink-red/50 bg-field-950/92 px-3 py-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.6)]">
+            <IconAlert size={12} className="text-red-300" />
+            <span className="font-body text-[10px] tracking-[0.12em] text-red-200">{hint.text}</span>
+          </div>
+        </div>
+      )}
+
+      <ChoiceDialog />
+      <GameOverDialog />
+
+      <Dialog
+        open={confirm !== null}
+        onClose={() => setConfirm(null)}
+        eyebrow={confirm === 'surrender' ? '确认投降' : '撤离战场'}
+        title={confirm === 'surrender' ? '放弃本局？' : '离开战场？'}
+        width="sm"
+        footer={
+          <div className="flex justify-end gap-2">
+            <button type="button" className="fards-btn fards-btn-ghost" onClick={() => setConfirm(null)}>
+              取消
+            </button>
+            <button
+              type="button"
+              className={confirm === 'surrender' ? 'fards-btn fards-btn-danger' : 'fards-btn fards-btn-primary'}
+              onClick={() => {
+                const action = confirm;
+                setConfirm(null);
+                if (action === 'surrender') surrender();
+                else quitToSetup();
+              }}
+            >
+              {confirm === 'surrender' ? '确认投降' : '确认撤离'}
+            </button>
+          </div>
+        }
+      >
+        <p className="font-body text-[12px] leading-relaxed text-field-300">
+          {confirm === 'surrender'
+            ? '投降将立即判负并结束本局，战绩不会保存。准备换一套编制再战？'
+            : '撤离会放弃当前对局并返回部署界面，本局进度不会保留。'}
+        </p>
+      </Dialog>
+    </div>
+  );
+}
+
+function aiFactionSafe(faction: string, _state: unknown): string {
+  return faction || 'Neutral';
+}
+
+export default BattleScreen;

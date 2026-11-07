@@ -36,6 +36,7 @@ import {
 import {
   checkAddCard,
   computeDeckStats,
+  deckStatusLabel,
   RULES,
   validateDraft,
 } from '../ui/lib/deckUi';
@@ -483,7 +484,7 @@ export default function DeckBuilderPage() {
               }`}
             >
               {validation.legal ? <IconCheck size={11} /> : <IconAlert size={11} />}
-              {validation.legal ? '编制合法' : `还差 ${Math.abs(RULES.deckSize - stats.total)} 张`}
+              {deckStatusLabel(validation, stats.total)}
             </span>
             <span
               className={`font-body text-[10px] tracking-wider ${

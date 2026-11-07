@@ -299,4 +299,270 @@ export const BRITAIN_CARD_SCRIPTS: Record<string, CardScript> = {
       { trigger: 'deploy', effects: [{ op: 'custom', id: 'gainHqDefense', params: { side: 'self', amount: 4 } }] },
     ],
   },
+
+  // ==== B 类批次（META top100）====
+
+  // ---- META #12 ----
+  // 中文原文：本单位攻击后，移除本单位。将 1 张具有双倍攻击力和防御力的复制加入卡组。
+  meteor: {
+    cardId: 'meteor',
+    abilities: [
+      {
+        trigger: 'attack',
+        effects: [
+          { op: 'custom', id: 'removeSelfFromGame' },
+          { op: 'custom', id: 'copySelfToDeckWithMultiplier', params: { multiplier: 2 } },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #38 ----
+  // 中文原文：每回合，友方使用的第一张指令具有 -1 花费。
+  // TODO(原语): 需要“每回合首张指令”钩子 + 临时费用修正 → 当前不生效
+  '85_pioneer_company': {
+    cardId: '85_pioneer_company',
+    abilities: [
+      {
+        trigger: 'orderPlayed',
+        oncePerTurn: true,
+        effects: [{ op: 'custom', id: 'modifyCost', params: { target: 'handAll', amount: -1, duration: 'turn' } }],
+        text: '每回合，友方使用的第一张指令具有 -1 花费',
+      },
+    ],
+  },
+
+  // ---- META #41 ----
+  // 中文原文：部署：抽取花费最低的指令。若是构筑之外的牌，重复此效果。
+  '2nd_west_africa': {
+    cardId: '2nd_west_africa',
+    abilities: [
+      { trigger: 'deploy', effects: [{ op: 'custom', id: 'drawCheapestOrder', params: { repeatIfUnowned: true } }] },
+    ],
+  },
+
+  // ---- META #67 ----
+  // 中文原文：部署：选择手中的 1 张指令。使其花费为 0 并将其返回卡组顶。
+  gordon_highlanders: {
+    cardId: 'gordon_highlanders',
+    abilities: [
+      { trigger: 'deploy', effects: [{ op: 'custom', id: 'handOrderToDeckTopCostZero' }] },
+    ],
+  },
+
+  // ---- META #75 ----
+  // 中文原文：压制所有敌方单位，对其造成 1 点伤害。敌方失去 1 个指挥点槽。
+  shelling: {
+    cardId: 'shelling',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'pin', target: { kind: 'query', side: 'enemy', line: 'any' } },
+          { op: 'damage', target: { kind: 'query', side: 'enemy', line: 'any' }, amount: 1 },
+          { op: 'custom', id: 'loseKreditSlots', params: { side: 'enemy', amount: 1 } },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #90 ----
+  // 中文原文：部署：从“HX 175 护航队”、“沙漠之鼠”和“防御工事”中开发 1 张。
+  hampshire_regiment: {
+    cardId: 'hampshire_regiment',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'choice',
+            prompt: '开发：选择 1 张加入手牌',
+            options: [
+              { label: 'HX 175 护航队', effects: [{ op: 'addCardToHand', side: 'self', cardId: 'convoy_hx_175' }] },
+              { label: '沙漠之鼠', effects: [{ op: 'addCardToHand', side: 'self', cardId: 'the_desert_rats' }] },
+              { label: '防御工事', effects: [{ op: 'addCardToHand', side: 'self', cardId: 'fortification' }] },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+
+  // ==== B 类批次 2（META #101-150）====
+
+  // ---- META #101 ----
+  // 中文原文：友方非英国卡牌具有 +2 花费。被敌方指向或攻击时，抽 1 张牌。
+  raf_mustang: {
+    cardId: 'raf_mustang',
+    abilities: [
+      // TODO(原语): 非英国友方卡牌费用 +2 需要 modifyCost 支持 “非指定阵营”
+      { trigger: 'any', effects: [{ op: 'custom', id: 'modifyCostOfNonFaction', params: { faction: 'Britain', amount: 2 } }] },
+      { trigger: 'attacked', effects: [{ op: 'draw', side: 'self', count: 1 }] },
+    ],
+  },
+
+  // ---- META #103 ----
+  // 中文原文：随机将敌方卡组中的 3 张指令的复制洗入友方卡组。使其获得：“抽 1 张牌。”
+  colossus: {
+    cardId: 'colossus',
+    abilities: [
+      { trigger: 'order', effects: [{ op: 'custom', id: 'copyEnemyOrdersToDeckAndGrantDraw', params: { count: 3 } }] },
+    ],
+  },
+
+  // ---- META #116 ----
+  // 中文原文：从“爆破”、“计划”和“生产”中开发 1 张，开发 1 张英国海军牌。
+  bpf: {
+    cardId: 'bpf',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'choice',
+            prompt: '开发：选择 1 张加入手牌',
+            options: [
+              { label: '爆破', effects: [{ op: 'addCardToHand', side: 'self', cardId: 'blast' }] },
+              { label: '计划', effects: [{ op: 'addCardToHand', side: 'self', cardId: 'plan' }] },
+              { label: '生产', effects: [{ op: 'addCardToHand', side: 'self', cardId: 'production' }] },
+            ],
+          },
+          { op: 'custom', id: 'discoverFrom', params: { faction: 'Britain', maxCost: 4 } },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #133 ----
+  // 中文原文：敌方使用指令时，将其反制，抽 1 张牌。
+  ultra: {
+    cardId: 'ultra',
+    counter: {
+      trigger: 'enemyUsesOrder',
+      text: '敌方使用指令时，将其反制，抽 1 张牌。',
+      effects: [{ op: 'custom', id: 'negatePlayedCard' }, { op: 'draw', side: 'self', count: 1 }],
+    },
+  },
+
+  // ---- META #137 ----
+  // 中文原文：前线至多有 2 个单位。部署：使前线所有单位撤退。
+  black_prince: {
+    cardId: 'black_prince',
+    abilities: [
+      // TODO(原语): “前线至多 2 个单位”是持续限制，需要被动槽位上限
+      { trigger: 'any', effects: [{ op: 'custom', id: 'limitFrontlineSlots', params: { count: 2 } }] },
+      {
+        trigger: 'deploy',
+        effects: [{ op: 'custom', id: 'moveUnitZone', params: { of: 'all', side: 'any', line: 'frontline', to: 'hand' } }],
+      },
+    ],
+  },
+
+  // ---- META #149 ----
+  // 中文原文：下个敌方回合中，敌方手牌具有 +2 花费。
+  raid: {
+    cardId: 'raid',
+    abilities: [
+      { trigger: 'order', effects: [{ op: 'custom', id: 'modifyEnemyHandCostNextTurn', params: { amount: 2 } }] },
+    ],
+  },
+
+  // ==== P2 批次（META #151-200 的 B 类）====
+
+  // ---- META #155 ----
+  // 中文原文：敌方使用指令时，将其反制，转换为“计划”并返回手牌。
+  hms_sceptre: {
+    cardId: 'hms_sceptre',
+    counter: {
+      trigger: 'enemyUsesOrder',
+      text: '敌方使用指令时，将其反制，转换为“计划”并返回手牌。',
+      effects: [{ op: 'custom', id: 'negatePlayedCard' }, { op: 'custom', id: 'transformPlayedCardToHand', params: { cardId: 'plan' } }],
+    },
+  },
+
+  // ---- META #157 ----
+  // 中文原文：开发 1 张花费不大于 4 的英国指令。将其加入卡组，使其花费为 0。
+  pams: {
+    cardId: 'pams',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [{ op: 'custom', id: 'discoverToDeckCostZero', params: { faction: 'Britain', type: 'order', maxCost: 4 } }],
+      },
+    ],
+  },
+
+  // ---- META #178 ----
+  // 中文原文：移除 1 个单位。将 2 张复制置于所有者卡组顶。
+  fog_of_war: {
+    cardId: 'fog_of_war',
+    abilities: [
+      {
+        trigger: 'order',
+        target: { kind: 'query', side: 'any', line: 'any', limit: 1 },
+        effects: [
+          { op: 'custom', id: 'removeFromGame' },
+          { op: 'custom', id: 'putCopiesOnOwnerDeckTop', params: { count: 2 } },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #183 ----
+  // 中文原文：使所有敌方单位获得：“本单位所有者回合开始时，对本单位造成 1 点伤害。”
+  supply_shortage: {
+    cardId: 'supply_shortage',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'custom',
+            id: 'grantAbilityToAllEnemyUnits',
+            params: { trigger: 'turnStart', effects: [{ op: 'damage', target: { kind: 'self' }, amount: 1 }] },
+          },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #184 ----
+  // 中文原文：敌方使用花费不小于 4 的指令时，将其反制。
+  dowding_system: {
+    cardId: 'dowding_system',
+    counter: {
+      trigger: 'enemyUsesOrder',
+      text: '敌方使用花费不小于 4 的指令时，将其反制。',
+      effects: [{ op: 'custom', id: 'negatePlayedCardIfCostAtLeast', params: { cost: 4 } }],
+    },
+  },
+
+  // ---- META #190 ----
+  // 中文原文：开发 1 张敌方卡组中的牌，然后开发 1 张友方卡组中的牌。
+  the_rock_of_gibraltar: {
+    cardId: 'the_rock_of_gibraltar',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'custom', id: 'discoverFromDeck', params: { side: 'enemy', count: 1 } },
+          { op: 'custom', id: 'discoverFromDeck', params: { side: 'self', count: 1 } },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #194 ----
+  // 中文原文：若在手牌中，友方使用指令时，获得 -2 花费。
+  // TODO(原语): 需要“在手牌中监听友方出指令”的钩子 → 当前不生效
+  wellington: {
+    cardId: 'wellington',
+    abilities: [
+      {
+        trigger: 'orderPlayed',
+        effects: [{ op: 'custom', id: 'discountWhileInHandOnFriendlyOrder', params: { amount: -2 } }],
+        text: '若在手牌中，友方使用指令时，获得 -2 花费',
+      },
+    ],
+  },
 };

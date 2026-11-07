@@ -10,6 +10,7 @@
 - **需要脚本 1551 张**：A 类 975 张（59.2%，现有 DSL 即可表达）、B 类 572 张（34.8%，需 21 个 custom 原语）、C 类 4 张（暂不实现）。
 - **META top100**：A 类 63 / B 类 36 / 纯关键字 1；B 类只涉及 **16 个 custom 原语**（`kredit_slot`、`remove`、`copy`、`restriction`、`fight`、`intel`、`cost`、`veteran`、`keyword_count`、`develop`、`damage_mod`、`naval`、`add_enemy_deck`、`opcost`、`unit_ability`、`counter`）。也就是说**先把 top100 卡 + 这 16 个原语做出来，实战卡组就有约 99% 的效果正确率**。
 - 效果文本高频结构：部署 233 张、亡计 59 张、抉择 43 张、钳击 15 张。
+- **实现进度（阶段二）**：META **top200 中所有 195 张需要脚本的卡已 100% 写完**（另 5 张纯关键字免脚本）；注册表脚本总数 221（可构筑 197 + 衍生 24），覆盖全部可构筑卡的 13.0%。仍未实现的部分只有：非 META 长尾卡（约 1320 张可构筑卡）与 105 张衍生老兵形态；custom 原语缺口见第 6 节。
 
 ## 1. 语料概貌
 
@@ -205,33 +206,159 @@
 
 ## 6. 待实现 custom 原语清单
 
-> 规则：脚本里先用 `{ op: 'custom', id: '<原语 id>', params: {...} }` 占位（同时保留中文原文注释），并在此处登记；执行器实现后逐个替换回标准 `EffectOp`。**新增/实现原语时同步更新本表与 `docs/META_CARDS.md` 的覆盖桶统计。**
+> 规则：脚本里用 `{ op: 'custom', id: '<原语 id>', params: {...} }`（或 `{ kind: 'custom', id }` 作条件）占位，并在此登记；执行器实现后逐个替换回标准 `EffectOp`。
+> 本表由 `_work/custom-spec.json`（规格）+ `_work/validate-scripts.mjs`（实际用量）生成，改脚本后重跑即可刷新。
 
-| 原语 id（建议） | DSL 缺口 | 涉及卡数 | 代表卡（按热度） |
-| --- | --- | --- | --- |
-| `modifyCost` | 卡牌花费增减（含按阵营/类型/费用奇偶/最左最右手牌过滤，含“等同于某值”动态费用） | 123 | `front_and_homeland`（前线与家乡，58 卡组）、`4th_guards_rifles`（近卫步兵第 4 团，55 卡组） |
-| `modifyOperationCost` | 行动花费增减/设为固定值 | 76 | `panzer_35t`（35(t) 坦克，34 卡组）、`blitzkrieg`（闪电战，32 卡组） |
-| `upgradeVeteran / onVeteranUpgrade` | 老兵升级判定与升级时触发 | 67 | `216th_guards`（近卫步兵第 216 团，50 卡组）、`7_schtzen`（第 7 步枪兵团，17 卡组） |
-| `restrictAction` | 行动限制：无法攻击/移动/部署/使用指令/免疫/伤害上限 | 50 | `km_tirpitz`（KM 提尔皮茨号，68 卡组）、`t3485_1945`（T-34-85 1945，46 卡组） |
-| `gainKreditSlots` | 指挥点槽（永久槽位）增减；现有 gainKredits 只改当前点数 | 47 | `the_war_machine`（战争机器，100 卡组）、`desperate_measures`（亡命之计，81 卡组） |
-| `counterTrigger / countermeasure` | 反制牌挂载与触发（敌方出牌/指向/攻击/空军入场） | 45 | `shibata_regiment`（新发田联队，33 卡组）、`raf_mustang`（RAF 野马，33 卡组） |
-| `damageModifier` | 伤害翻倍/减免/上限/无视重甲/溢出转移/伤害类型加成 | 41 | `238th_regiment`（步兵第二百三十八联队，38 卡组）、`593rd_jasco`（第 593 联合通信连，24 卡组） |
-| `copyCard / duplicateUnit` | 复制手牌/单位（含“复制加入卡组/手牌/阵线”） | 41 | `meteor`（流星，74 卡组）、`336th_guards_naval`（近卫海军步兵第 336 旅，44 卡组） |
-| `grantAbility` | 给单位附加一段持续能力文本（“获得：…”） | 33 | `special_attack`（特攻，34 卡组）、`colossus`（巨人计算机，32 卡组） |
-| `revealIntel` | 情报/预报/揭示（查看手牌或卡组顶并可能选择） | 29 | `yokosuka_e14y`（E14Y 零式小型水侦，65 卡组）、`task_force_44`（第 44 特混舰队，42 卡组） |
-| `removeFromGame` | 移除出对局（非“消灭”，不触发亡计） | 27 | `meteor`（流星，74 卡组）、`salamander`（He 162 蝾螈，35 卡组） |
-| `traitNaval` | 海军属性标记与“算作海军”动态判定 | 22 | `5th_sasebo_snlf`（佐镇第五特别陆战队，37 卡组）、`bpf`（英国太平洋舰队，30 卡组） |
-| `discoverFrom` | 开发：从 3 张候选中选择 1 张加入手牌 | 21 | `blitz_doctrine`（闪击战法，40 卡组）、`hampshire_regiment`（汉普郡团，34 卡组） |
-| `countBattleKeywords` | 统计“对战词条数”（单位身上的战斗关键字数量），作为条件/数值来源 | 13 | `monastyr`（修道院行动，50 卡组）、`44th_silesia`（西里西亚第 44 团，39 卡组） |
-| `forcedFight` | 强制对战（“与 1 个敌方单位战斗”） | 12 | `henschel_hs_129`（Hs 129，65 卡组）、`heinkel_he_219`（He 219 夜枭，17 卡组） |
-| `addCardToEnemyDeck` | 将卡加入敌方卡组/手牌 | 11 | `liberation`（解放，35 卡组）、`colossus`（巨人计算机，32 卡组） |
-| `setWeather` | 天气（晴天/降雨/风暴）全局修正 | 11 | `coastwatchers`（海岸观察员，12 卡组）、`surprise_engagement`（突发交战，7 卡组） |
-| `grantHqAbility` | 给总部附加持续能力（“总部获得：…”） | 9 | `front_formation`（方面军，26 卡组）、`road_to_berlin`（柏林之路，19 卡组） |
-| `extraAction` | 额外行动/重置攻击次数/“能在同一回合移动并攻击” | 7 | `windhund_division`（灰猎犬师，22 卡组）、`tactical_withdrawal`（战术撤退，13 卡组） |
-| `takeControl` | 控制敌方单位 | 4 | `confusion`（混乱，9 卡组）、`39th_rifle_regiment`（步兵第 39 团，8 卡组） |
-| `triggerTwice` | 亡计/部署/非指向部署触发两次 | 2 | `114th_infantry_regiment`（步兵第百十四联队，9 卡组）、`b26_marauder`（B-26 掠夺者，5 卡组） |
+### 6.1 已在使用中的 custom 操作（`EffectOp`）
 
-> 现有契约里已有但语义不足的部分：`CardScript.counter` 只覆盖 4 种触发；`gainKredits` 不能永久增加指挥点槽；`costDelta` 只能写在脚本自身；`targetSpec` 目前只支持单目标（`targeting.ts` 的 `count` 恒为 1）——“指向 2 个单位/选择 2 张手牌”类卡需要扩展目标数量。
+| 原语 id | 优先级 | params | 语义 | 出现次数 | 代表卡 |
+| --- | --- | --- | --- | --- | --- |
+| `gainHqDefense` | P0 | `{side:'self'|'enemy', amount?:number, from?:'selfCost'|'lastDamage'}` | 总部获得/失去 +N 防御力（maxHp 与 hp 同时增加，不能用 heal 代替） | 19 | sincerely_yours +6、fortification +7、the_glamour_boys +4、m3a3_honey +1、329th_engineer_battalion +2 |
+| `moveUnitZone` | P0 | `{of:'self'|'chosen'|'all'|'adjacent', to:'hand'|'deckTop', side?, line?, type?, count?}` | 把单位移出手牌/卡组顶（统一“撤退/返回手牌/返回卡组顶/相邻撤退”） | 12 | leopold、fw_190_jagdbomber、komet、queens_own、churchill_mk_iii_avre、uss_missouri |
+| `damageAnyTarget` | P0 | `{side:'enemy'|'any', amount:number, includeHQ:boolean, drawIfHQ?:number}` | 对“1 个目标”造成伤害，目标可为单位或总部（可选总部则额外抽牌） | 2 | buzz_bomb、attack_in_the_colonies |
+| `damageSplitRandom` | P1 | `{amount:number, side, includeHQ?:boolean}` | N 点伤害随机分配到所有敌方目标 | 1 | b29_superfortress |
+| `damageRepeatWhileKill` | P1 | `{side, amount:number}` | 群体伤害，只要有人被消灭就重复一次 | 1 | crossfire |
+| `damageTargetAndAdjacent` | P1 | `{side, amount:number, adjacentAmount:number}` | 对选定目标及其相邻目标分别造成伤害 | 1 | bombing_raid |
+| `pinAdjacentToChosen` | P1 | `{}` | 压制选定目标及其相邻单位 | 1 | monty |
+| `endTurn` | P1 | `{}` | 立即结束当前回合 | 3 | kurume_regiment、banzai、repel_the_attack |
+| `shuffleIntoDeck` | P1 | `{cardId, count:number, side?:'self'|'enemy'}` | 将 N 张卡洗入卡组 | 4 | last_rites、kikka、97th_rifles |
+| `drawByType` | P1 | `{type, count:number}` | 按类型定向抽牌（如“抽 1 张指令”） | 1 | arado_ar_196 |
+| `drawUntilHandSizeMatchesEnemy` | P1 | `{}` | 抽牌直到己方手牌数 = 敌方手牌数 | 1 | enigma |
+| `drawPerDistinctUnitType` | P1 | `{}` | 己方每有一种单位类型抽 1 张 | 1 | conquest |
+| `drawBothUntilHandSize` | P1 | `{size:number}` | 双方各抽到指定手牌数 | 1 | phoney_war |
+| `destroyUnitByStatSum` | P1 | `{side, sum:number, compare:'lte'|'gte', count:number}` | 按“攻击力+防御力”之筛选并消灭（UnitFilter 无此字段） | 1 | fifth_ohio |
+| `destroyUnitAndSameName` | P2 | `{maxAttack:number}` | 消灭 1 个单位及所有同名单位 | 1 | overpower |
+| `destroyUnitsByCostParity` | P1 | `{parity:'odd'|'even'}` | 消灭所有奇数/偶数花费的单位 | 2 | naval_battle |
+| `destroySalvageLowestAttack` | P2 | `{}` | 消灭并收缴所有攻击力最低的单位 | 1 | on_the_ascent |
+| `destroyAttacker` | P1 | `{}` | 反制：消灭发起攻击的单位（需要反制上下文携带攻击者） | 1 | counter_strike |
+| `summonByStatSum` | P2 | `{count, stat:'attack', sum, faction, type, line}` | 随机召唤若干单位使其属性和为指定值 | 1 | seaborne_invasion |
+| `summonLastDestroyedUnit` | P2 | `{side, type:'ground', line}` | 召唤最近被消灭的指定类型单位 | 1 | ilyushin_il10 |
+| `summonAndStrike` | P2 | `{cardId, line, side}` | 召唤单位并让它随机攻击敌方单位（伤害=其攻击力） | 1 | audacity |
+| `summonWithKeywords` | P2 | `{cardId, line, keywords:string[]}` | 召唤单位并附加关键字 | 1 | the_white_death |
+| `buffFactionUnits` | P1 | `{faction, type?, attack?, hp?, side?}` | 按阵营（+类型）批量增益（UnitFilter 无 faction 字段） | 1 | fast_heinz |
+| `buffDeckTopUnit` | P2 | `{attack, hp}` | 增益卡组顶的单位 | 1 | uss_the_sullivans |
+| `returnHandCardToDeckTop` | P2 | `{count:number}` | 选择手牌放回卡组顶 | 1 | thunderbolt |
+| `enemyHandCardToDeckTop` | P2 | `{count:number, random:boolean}` | 敌方随机/选择手牌放回卡组顶 | 1 | mi5 |
+| `handCardToDeckThenDraw` | P2 | `{count:number}` | 选择手牌洗入卡组并抽等量牌 | 1 | 10th_recon |
+| `transformHandCardToUnit` | P2 | `{}` | 把手牌转换为一个单位 | 1 | surveil |
+| `convertOwnerUnitsToChosen` | P2 | `{}` | 把选定单位所有者的所有单位转换为该单位 | 1 | victory_banners |
+| `scheduleEffects` | P1 | `{when:'selfTurnStart'|'selfTurnEnd', effects:EffectOp[]}` | 延迟到指定时点执行一组效果（如“下个友方回合开始时失去/获得指挥点”） | 3 | extended_barrage、55th_rifles |
+| `watchChosenDeathDraw` | P2 | `{count:number}` | 监视选定单位：其被消灭时抽牌 | 1 | 738_jger_regiment |
+| `damageEnemyHqIfEnemyDrew` | P2 | `{amount:number}` | 监听敌方抽牌并伤害其总部（需要 cardDrawn 触发携带着抽牌方） | 1 | kv1_1941 |
+| `onCombatDamageAddCards` | P2 | `{cardId}` | 造成对战伤害后按伤害值加入等量卡牌（需要 damageDealt 携带 amount） | 1 | stz5_katyusha |
+| `selfStatsWhileHasKeyword` | P2 | `{keyword, attack?, hp?}` | 仅在自身具有某关键字时获得属性（PassiveAura 无法只作用于自身） | 1 | 58th_infantry_regiment |
+| `onFriendlyUnitActedBuffPerOperatingCost` | P2 | `{}` | 友方单位行动后按行动花费次数增益（需要“行动后”钩子） | 1 | blue_legion |
+| `onGainedAttackBonus` | P2 | `{}` | 被其他效果增加攻击力时触发（需要增益钩子） | 1 | sd_kfz_10_pak_38 |
+| `onActedGainAttackPerActionCount` | P2 | `{}` | 行动后按累计行动次数获得属性 | 1 | panther_a_zimmerit |
+| `loseKreditSlots` | P0 | `{side, amount}` | 失去 N 个指挥点槽（与 gainKreditSlots 对称，上限/下限夹紧） | 10 | desperate_measures、shelling、southern_plan、last_ditch_force |
+| `discoverFromDeck` | P2 | `{side, count}` | 从指定方卡组随机“开发”卡牌加入手牌 | 3 | the_rock_of_gibraltar、air_land_sea |
+| `negatePlayedCard` | P2 | `{}` | 反制：取消对方刚打出的卡牌结算 | 2 | ultra、hms_sceptre |
+| `negatePlayedCardIfCostAtLeast` | P2 | `{cost}` | 反制：仅当对方卡牌花费 ≥ N 时取消 | 1 | dowding_system |
+| `setHqDefense` | P2 | `{side, value}` | 把总部防御力设为固定值 | 1 | alpenfestung |
+| `grantHqAbility` | P2 | `{trigger?, effects, targetSide?, thresholdDamage?}` | 给总部附加一段持续能力 | 3 | front_formation、road_to_berlin、contest_doctrine |
+| `damageAnyTargetAndAdjacent` | P2 | `{side, amount, adjacentAmount, includeHQ}` | 对可选目标（单位/总部）及其相邻单位造成伤害 | 1 | aerosani |
+| `silenceAdjacentToChosen` | P2 | `{}` | 抑制选定单位及其相邻单位 | 1 | b24j |
+| `grantHqKeywordUntilNextTurn` | P2 | `{keyword}` | 总部临时获得关键字，直到下个己方回合开始 | 1 | depth_charges |
+| `destroyUnitByMaxCost` | P2 | `{maxCost, count}` | 按花费上限筛选并消灭 | 1 | v1_flying_bomb |
+| `destroyUnitByMaxKredits` | P2 | `{side, count}` | 按“攻击力 ≤ 己方指挥点槽数”筛选并消灭 | 1 | commit_the_reserves |
+| `extraAction` | P0 | `{}` | 重置一次攻击（已实现） | 1 | windhund_division |
+| `modifyOperationCostArea` | P2 | `{side, line, amount}` | 批量修改行动花费（区域） | 1 | blitzkrieg |
+| `returnChosenToHandAndCostZero` | P2 | `{}` | 把选定单位返回手牌并使其花费为 0（至回合结束） | 1 | shifting_attack |
+
+### 6.2 已在使用中的 custom 条件（`Condition`）
+
+| 条件 id | 优先级 | params | 语义 | 出现次数 | 代表卡 |
+| --- | --- | --- | --- | --- | --- |
+| `chosenIsFriendly` | P0 | `{}` | 选定目标属于己方 | 2 | 40_panzergrenadier、15th_wolves_regiment |
+| `chosenIsEnemyHQ` | P0 | `{}` | 选定目标是敌方总部（攻击类触发用） | 2 | type_94_tk_early、dingo |
+| `chosenIsUnit` | P1 | `{}` | 选定目标是单位（而非总部） | 1 | 28th_infantry_regiment |
+| `chosenIsSelf` | P1 | `{}` | 事件目标就是本单位 | 1 | 845th_rifles |
+| `ordersPlayedThisTurnAtLeast` | P1 | `{count:number}` | 本回合已使用指令数 ≥ N | 1 | wave_after_wave |
+| `deployedFactionTypeLastTurn` | P2 | `{faction, type}` | 上回合部署过指定阵营/兵种的单位 | 1 | forward_observers |
+| `friendlyTurnChosenIsEnemy` | P2 | `{}` | 当前是己方回合且事件目标是敌方单位 | 1 | 158_nachschub |
+| `friendlyFactionUnitOnFrontline` | P2 | `{faction}` | 前线有指定阵营的友方单位 | 1 | expansion |
+| `destroyedBySelf` | P2 | `{}` | 事件中的被消灭单位由本单位消灭 | 1 | 77th_regiment |
+| `usedFromLeftmostHandCard` | P2 | `{}` | 本卡是从手牌最左侧打出的 | 2 | z_special_unit |
+| `usedFromRightmostHandCard` | P2 | `{}` | 本卡是从手牌最右侧打出的 | 1 | repel_the_attack |
+| `chosenHasUniqueHighestAttack` | P2 | `{}` | 选定单位拥有全场唯一最高攻击力 | 1 | the_dagger_strikes |
+| `factionIsAlly` | P1 | `{faction}` | 指定阵营是己方的盟军阵营 | 1 | asw_patrol |
+| `chosenAttackGtMaxKredits` | P2 | `{}` | 选中单位攻击力大于己方指挥点槽数 | 1 | ferocious_assault |
+| `chosenDamaged` | P2 | `{}` | 事件目标已受伤 | 1 | sissi |
+| `attackKilledTarget` | P2 | `{}` | 本次攻击消灭了目标 | 1 | windhund_division |
+| `deckTopIsNaval` | P2 | `{}` | 卡组顶是海军牌 | 1 | u16 |
+| `notAttackedLastTurn` | P2 | `{}` | 上回合己方总部没有被攻击 | 1 | garrison |
+
+### 6.3 其余已用 custom id（长尾，规格以脚本注释为准）
+
+> 这些 id 只在少量卡上使用、多为需要专有钩子的“一次性原语”；执行器未实现时静默 no-op（不报错、不阻断对局），实现后按脚本注释替换即可。
+
+| custom id | 用量 |
+| --- | --- |
+| `gainKreditSlots` | 10 |
+| `revealIntel` | 6 |
+| `discoverFrom` | 5 |
+| `restrictAction` | 3 |
+| `removeSelfFromGame` | 1 |
+| `copySelfToDeckWithMultiplier` | 1 |
+| `discountFirstOrderEachTurn` | 1 |
+| `drawCheapestOrder` | 1 |
+| `handOrderToDeckTopCostZero` | 1 |
+| `modifyCostOfNonFaction` | 1 |
+| `copyEnemyOrdersToDeckAndGrantDraw` | 1 |
+| `limitFrontlineSlots` | 1 |
+| `modifyEnemyHandCostNextTurn` | 1 |
+| `transformPlayedCardToHand` | 1 |
+| `discoverToDeckCostZero` | 1 |
+| `removeFromGame` | 1 |
+| `putCopiesOnOwnerDeckTop` | 1 |
+| `grantAbilityToAllEnemyUnits` | 1 |
+| `discountWhileInHandOnFriendlyOrder` | 1 |
+| `forcedFight` | 1 |
+| `attackBonusVsTypes` | 1 |
+| `modifyCost` | 1 |
+| `drawAtTurn` | 1 |
+| `phaseOutUntilNextTurn` | 1 |
+| `modifyOperationCost` | 1 |
+| `phaseOutUnitReturnNextTurnEndAndCopy` | 1 |
+| `onFriendlyGermanUnitActedModifyOpCost` | 1 |
+| `drawUnitByCost` | 1 |
+| `doubleDamageWhileMaxKreditsLte` | 1 |
+| `onFriendlyNavalCardPlayedBuffSelf` | 1 |
+| `grantDeathTriggerToAllies` | 1 |
+| `onEnemyOrderDamageHq` | 1 |
+| `onEnemyOrderBuffSelf` | 1 |
+| `buffUnitsInBothDecks` | 1 |
+| `onFriendlyRevealDraw` | 1 |
+| `phaseOutEnemyUnitUntilSelfLeaves` | 1 |
+| `addCardToEnemyDeck` | 1 |
+| `copyRandomEnemyOrderAndGainHqDefense` | 1 |
+| `discardChosenEnemyHandCardCopyToHand` | 1 |
+| `onVeteranUpgradeGrantDefense` | 1 |
+| `conditionalCostDelta` | 1 |
+| `hqDamageReduction` | 1 |
+| `buffDeckUnitsWithRandomKeyword` | 1 |
+| `discountWhileInHandOnEnemyDraw` | 1 |
+| `trackVeteranProgress` | 1 |
+| `destroyUnitsByBattleKeywordCount` | 1 |
+| `immuneToSilenceAndKeywordLoss` | 1 |
+| `copyHandUnitToSupport` | 1 |
+| `drawPerAllyBattleKeywordAtLeast` | 1 |
+| `onEnemyTargetedCopyToSupport` | 1 |
+| `hqImmuneDuringEnemyTurn` | 1 |
+
+### 6.4 执行器/契约侧缺口（不是卡牌原语）
+
+| 缺口 | 说明 |
+| --- | --- |
+| `cardDrawn-trigger` | cardDrawn 触发从未 fire（m3a3_honey / kv1_1941 需要），建议 drawCardInternal 后 fireBoardTriggers('cardDrawn', {drawer}) |
+| `counter-enemyAttacks` | triggerCounters 只 fire enemyPlaysCard/enemyPlaysUnit，enemyAttacks 未 fire（counter_strike） |
+| `counter-context` | CardScript.counter 的 effects 拿不到攻击者/被攻击目标，建议 createCtx 时写入 chosen |
+| `unitFilter-faction-cost` | UnitFilter 缺 faction 与 kredits 过滤（“友方德国单位”“花费不大于 N”） |
+| `damage-amount-context` | damageDealt/healed 触发不携带数值（stz5_katyusha、845th_rifles）” |
+| `self-only-aura` | PassiveAura 无法只作用于自身（58th_infantry_regiment） |
+
+> 现有契约里已有但语义不足的部分：`CardScript.counter` 只覆盖 4 种触发（且拿不到攻击者上下文）；`gainKredits` 不能永久增加指挥点槽；`costDelta` 只能写在脚本自身；`targetSpec`/LegalTargets 目前单目标；“使友方总部获得 +N 防御力”没有原生 op（heal 受 maxHp 上限，不能代替）。
+> 未归类的高频文本模式（仍走 custom）：费用修改、行动花费修改、老兵升级、指挥点槽、情报/开发、反制、复制、移出对局、持续能力授予、行动限制、天气、海军属性等，见第 4 节 `⚠️ 需原语` 行。
 
 ## 7. C 类 / 零脚本卡清单（unimplemented 与免实现）
 
@@ -269,15 +396,17 @@
 
 ## 9. 阶段二进度账本
 
-| 阵营 | 可构筑卡 | 已写脚本 | 覆盖率 |
-|---|---:|---:|---:|
-| Germany（`germany.ts`） | 253 | 0 | 0% |
-| USA（`usa.ts`） | 254 | 1 | 0.4% |
-| Britain（`britain.ts`） | 251 | 1 | 0.4% |
-| Japan（`japan.ts`） | 252 | 1 | 0.4% |
-| USSR（`ussr.ts`） | 254 | 0 | 0% |
-| 小国/盟军（`minor.ts`） | 253 | 0 | 0% |
-| 衍生（`tokens.ts`） | 129 | 0 | 0% |
-| **合计** | **1517 + 129 衍生** | **3** | **0.2%** |
+> 统计口径：可构筑卡 = 数据集中 `isDerived: false` 的卡；已写脚本数 = 脚本注册表键数量（`_work/validate-scripts.mjs` 实测，见 `_work/script-stats.json`）。
 
-> 脚本总数以 `src/engine/cards/index.ts#scriptCount()` 为准；上表由阶段二每批完成后手工更新（或用 `_work` 脚本重算）。
+| 阵营文件 | 可构筑卡 | 已写脚本 | 覆盖率 |
+| --- | --- | --- | --- |
+| `germany.ts` | 253 | 43 | 17.0% |
+| `usa.ts` | 254 | 23 | 9.1% |
+| `britain.ts` | 251 | 40 | 15.9% |
+| `japan.ts` | 252 | 41 | 16.3% |
+| `ussr.ts` | 254 | 32 | 12.6% |
+| `minor.ts` | 253 | 18 | 7.1% |
+| `tokens.ts` | 129（衍生） | 24 | 18.6% |
+| **合计** | **1517**（另 129 张衍生） | **221**（其中可构筑 197 + 衍生 24） | **13.0%（可构筑卡口径）** |
+
+脚本总数以 `src/engine/cards/index.ts#scriptCount()` 为准；脚本引用的卡牌 id 均已通过存在性校验（`_work/validate-scripts.mjs`）；custom 原语用量见第 6 节。

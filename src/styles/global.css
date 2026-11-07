@@ -1,31 +1,9 @@
 @import "tailwindcss";
 
 /* ============================================================
- * 字体：本地 woff2（data-forge 下载到 public/fonts/）
- * src 列表为候选文件名回退，全部缺失时退到系统字体（不影响可用性）
+ * 字体：由 src/ui/components/FontFaces.tsx 在运行时按 BASE_URL 注入
+ * （public/fonts/*.woff2；Black Ops One 标题 / Oswald 正文）
  * ============================================================ */
-@font-face {
-  font-family: "Black Ops One";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src:
-    url("/fonts/BlackOpsOne-Regular.woff2") format("woff2"),
-    url("/fonts/black-ops-one-latin-400-normal.woff2") format("woff2"),
-    url("/fonts/BlackOpsOne.woff2") format("woff2");
-}
-
-@font-face {
-  font-family: "Oswald";
-  font-style: normal;
-  font-weight: 200 700;
-  font-display: swap;
-  src:
-    url("/fonts/Oswald-Variable.woff2") format("woff2-variations"),
-    url("/fonts/Oswald-VariableFont_wght.woff2") format("woff2"),
-    url("/fonts/oswald-latin-variable-wghtOnly-normal.woff2") format("woff2"),
-    url("/fonts/Oswald-Regular.woff2") format("woff2");
-}
 
 /* ============ Fards 设计令牌 ============ */
 @theme {

@@ -235,4 +235,136 @@ export const USA_CARD_SCRIPTS: Record<string, CardScript> = {
       effects: [{ op: 'custom', id: 'destroyAttacker' }],
     },
   },
+
+  // ==== B 类批次（META top100，先按已实现原语写，未实现部分 custom 占位）====
+
+  // ---- META #1 ----
+  // 中文原文：额外获得 1 个指挥点槽。
+  the_war_machine: {
+    cardId: 'the_war_machine',
+    abilities: [
+      { trigger: 'order', effects: [{ op: 'custom', id: 'gainKreditSlots', params: { side: 'self', amount: 1 } }] },
+    ],
+  },
+
+  // ---- META #9 ----
+  // 中文原文：额外获得 2 个指挥点槽。
+  in_hour_of_need: {
+    cardId: 'in_hour_of_need',
+    abilities: [
+      { trigger: 'order', effects: [{ op: 'custom', id: 'gainKreditSlots', params: { side: 'self', amount: 2 } }] },
+    ],
+  },
+
+  // ---- META #31 ----
+  // 中文原文：额外获得 3 个指挥点槽。若美国是盟国，随机消灭 1 个敌方单位。
+  asw_patrol: {
+    cardId: 'asw_patrol',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'custom', id: 'gainKreditSlots', params: { side: 'self', amount: 3 } },
+          {
+            op: 'conditional',
+            condition: { kind: 'custom', id: 'factionIsAlly', params: { faction: 'USA' } },
+            then: [{ op: 'destroy', target: { kind: 'query', side: 'enemy', line: 'any', pick: 'random', limit: 1 } }],
+          },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #50 ----
+  // 中文原文：额外获得 2 个指挥点槽。下个友方回合开始时，额外抽 1 张牌。
+  war_bonds: {
+    cardId: 'war_bonds',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'custom', id: 'gainKreditSlots', params: { side: 'self', amount: 2 } },
+          {
+            op: 'custom',
+            id: 'scheduleEffects',
+            params: { when: 'selfTurnStart', effects: [{ op: 'draw', side: 'self', count: 1 }] },
+          },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #81 ----
+  // 中文原文：对敌方支援阵线所有目标造成 3 点伤害。敌方失去 1 个指挥点槽。
+  strategic_bombing: {
+    cardId: 'strategic_bombing',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'damage', target: { kind: 'query', side: 'enemy', line: 'support' }, amount: 3 },
+          { op: 'custom', id: 'loseKreditSlots', params: { side: 'enemy', amount: 1 } },
+        ],
+      },
+    ],
+  },
+
+  // ==== B 类批次 2（META #101-150）====
+
+  // ---- META #130 ----
+  // 中文原文：预报。使双方总部获得 +2 防御力。双方额外获得 1 个指挥点槽，抽 1 张牌。
+  overcast: {
+    cardId: 'overcast',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'custom', id: 'revealIntel', params: { count: 1 } },
+          { op: 'custom', id: 'gainHqDefense', params: { side: 'self', amount: 2 } },
+          { op: 'custom', id: 'gainHqDefense', params: { side: 'enemy', amount: 2 } },
+          { op: 'custom', id: 'gainKreditSlots', params: { side: 'self', amount: 1 } },
+          { op: 'custom', id: 'gainKreditSlots', params: { side: 'enemy', amount: 1 } },
+          { op: 'draw', side: 'self', count: 1 },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #150 ----
+  // 中文原文：友方总部受到的伤害 -1。
+  // TODO(原语): 需要总部伤害减免被动（damageModifier 目前只作用于单位）→ 当前不生效
+  '593rd_jasco': {
+    cardId: '593rd_jasco',
+    abilities: [{ trigger: 'any', effects: [{ op: 'custom', id: 'hqDamageReduction', params: { amount: 1 } }] }],
+  },
+
+  // ==== P2 批次（META #151-200 的 B 类）====
+
+  // ---- META #188 ----
+  // 中文原文：开发 1 张美国轰炸机。若剩余指挥点数不小于 5，对所有敌方单位造成 2 点伤害。
+  bomber_mafia: {
+    cardId: 'bomber_mafia',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          { op: 'custom', id: 'discoverFrom', params: { faction: 'USA', type: 'bomber' } },
+          {
+            op: 'conditional',
+            condition: { kind: 'stat', of: 'selfHQ', stat: 'kredits', op: 'gte', value: 5 },
+            then: [{ op: 'damage', target: { kind: 'query', side: 'enemy', line: 'any' }, amount: 2 }],
+          },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #189 ----
+  // 中文原文：亡计：使卡组中的所有单位获得 +2+3 和 1 个随机对战词条。
+  the_professionals: {
+    cardId: 'the_professionals',
+    abilities: [
+      { trigger: 'death', effects: [{ op: 'custom', id: 'buffDeckUnitsWithRandomKeyword', params: { attack: 2, hp: 3 } }] },
+    ],
+  },
 };

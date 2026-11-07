@@ -320,4 +320,137 @@ export const USSR_CARD_SCRIPTS: Record<string, CardScript> = {
     cardId: 'surveil',
     abilities: [{ trigger: 'order', effects: [{ op: 'custom', id: 'transformHandCardToUnit' }] }],
   },
+
+  // ==== B 类批次（META top100）====
+
+  // ---- META #34 ----
+  // 中文原文：若在手中，敌方每抽 1 张牌，获得 -1 花费。
+  // TODO(原语): 需要“在手牌中监听敌方抽牌”的钩子 → 当前不生效
+  '4th_guards_rifles': {
+    cardId: '4th_guards_rifles',
+    abilities: [
+      {
+        trigger: 'cardDrawn',
+        anySide: true,
+        effects: [{ op: 'custom', id: 'discountWhileInHandOnEnemyDraw', params: { amount: -1 } }],
+        text: '若在手中，敌方每抽 1 张牌，获得 -1 花费',
+      },
+    ],
+  },
+
+  // ---- META #44 ----
+  // 中文原文：友方回合开始时，对友方总部造成 2 点伤害，抽 1 张牌。第二次后，升为老兵。
+  '216th_guards': {
+    cardId: '216th_guards',
+    abilities: [
+      {
+        trigger: 'turnStart',
+        effects: [
+          { op: 'damage', target: { kind: 'hq', side: 'self' }, amount: 2 },
+          { op: 'draw', side: 'self', count: 1 },
+          { op: 'custom', id: 'trackVeteranProgress', params: { threshold: 2, cardId: '216th_guards_vet' } },
+        ],
+      },
+    ],
+  },
+
+  // ---- META #45 ----
+  // 中文原文：消灭所有对战词条数不大于 1 的单位。
+  monastyr: {
+    cardId: 'monastyr',
+    abilities: [
+      { trigger: 'order', effects: [{ op: 'custom', id: 'destroyUnitsByBattleKeywordCount', params: { max: 1 } }] },
+    ],
+  },
+
+  // ---- META #54 ----
+  // 中文原文：无法被抑制或失去冲击。
+  // TODO(原语): 需要“关键字保护/免疫”机制 → 当前不生效
+  t3485_1945: {
+    cardId: 't3485_1945',
+    abilities: [{ trigger: 'any', effects: [{ op: 'custom', id: 'immuneToSilenceAndKeywordLoss' }] }],
+  },
+
+  // ---- META #59 ----
+  // 中文原文：部署：选择手中的 1 张花费不大于 3 的单位。将 1 个复制加入支援阵线。
+  '336th_guards_naval': {
+    cardId: '336th_guards_naval',
+    abilities: [
+      { trigger: 'deploy', effects: [{ op: 'custom', id: 'copyHandUnitToSupport', params: { maxCost: 3 } }] },
+    ],
+  },
+
+  // ---- META #70 ----
+  // 中文原文：部署：每有 1 个对战词条数不小于 2 的友方单位，抽 1 张牌。
+  '44th_silesia': {
+    cardId: '44th_silesia',
+    abilities: [
+      { trigger: 'deploy', effects: [{ op: 'custom', id: 'drawPerAllyBattleKeywordAtLeast', params: { count: 2 } }] },
+    ],
+  },
+
+  // ---- META #87 ----
+  // 中文原文：被敌方效果指向时，将 1 个复制加入友方总部相邻处。
+  // TODO(原语): 需要“被敌方效果指向”钩子 → 当前不生效
+  '75th_rifle_regiment': {
+    cardId: '75th_rifle_regiment',
+    abilities: [{ trigger: 'any', effects: [{ op: 'custom', id: 'onEnemyTargetedCopyToSupport' }] }],
+  },
+
+  // ==== B 类批次 2（META #101-150）====
+
+  // ---- META #140 ----
+  // 中文原文：使友方总部获得：“友方回合开始时，受到 1 点伤害，将 1 个‘T-34 1942’加入支援阵线。回合结束时，将其消灭。”
+  front_formation: {
+    cardId: 'front_formation',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'custom',
+            id: 'grantHqAbility',
+            params: {
+              effects: [
+                { op: 'damage', target: { kind: 'hq', side: 'self' }, amount: 1 },
+                { op: 'summon', side: 'self', cardId: 't34_1942', line: 'support' },
+              ],
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // ==== P2 批次（META #151-200 的 B 类）====
+
+  // ---- META #173 ----
+  // 中文原文：敌方回合中，友方总部具有免疫。
+  // TODO(原语): 需要“总部免疫”被动机制 → 当前不生效
+  '15th_motor_rifles': {
+    cardId: '15th_motor_rifles',
+    abilities: [{ trigger: 'any', effects: [{ op: 'custom', id: 'hqImmuneDuringEnemyTurn' }] }],
+  },
+
+  // ---- META #196 ----
+  // 中文原文：使敌方总部获得：“每回合，累计受到的伤害不小于 3 时，使友方总部获得 +3 防御力。”
+  road_to_berlin: {
+    cardId: 'road_to_berlin',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'custom',
+            id: 'grantHqAbility',
+            params: {
+              targetSide: 'enemy',
+              thresholdDamage: 3,
+              effects: [{ op: 'custom', id: 'gainHqDefense', params: { side: 'self', amount: 3 } }],
+            },
+          },
+        ],
+      },
+    ],
+  },
 };

@@ -32,12 +32,14 @@ import {
   placeUnit,
   playerUnits,
   recalcUnit,
+  buffUnit,
   setRegistry,
   startTurnInternal,
 } from './state';
 import {
   canDeployToFrontline,
   getOperationCost,
+  attackerType,
   isOrderCardType,
   isRefIn,
   legalAttackTargets,
@@ -100,6 +102,11 @@ export function applyCommand(prev: GameState, cmd: GameCommand, reg: EngineRegis
   }
   recomputeAuras(state, reg);
   checkGameOver(state, events);
+  // 若有“立即结束回合”类效果（custom: endTurn），在所有结算完成后统一推进回合
+  if (state.status === 'playing' && state.trackers.forceEndTurn) {
+    delete state.trackers.forceEndTurn;
+    resolveEndTurn(state, reg, { type: 'endTurn', player: state.activePlayer }, events);
+  }
   return { state, events };
 }
 
@@ -179,6 +186,7 @@ function playCard(
     sourceCardId: instance.cardId,
     chosen,
     chosenList: targets,
+    playHandIndex: handIdx,
   });
 
   if (isUnit) {
@@ -190,6 +198,14 @@ function playCard(
     placeUnit(state, unit, line!, cmd.slot);
     p.deployedThisTurn += 1;
     state.trackers['unitsDeployed'] = (state.trackers['unitsDeployed'] ?? 0) + 1;
+    // 预置的“部署时获得 buff”（buffDeckTopUnit 等效果）
+    const pendingAtk = p.trackers[`buffOnDeploy:${instance.instanceId}:attack`] ?? 0;
+    const pendingHp = p.trackers[`buffOnDeploy:${instance.instanceId}:hp`] ?? 0;
+    if (pendingAtk || pendingHp) {
+      buffUnit(unit, pendingAtk, pendingHp, true);
+      delete p.trackers[`buffOnDeploy:${instance.instanceId}:attack`];
+      delete p.trackers[`buffOnDeploy:${instance.instanceId}:hp`];
+    }
     events.push({ type: 'deploy', unitId: unit.unitId, cardId: instance.cardId, owner: player, line: line! });
     addLog(state, player, 'play', `部署 ${def.nameZh}（${line === 'frontline' ? '前线' : '支援线'}）`);
     ctx.sourceUnitId = unit.unitId;
@@ -211,6 +227,10 @@ function playCard(
   }
 
   recomputeAuras(state, reg);
+  processTriggers(ctx);
+  // “任意卡牌被使用 / 指令被使用”类监听
+  fireBoardTriggers(ctx, 'cardPlayed', { owners: [0, 1] });
+  if (!isUnit) fireBoardTriggers(ctx, 'orderPlayed', { owners: [0, 1] });
   processTriggers(ctx);
   checkGameOver(state, events);
 }
@@ -289,7 +309,10 @@ function resolveAttack(
 
   attacker.attacksUsed += 1;
   const attackerAtk = attacker.attack;
-  const retaliation = targetUnit ? targetUnit.attack : 0;
+  const attackerKind = attackerType(reg, attacker);
+  const targetType = targetUnit ? attackerType(reg, targetUnit) : '';
+  // 炮兵永不受到反击；轰炸机作为防守方不反击
+  const retaliation = targetUnit && attackerKind !== 'artillery' && targetType !== 'bomber' ? targetUnit.attack : 0;
   events.push({ type: 'attack', attackerId: attacker.unitId, target: targetRef });
   const targetLabel =
     targetRef.kind === 'hq'
@@ -311,9 +334,9 @@ function resolveAttack(
   if (state.status === 'finished') return;
 
   // 攻击前触发（先结算伤害，再触发事件，保证不会因选择挂起而丢失伤害）
-  dealDamage(ctx, targetRef, attackerAtk, { unitId: attacker.unitId });
+  dealDamage(ctx, targetRef, attackerAtk, { unitId: attacker.unitId, kind: 'unit' });
   if (targetUnit && state.units[targetUnit.unitId]) {
-    dealDamage(ctx, { kind: 'unit', unitId: attacker.unitId }, retaliation);
+    dealDamage(ctx, { kind: 'unit', unitId: attacker.unitId }, retaliation, { unitId: targetUnit.unitId, kind: 'unit' });
   }
   processTriggers(ctx);
   if (ctx.suspended) return;
@@ -325,6 +348,7 @@ function resolveAttack(
       chosen: { kind: 'unit', unitId: attacker.unitId },
     });
   }
+  fireBoardTriggers(ctx, 'unitActed', { owners: [0, 1], triggerUnitId: attacker.unitId });
   processTriggers(ctx);
   recomputeAuras(state, reg);
 }
@@ -349,6 +373,7 @@ function resolveMove(
   unit.movedThisTurn = true;
   const ctx = createCtx(state, reg, events, { controller: cmd.player, sourceUnitId: unit.unitId });
   moveUnitToLine(ctx, unit, cmd.toLine);
+  fireBoardTriggers(ctx, 'unitActed', { owners: [0, 1], triggerUnitId: unit.unitId });
   processTriggers(ctx);
   recomputeAuras(state, reg);
 }
@@ -368,6 +393,7 @@ function resolveEndTurn(
   fireBoardTriggers(ctx, 'turnEnd', { owners: [player] });
   processTriggers(ctx);
   if (ctx.suspended) return;
+  processScheduledEffects(state, reg, events, 'selfTurnEnd', player);
   endTurnInternal(state, player, events);
 
   const next = opponentOf(player);
@@ -377,8 +403,31 @@ function resolveEndTurn(
   fireBoardTriggers(ctx, 'cardDrawn', { owners: [next] });
   processTriggers(ctx);
   if (ctx.suspended) return;
+  processScheduledEffects(state, reg, events, 'selfTurnStart', next);
   recomputeAuras(state, reg);
   checkGameOver(state, events);
+}
+
+/** 处理延迟效果队列 */
+function processScheduledEffects(
+  state: GameState,
+  reg: EngineRegistry,
+  events: GameEvent[],
+  when: 'selfTurnStart' | 'selfTurnEnd',
+  player: PlayerIndex,
+): void {
+  const due = state.scheduled.filter(
+    (item) => item.player === player && (item.when === when || (when === 'selfTurnStart' && item.when === 'opponentTurnStart' && item.player === player)),
+  );
+  if (due.length === 0) return;
+  state.scheduled = state.scheduled.filter((item) => !due.includes(item));
+  for (const item of due) {
+    const ctx = createCtx(state, reg, events, { controller: item.player, sourceCardId: item.sourceCardId });
+    executeEffects(ctx, item.effects);
+    processTriggers(ctx);
+    if (ctx.suspended) return;
+  }
+  recomputeAuras(state, reg);
 }
 
 // ============================================================

@@ -16,8 +16,10 @@ src/assets/screenshots/
 .env.*
 !.env.example
 
-# KARDS 素材（版权归 1939 Games；运行时使用 wsrv.nl 远程地址，本地下载不入库）
-public/cards/
+# KARDS 素材（版权归 1939 Games）
+# 政策变更 2026-11-07：维护者授权在非商业前提下入库并公开发布（见 README 免责声明）。
+# public/cards/ 现在提交入库（约 50MB），使页面在无外网代理时也能离线加载卡图。
+# 若日后需要瘦身，可改回忽略并依赖 wsrv.nl 远程地址。
 public/cardbacks/
 public/data/images-manifest.json
 public/data/image-missing.json
@@ -28,3 +30,6 @@ docs/_*
 # 系统文件
 .DS_Store
 Thumbs.db
+
+# 第三方文章抓取（仅本地参考，版权非本项目，不入库）
+/*知乎*
