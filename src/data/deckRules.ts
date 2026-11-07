@@ -8,10 +8,9 @@
  * 纯 TS、无框架依赖；卡表未加载时降级为"只做张数/副本/精英上限"的弱校验。
  */
 
-import type { Card } from './types';
+import type { Card, DecodedDeck } from './types';
 import { normalizeFactionName } from './types';
 import { getCardIndex } from './loadCards';
-import type { DecodedDeck } from './deckcode';
 
 /* ============================================================
  * 1. 规则常量（统计结论，改这里即可全局生效）

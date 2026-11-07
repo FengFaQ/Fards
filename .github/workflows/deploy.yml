@@ -5,20 +5,21 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Allow only one concurrent deployment, skipping runs queued between the run
-# in-progress and latest queued. Do not cancel in-progress runs as we want to
-# allow these production deployments to complete.
+# Allow only one concurrent deployment. Do not cancel in-progress runs as we
+# want production deployments to complete.
 concurrency:
   group: pages
   cancel-in-progress: false
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
+
+env:
+  # GitHub Pages project site lives at https://<user>.github.io/Fards/
+  VITE_BASE: /Fards/
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,13 +32,6 @@ jobs:
           cache: npm
           cache-dependency-path: package-lock.json
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-        with:
-          # Enable Pages (build_type: workflow) on first run, so the project
-          # does not depend on a manual Settings -> Pages toggle.
-          enablement: true
-
       - name: Install dependencies
         run: |
           if [ -f package-lock.json ]; then
@@ -49,18 +43,16 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: dist
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          # Publish a clean orphan commit (no build history in the branch).
+          force_orphan: true
+          # Do not run Jekyll: keeps files/folders that start with "_".
+          enable_jekyll: false
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          commit_message: "deploy: ${{ github.sha }}"

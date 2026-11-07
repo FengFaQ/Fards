@@ -385,12 +385,14 @@ export function destroyUnitAndTrigger(ctx: ExecCtx, unitId: UnitId): void {
   const unit = ctx.state.units[unitId];
   if (!unit) return;
   const { cardId, owner } = unit;
+  const watchDraw = unit.trackers.watchDeathDraw ?? 0;
   leaveBoard(ctx.state, unitId);
   ctx.events.push({ type: 'death', unitId });
   addLog(ctx.state, owner, 'death', `${cardDefName(ctx.reg, cardId)} 阵亡`);
   ctx.triggerQueue.push({ trigger: 'death', cardId, owner, triggerUnitId: unitId });
   enqueueTriggerForUnits(ctx, 'unitDestroyed', { victimUnitId: unitId });
   recomputeAuras(ctx.state, ctx.reg);
+  for (let i = 0; i < watchDraw; i++) drawCardInternal(ctx.state, owner, ctx.events);
 }
 
 function enqueueTriggerForUnits(
@@ -900,3 +902,564 @@ export const CUSTOM_CONDITIONS: Record<
   /** 本回合使用过指令 */
   playedOrderThisTurn: (ctx) => (ctx.state.players[ctx.controller].trackers['ordersPlayedThisTurn'] ?? 0) > 0,
 };
+
+// ============================================================
+// 追加：卡牌脚本 custom 原语（card-smith 约定，Lead 实现）
+// 约定：params 使用 camelCase；side 为 'self' | 'enemy'（相对效果控制者）
+// ============================================================
+
+function pNum(value: unknown, fallback = 1): number {
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function pStr(value: unknown, fallback = ''): string {
+  return typeof value === 'string' ? value : fallback;
+}
+
+function enemiesOf(ctx: ExecCtx): Unit[] {
+  return playerUnits(ctx.state, opponentOf(ctx.controller));
+}
+
+function alliesOf(ctx: ExecCtx): Unit[] {
+  return playerUnits(ctx.state, ctx.controller);
+}
+
+function sideOf(ctx: ExecCtx, side: string): PlayerIndex {
+  return side === 'enemy' ? opponentOf(ctx.controller) : ctx.controller;
+}
+
+function queryUnits(ctx: ExecCtx, params: Record<string, unknown>): Unit[] {
+  const side = pStr(params.side, 'any') as 'self' | 'enemy' | 'any';
+  const line = pStr(params.line, 'any') as 'frontline' | 'support' | 'any';
+  const type = pStr(params.type, '');
+  const faction = pStr(params.faction, '');
+  const refs = resolveQueryTargets(ctx.state, ctx.reg, ctx.controller, {
+    kind: 'query',
+    side,
+    line,
+    filter: {
+      type: type ? type : undefined,
+      faction: faction ? faction : undefined,
+      maxCost: params.maxCost !== undefined ? pNum(params.maxCost) : undefined,
+      minCost: params.minCost !== undefined ? pNum(params.minCost) : undefined,
+    },
+  });
+  return refs
+    .map((ref) => (ref.kind === 'unit' ? ctx.state.units[ref.unitId] : undefined))
+    .filter((u): u is Unit => !!u);
+}
+
+function chosenUnit(ctx: ExecCtx): Unit | undefined {
+  const ref = ctx.chosen;
+  return ref && ref.kind === 'unit' ? ctx.state.units[ref.unitId] : undefined;
+}
+
+function returnUnitToHand(ctx: ExecCtx, unit: Unit): void {
+  const state = ctx.state;
+  removeUnitFromBoard(state, unit.unitId);
+  const instance = state.cards[unit.instanceId];
+  if (!instance || unit.token) return;
+  const owner = state.players[unit.owner];
+  if (owner.hand.length < state.config.handLimit) owner.hand.push(instance);
+  else owner.discard.push(instance);
+  ctx.events.push({ type: 'effect', text: `${nameOf(unit.cardId)} 返回手牌` });
+  recomputeAuras(state, ctx.reg);
+}
+
+function returnUnitToDeckTop(ctx: ExecCtx, unit: Unit): void {
+  const state = ctx.state;
+  removeUnitFromBoard(state, unit.unitId);
+  const instance = state.cards[unit.instanceId];
+  if (!instance || unit.token) return;
+  state.players[unit.owner].deck.unshift(instance);
+  recomputeAuras(state, ctx.reg);
+}
+
+Object.assign(CUSTOM_HANDLERS, {
+  /** 总部获得 N 点防御力（最大生命 +N，同时回复 N） */
+  gainHqDefense: (ctx: ExecCtx, params) => {
+    const side = sideOf(ctx, pStr(params.side, 'self'));
+    const amount = pNum(params.amount, 1);
+    const hq = ctx.state.players[side].hq;
+    hq.maxHp += amount;
+    hq.hp += amount;
+    ctx.events.push({ type: 'heal', target: { kind: 'hq', player: side }, amount });
+  },
+
+  /** 单位区域移动：返回手牌 / 返回卡组顶 / 撤退 */
+  moveUnitZone: (ctx: ExecCtx, params) => {
+    const of = pStr(params.of, 'self');
+    const to = pStr(params.to, 'hand');
+    const count = pNum(params.count, 1);
+    let units: Unit[] = [];
+    if (of === 'self') {
+      const u = ctx.sourceUnitId ? ctx.state.units[ctx.sourceUnitId] : undefined;
+      if (u) units = [u];
+    } else if (of === 'chosen') {
+      const refs = ctx.chosenList ?? (ctx.chosen ? [ctx.chosen] : []);
+      units = refs
+        .map((r) => (r.kind === 'unit' ? ctx.state.units[r.unitId] : undefined))
+        .filter((u): u is Unit => !!u);
+    } else if (of === 'adjacent') {
+      const base = chosenUnit(ctx);
+      if (base) {
+        const lineArr = ctx.state.players[base.owner][base.line];
+        const idx = lineArr.indexOf(base.unitId);
+        units = [lineArr[idx - 1], lineArr[idx + 1]]
+          .filter((id): id is string => !!id)
+          .map((id) => ctx.state.units[id])
+          .filter((u): u is Unit => !!u);
+      }
+    } else {
+      units = queryUnits(ctx, params);
+    }
+    units = units.slice(0, Math.max(1, count));
+    for (const unit of units) {
+      if (to === 'deckTop') returnUnitToDeckTop(ctx, unit);
+      else returnUnitToHand(ctx, unit);
+    }
+  },
+
+  /** 对 1 个敌方目标（可含总部）造成伤害；对总部造成伤害时可抽牌 */
+  damageAnyTarget: (ctx: ExecCtx, params) => {
+    const amount = pNum(params.amount, 1);
+    const includeHQ = Boolean(params.includeHQ);
+    const drawIfHQ = pNum(params.drawIfHQ, 0);
+    const refs = ctx.chosenList ?? (ctx.chosen ? [ctx.chosen] : []);
+    const enemy = opponentOf(ctx.controller);
+    if (refs.length > 0) {
+      for (const ref of refs) {
+        if (ref.kind === 'hq' && !includeHQ) continue;
+        dealDamage(ctx, ref, amount);
+        if (ref.kind === 'hq' && drawIfHQ > 0) {
+          for (let i = 0; i < drawIfHQ; i++) drawCardInternal(ctx.state, ctx.controller, ctx.events);
+        }
+      }
+      return;
+    }
+    const candidates: TargetRef[] = enemiesOf(ctx).map((u) => ({ kind: 'unit', unitId: u.unitId }) as TargetRef);
+    if (includeHQ) candidates.push({ kind: 'hq', player: enemy });
+    if (candidates.length === 0) return;
+    const picked = candidates[Math.floor(randomValue(ctx.state) * candidates.length)];
+    dealDamage(ctx, picked, amount);
+  },
+
+  /** 造成 N 点伤害，随机分配至敌方所有目标 */
+  damageSplitRandom: (ctx: ExecCtx, params) => {
+    const amount = pNum(params.amount, 1);
+    const includeHQ = Boolean(params.includeHQ);
+    const enemy = opponentOf(ctx.controller);
+    for (let i = 0; i < amount; i++) {
+      const candidates: TargetRef[] = enemiesOf(ctx).map((u) => ({ kind: 'unit', unitId: u.unitId }) as TargetRef);
+      if (includeHQ) candidates.push({ kind: 'hq', player: enemy });
+      if (candidates.length === 0) return;
+      const picked = candidates[Math.floor(randomValue(ctx.state) * candidates.length)];
+      dealDamage(ctx, picked, 1);
+      if (ctx.state.status === 'finished') return;
+    }
+  },
+
+  /** 对所有敌方单位造成 N 点伤害；若有单位被消灭则重复 */
+  damageRepeatWhileKill: (ctx: ExecCtx, params) => {
+    const amount = pNum(params.amount, 1);
+    for (let round = 0; round < 8; round++) {
+      const before = enemiesOf(ctx).length;
+      for (const unit of enemiesOf(ctx)) dealDamage(ctx, { kind: 'unit', unitId: unit.unitId }, amount);
+      const after = enemiesOf(ctx).length;
+      if (after >= before) return;
+    }
+  },
+
+  /** 抽指定类型的牌 */
+  drawByType: (ctx: ExecCtx, params) => {
+    const type = pStr(params.type);
+    const count = pNum(params.count, 1);
+    const p = ctx.state.players[ctx.controller];
+    for (let n = 0; n < count && p.deck.length > 0; n++) {
+      const idx = p.deck.findIndex((c) => (getDef(ctx.reg, c.cardId)?.type ?? '') === type);
+      const card = idx >= 0 ? p.deck.splice(idx, 1)[0] : p.deck.shift()!;
+      if (p.hand.length < ctx.state.config.handLimit) p.hand.push(card);
+      else p.discard.push(card);
+    }
+  },
+
+  /** 抽牌直到手牌数不少于对手 */
+  drawUntilHandSizeMatchesEnemy: (ctx: ExecCtx) => {
+    const me = ctx.state.players[ctx.controller];
+    const enemy = ctx.state.players[opponentOf(ctx.controller)];
+    let guard = 0;
+    while (me.hand.length < enemy.hand.length && me.deck.length > 0 && guard++ < 10) {
+      drawCardInternal(ctx.state, ctx.controller, ctx.events);
+    }
+  },
+
+  /** 每有一种不同类型的友方单位，抽 1 张牌 */
+  drawPerDistinctUnitType: (ctx: ExecCtx) => {
+    const types = new Set(alliesOf(ctx).map((u) => getDef(ctx.reg, u.cardId)?.type ?? ''));
+    for (let i = 0; i < types.size; i++) drawCardInternal(ctx.state, ctx.controller, ctx.events);
+  },
+
+  /** 按“攻击+生命之和”筛选并消灭 */
+  destroyUnitByStatSum: (ctx: ExecCtx, params) => {
+    const side = pStr(params.side, 'enemy');
+    const sum = pNum(params.sum, 0);
+    const op = pStr(params.compare, 'lte');
+    const count = pNum(params.count, 1);
+    const pool = (side === 'enemy' ? enemiesOf(ctx) : alliesOf(ctx)).filter((u) => {
+      const value = u.attack + u.hp;
+      if (op === 'gte') return value >= sum;
+      if (op === 'eq') return value === sum;
+      if (op === 'lt') return value < sum;
+      if (op === 'gt') return value > sum;
+      return value <= sum;
+    });
+    pool.sort((a, b) => b.attack + b.hp - (a.attack + a.hp));
+    for (const unit of pool.slice(0, Math.max(1, count))) {
+      destroyUnitAndTrigger(ctx, unit.unitId);
+    }
+  },
+
+  /** 将手牌放回卡组顶 */
+  returnHandCardToDeckTop: (ctx: ExecCtx, params) => {
+    const p = ctx.state.players[ctx.controller];
+    const count = pNum(params.count, 1);
+    for (let i = 0; i < count && p.hand.length > 0; i++) {
+      const card = p.hand.shift()!;
+      p.deck.unshift(card);
+    }
+  },
+
+  /** 将敌方手牌放回其卡组顶 */
+  enemyHandCardToDeckTop: (ctx: ExecCtx, params) => {
+    const enemy = ctx.state.players[opponentOf(ctx.controller)];
+    const count = pNum(params.count, 1);
+    for (let i = 0; i < count && enemy.hand.length > 0; i++) {
+      const idx = params.random === false ? 0 : Math.floor(randomValue(ctx.state) * enemy.hand.length);
+      const card = enemy.hand.splice(Math.min(enemy.hand.length - 1, idx), 1)[0];
+      enemy.deck.unshift(card);
+    }
+  },
+
+  /** 给卡组顶的单位牌加 buff（简化：直接修改卡组中该卡的 def 引用副本不可变，改为记录玩家 buff 池） */
+  buffDeckTopUnit: (ctx: ExecCtx, params) => {
+    const p = ctx.state.players[ctx.controller];
+    const idx = p.deck.findIndex((c) => {
+      const def = getDef(ctx.reg, c.cardId);
+      return def && def.type !== 'order' && def.type !== 'countermeasure';
+    });
+    if (idx < 0) return;
+    const card = p.deck[idx];
+    const key = `buffOnDeploy:${card.instanceId}`;
+    p.trackers[`${key}:attack`] = pNum(params.attack, 0);
+    p.trackers[`${key}:hp`] = pNum(params.hp, 0);
+  },
+
+  /** 按“攻击+生命之和”条件召唤单位 */
+  summonByStatSum: (ctx: ExecCtx, params) => {
+    const side = pStr(params.side, 'self');
+    const owner = sideOf(ctx, side);
+    const count = pNum(params.count, 1);
+    const stat = pStr(params.stat, 'cost');
+    const sum = pNum(params.sum, 0);
+    const faction = pStr(params.faction, '');
+    const type = pStr(params.type, '');
+    const line = (pStr(params.line, 'support') as 'frontline' | 'support');
+    const defs = Object.values(ctx.reg.cardDefs).filter((def) => {
+      if (def.type === 'order' || def.type === 'countermeasure') return false;
+      if (faction && def.faction !== faction) return false;
+      if (type && def.type !== type) return false;
+      const value = stat === 'attack' ? def.attack : stat === 'defense' ? def.defense : def.attack + def.defense;
+      return value <= sum;
+    });
+    for (let n = 0; n < count && defs.length > 0; n++) {
+      const def = defs[Math.floor(randomValue(ctx.state) * defs.length)];
+      const unit = makeUnit(ctx.state, ctx.reg, owner, def.cardId, line, { token: true, ready: true });
+      if (!unit) continue;
+      placeUnit(ctx.state, unit, line);
+      ctx.events.push({ type: 'deploy', unitId: unit.unitId, cardId: def.cardId, owner, line });
+    }
+    recomputeAuras(ctx.state, ctx.reg);
+  },
+
+  /** 消灭花费奇偶性匹配的单位 */
+  destroyUnitsByCostParity: (ctx: ExecCtx, params) => {
+    const parity = pStr(params.parity, 'odd');
+    for (const unit of [...alliesOf(ctx), ...enemiesOf(ctx)]) {
+      const cost = getDef(ctx.reg, unit.cardId)?.kredits ?? 0;
+      const isOdd = cost % 2 === 1;
+      if ((parity === 'odd' && isOdd) || (parity !== 'odd' && !isOdd)) {
+        destroyUnitAndTrigger(ctx, unit.unitId);
+      }
+    }
+  },
+
+  /** 给某阵营（可限类型）友方单位加 buff */
+  buffFactionUnits: (ctx: ExecCtx, params) => {
+    const faction = pStr(params.faction, '');
+    const type = pStr(params.type, '');
+    const attack = pNum(params.attack, 0);
+    const hp = pNum(params.hp, 0);
+    for (const unit of alliesOf(ctx)) {
+      const def = getDef(ctx.reg, unit.cardId);
+      if (faction && def?.faction !== faction) continue;
+      if (type && def?.type !== type) continue;
+      buffUnit(unit, attack, hp, true);
+    }
+  },
+
+  /** 监听指定单位死亡后抽牌 */
+  watchChosenDeathDraw: (ctx: ExecCtx, params) => {
+    const count = pNum(params.count, 1);
+    for (const ref of ctx.chosenList ?? (ctx.chosen ? [ctx.chosen] : [])) {
+      if (ref.kind !== 'unit') continue;
+      const unit = ctx.state.units[ref.unitId];
+      if (unit) unit.trackers.watchDeathDraw = (unit.trackers.watchDeathDraw ?? 0) + count;
+    }
+  },
+
+  /** 消灭攻击者（反制用；chosen 为攻击者） */
+  destroyAttacker: (ctx: ExecCtx) => {
+    const ref = ctx.chosen;
+    if (ref && ref.kind === 'unit' && ctx.state.units[ref.unitId]) destroyUnitAndTrigger(ctx, ref.unitId);
+  },
+
+  /** 额外获得指挥点槽 */
+  gainKreditSlots: (ctx: ExecCtx, params) => {
+    const side = sideOf(ctx, pStr(params.side, 'self'));
+    const amount = pNum(params.amount, 1);
+    const p = ctx.state.players[side];
+    p.maxKredits = Math.min(ctx.state.config.kreditCap, p.maxKredits + amount);
+    p.kredits = Math.min(p.maxKredits, p.kredits + amount);
+  },
+
+  /** 改变花费（手牌/卡组中的卡） */
+  modifyCost: (ctx: ExecCtx, params) => {
+    const amount = pNum(params.amount, 1);
+    const target = pStr(params.target, 'handAll');
+    const p = ctx.state.players[ctx.controller];
+    const apply = (key: string) => {
+      p.trackers[key] = (p.trackers[key] ?? 0) + amount;
+    };
+    if (target === 'cardId') apply(`costDiscount:card:${pStr(params.cardId)}`);
+    else if (target === 'faction') apply(`costDiscount:faction:${pStr(params.faction)}`);
+    else if (target === 'type') apply(`costDiscount:type:${pStr(params.type)}`);
+    else if (target === 'parity') apply(`costDiscount:parity:${pStr(params.parity, 'odd')}`);
+    else apply('costDiscount:all');
+  },
+
+  /** 强制与目标单位战斗（双方互相造成攻击力伤害） */
+  forcedFight: (ctx: ExecCtx) => {
+    const target = chosenUnit(ctx);
+    const self = ctx.sourceUnitId ? ctx.state.units[ctx.sourceUnitId] : undefined;
+    if (!target || !self) return;
+    const selfAtk = self.attack;
+    const targetAtk = target.attack;
+    dealDamage(ctx, { kind: 'unit', unitId: target.unitId }, selfAtk);
+    if (ctx.state.units[self.unitId]) dealDamage(ctx, { kind: 'unit', unitId: self.unitId }, targetAtk);
+  },
+
+  /** 移除出对局（不进弃牌堆） */
+  removeFromGame: (ctx: ExecCtx) => {
+    const refs = ctx.chosenList ?? (ctx.chosen ? [ctx.chosen] : []);
+    for (const ref of refs) {
+      if (ref.kind !== 'unit') continue;
+      const unit = leaveBoard(ctx.state, ref.unitId);
+      if (!unit) continue;
+      const p = ctx.state.players[unit.owner];
+      p.discard = p.discard.filter((c) => c.instanceId !== unit.instanceId);
+      recomputeAuras(ctx.state, ctx.reg);
+    }
+  },
+
+  /** 复制单位（到手牌/支援线/前线） */
+  copyCard: (ctx: ExecCtx, params) => {
+    const to = pStr(params.to, 'hand');
+    const refs = ctx.chosenList ?? (ctx.chosen ? [ctx.chosen] : []);
+    const sourceRef = refs[0] ?? (ctx.sourceUnitId ? { kind: 'unit', unitId: ctx.sourceUnitId } : undefined);
+    if (!sourceRef || sourceRef.kind !== 'unit') return;
+    const unit = ctx.state.units[sourceRef.unitId];
+    if (!unit) return;
+    if (to === 'hand') {
+      const instance = createCardInstance(ctx.state, unit.cardId, ctx.controller, 'created');
+      ctx.state.players[ctx.controller].hand.push(instance);
+      return;
+    }
+    const line = to === 'frontline' ? 'frontline' : 'support';
+    const copy = makeUnit(ctx.state, ctx.reg, ctx.controller, unit.cardId, line, { token: true, ready: true });
+    if (copy) {
+      placeUnit(ctx.state, copy, line);
+      recomputeAuras(ctx.state, ctx.reg);
+    }
+  },
+
+  /** 限制对手下回合的行动 */
+  restrictAction: (ctx: ExecCtx, params) => {
+    const action = pStr(params.action, 'deploy');
+    const scope = pStr(params.scope, 'enemyNextTurn');
+    if (scope === 'enemyNextTurn') {
+      const enemy = ctx.state.players[opponentOf(ctx.controller)];
+      enemy.trackers[`restrict:${action}:untilTurn`] = ctx.state.turn + 1;
+    } else {
+      const me = ctx.state.players[ctx.controller];
+      me.trackers[`restrict:${action}:untilTurn`] = ctx.state.turn + 1;
+    }
+  },
+
+  /** 情报/预报：记录可见信息（简化：日志） */
+  revealIntel: (ctx: ExecCtx, params) => {
+    const count = pNum(params.count, 1);
+    const enemy = ctx.state.players[opponentOf(ctx.controller)];
+    const visible = enemy.hand.slice(0, count).map((c) => cardDefName(ctx.reg, c.cardId));
+    addLog(ctx.state, ctx.controller, 'effect', `情报：${visible.length ? visible.join('、') : '无手牌'}`);
+    ctx.events.push({ type: 'effect', text: `情报 ${count}` });
+  },
+
+  /** 从卡池开发一张牌到手牌 */
+  discoverFrom: (ctx: ExecCtx, params) => {
+    const faction = pStr(params.faction, '');
+    const type = pStr(params.type, '');
+    const maxCost = params.maxCost !== undefined ? pNum(params.maxCost) : 99;
+    const pool = Object.values(ctx.reg.cardDefs).filter(
+      (def) =>
+        (!faction || def.faction === faction) &&
+        (!type || def.type === type) &&
+        def.kredits <= maxCost &&
+        def.type !== 'countermeasure',
+    );
+    if (pool.length === 0) return;
+    const def = pool[Math.floor(randomValue(ctx.state) * pool.length)];
+    const instance = createCardInstance(ctx.state, def.cardId, ctx.controller, 'created');
+    ctx.state.players[ctx.controller].hand.push(instance);
+    addLog(ctx.state, ctx.controller, 'effect', `开发：${def.nameZh}`);
+  },
+
+  /** 升为老兵形态 */
+  upgradeVeteran: (ctx: ExecCtx, params) => {
+    const cardId = pStr(params.cardId);
+    const def = cardId ? getDef(ctx.reg, cardId) : undefined;
+    const refs = ctx.chosenList ?? (ctx.chosen ? [ctx.chosen] : []);
+    const unitRef = refs.find((r) => r.kind === 'unit') ??
+      (ctx.sourceUnitId ? ({ kind: 'unit', unitId: ctx.sourceUnitId } as TargetRef) : undefined);
+    if (!def || !unitRef || unitRef.kind !== 'unit') return;
+    const unit = ctx.state.units[unitRef.unitId];
+    if (!unit) return;
+    unit.cardId = cardId;
+    unit.baseAttack = def.attack;
+    unit.baseHp = def.defense;
+    unit.buffAttack = 0;
+    unit.buffHp = 0;
+    unit.baseKeywords = normalizeUnitKeywords(ctx.reg, cardId, def.attributes);
+    unit.hp = def.defense;
+    recalcUnit(unit);
+    recomputeAuras(ctx.state, ctx.reg);
+    ctx.events.push({ type: 'effect', text: `${def.nameZh} 升级为老兵` });
+  },
+
+  /** 额外行动（重置一次攻击） */
+  extraAction: (ctx: ExecCtx) => {
+    const ref = ctx.chosen ?? (ctx.sourceUnitId ? { kind: 'unit', unitId: ctx.sourceUnitId } : undefined);
+    if (ref && ref.kind === 'unit') {
+      const unit = ctx.state.units[ref.unitId];
+      if (unit) unit.attacksUsed = Math.max(0, unit.attacksUsed - 1);
+    }
+  },
+
+  /** 夺取控制权 */
+  takeControl: (ctx: ExecCtx) => {
+    const ref = ctx.chosen;
+    if (!ref || ref.kind !== 'unit') return;
+    const unit = ctx.state.units[ref.unitId];
+    if (!unit) return;
+    const newOwner = ctx.controller;
+    removeUnitFromBoard(ctx.state, unit.unitId);
+    unit.owner = newOwner;
+    const line = unit.line;
+    placeUnit(ctx.state, unit, line);
+    unit.attacksUsed = unit.maxAttacks;
+    recomputeAuras(ctx.state, ctx.reg);
+  },
+
+  /** 向敌方卡组加入卡牌 */
+  addCardToEnemyDeck: (ctx: ExecCtx, params) => {
+    const count = pNum(params.count, 1);
+    const cardId = pStr(params.cardId);
+    const enemy = ctx.state.players[opponentOf(ctx.controller)];
+    for (let n = 0; n < count; n++) {
+      let id = cardId;
+      if (!id) {
+        const pool = Object.values(ctx.reg.cardDefs).filter((d) => d.type !== 'countermeasure');
+        id = pool[Math.floor(randomValue(ctx.state) * pool.length)]?.cardId ?? '';
+      }
+      if (!id) return;
+      const instance = createCardInstance(ctx.state, id, opponentOf(ctx.controller), 'created');
+      const pos = Math.floor(randomValue(ctx.state) * (enemy.deck.length + 1));
+      enemy.deck.splice(pos, 0, instance);
+    }
+  },
+
+  /** 伤害修正（简化：单位受到伤害减免） */
+  damageModifier: (ctx: ExecCtx, params) => {
+    const amount = pNum(params.amount, 1);
+    const refs = ctx.chosenList ?? (ctx.chosen ? [ctx.chosen] : []);
+    const ref = refs[0] ?? (ctx.sourceUnitId ? { kind: 'unit', unitId: ctx.sourceUnitId } : undefined);
+    if (ref && ref.kind === 'unit') {
+      const unit = ctx.state.units[ref.unitId];
+      if (unit) unit.trackers.damageReduction = (unit.trackers.damageReduction ?? 0) + amount;
+    }
+  },
+
+  /** 修改单位行动花费（可为负） */
+  modifyOperationCost: (ctx: ExecCtx, params) => {
+    const amount = pNum(params.amount, 0);
+    const refs = ctx.chosenList ?? (ctx.chosen ? [ctx.chosen] : []);
+    const ref = refs[0] ?? (ctx.sourceUnitId ? { kind: 'unit', unitId: ctx.sourceUnitId } : undefined);
+    if (ref && ref.kind === 'unit') {
+      const unit = ctx.state.units[ref.unitId];
+      if (unit) unit.operationCost = Math.max(0, unit.operationCost + amount);
+    }
+  },
+} as Record<string, CustomHandler>);
+
+function normalizeUnitKeywords(reg: EngineRegistry, cardId: string, attributes: string[]): string[] {
+  void reg;
+  void cardId;
+  const out: string[] = [];
+  for (const attr of attributes) {
+    const parsed = parseAttributeLocal(attr);
+    if (parsed) out.push(parsed);
+  }
+  return out;
+}
+
+function parseAttributeLocal(attr: string): string | null {
+  if (!attr || attr === 'OnlySpawnable' || attr.startsWith('BecomesVeteran:') || attr.startsWith('VeteranOf:')) return null;
+  const m = /^([a-zA-Z]+)(\d+)$/.exec(attr);
+  if (m) return `${m[1].charAt(0).toLowerCase() + m[1].slice(1)}:${m[2]}`;
+  return attr;
+}
+
+Object.assign(CUSTOM_CONDITIONS, {
+  ordersPlayedThisTurnAtLeast: (ctx: ExecCtx, params) => {
+    const need = pNum(params.count, 1);
+    return (ctx.state.players[ctx.controller].trackers['ordersPlayedThisTurn'] ?? 0) >= need;
+  },
+  deployedFactionTypeLastTurn: (ctx: ExecCtx, params) => {
+    const faction = pStr(params.faction, '');
+    const type = pStr(params.type, '');
+    const key = `lastDeployed:${faction}:${type}`;
+    return (ctx.state.players[ctx.controller].trackers[key] ?? 0) > 0;
+  },
+  chosenIsFriendly: (ctx: ExecCtx) => {
+    const ref = ctx.chosen;
+    if (!ref || ref.kind !== 'unit') return false;
+    const unit = ctx.state.units[ref.unitId];
+    return !!unit && unit.owner === ctx.controller;
+  },
+  friendlyTurnChosenIsEnemy: (ctx: ExecCtx) => {
+    const ref = ctx.chosen;
+    if (!ref || ref.kind !== 'unit') return false;
+    const unit = ctx.state.units[ref.unitId];
+    return !!unit && unit.owner !== ctx.controller && ctx.state.activePlayer === ctx.controller;
+  },
+} as Record<string, (ctx: ExecCtx, params: Record<string, unknown>) => boolean>);

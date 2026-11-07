@@ -240,6 +240,7 @@ function triggerCounters(
   events: GameEvent[],
   caster: PlayerIndex,
   trigger: 'enemyPlaysCard' | 'enemyPlaysUnit' | 'enemyAttacks' | 'enemyUsesOrder',
+  chosen?: TargetRef,
 ): void {
   const defender = opponentOf(caster);
   const counters = [...state.players[defender].counters];
@@ -251,7 +252,12 @@ function triggerCounters(
       (c) => c.instanceId !== counter.instanceId,
     );
     addLog(state, defender, 'effect', `反制触发：${nameOf(counter.cardId)}`);
-    const ctx = createCtx(state, reg, events, { controller: defender, sourceCardId: counter.cardId });
+    const ctx = createCtx(state, reg, events, {
+      controller: defender,
+      sourceCardId: counter.cardId,
+      chosen,
+      chosenList: chosen ? [chosen] : undefined,
+    });
     executeEffects(ctx, script.counter.effects);
     processTriggers(ctx);
     if (ctx.suspended) return;
@@ -299,6 +305,10 @@ function resolveAttack(
     chosen: targetRef,
   });
   if (attacker.ambush) attacker.ambush = false;
+
+  // 敌方反制：被攻击时触发（chosen = 攻击者，供“消灭攻击者”类反制引用）
+  triggerCounters(state, reg, events, cmd.player, 'enemyAttacks', { kind: 'unit', unitId: attacker.unitId });
+  if (state.status === 'finished') return;
 
   // 攻击前触发（先结算伤害，再触发事件，保证不会因选择挂起而丢失伤害）
   dealDamage(ctx, targetRef, attackerAtk, { unitId: attacker.unitId });
@@ -364,6 +374,7 @@ function resolveEndTurn(
   startTurnInternal(state, next, events);
   ctx.controller = next;
   fireBoardTriggers(ctx, 'turnStart', { owners: [next] });
+  fireBoardTriggers(ctx, 'cardDrawn', { owners: [next] });
   processTriggers(ctx);
   if (ctx.suspended) return;
   recomputeAuras(state, reg);

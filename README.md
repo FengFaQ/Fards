@@ -34,9 +34,36 @@ npm run build     # 生产构建，输出到 dist/
 
 ## 免责声明
 
-本项目是**非官方同人项目**，与 1939 Games 无任何关联，未获其授权或背书。
-KARDS 及其相关卡牌名称、美术素材、商标的版权归 **1939 Games** 所有。
-本项目仅供卡组构筑测试与个人娱乐用途，不得用于商业用途。
+本项目是**非官方同人项目**，与 **1939 Games 无任何隶属、授权、赞助或背书关系**，不代表也不代替官方产品。
+KARDS™ 及其相关卡牌名称、美术素材、音频、商标的版权归 **1939 Games** 所有。本项目不主张任何素材所有权。
+
+本项目仅供卡组构筑测试与个人娱乐用途，**不进行任何形式的收费**（无广告、无赞助、无打赏、无内购、无付费版本）。
+
+### 使用边界（硬性）
+
+- **禁止商业化**：不得将本仓库或其部署产物用于任何盈利目的。
+- **反对法西斯主义**：本项目以二战为题材，**明确反对一切法西斯主义、侵略战争与战争罪行**。任何卡牌描述、社区投稿、对战文本不得出现宣扬极端民族主义的内容。
+- **禁止仇恨与辱骂**：不得利用本项目发布歧视、仇恨、辱骂或骚扰性内容。
+- 素材依据 1939 Games 的 [Community Content Policy](https://support.kards.com/hc/en-us/articles/360027838532-KARDS-Community-License) 精神使用。
+- **撤下通道**：若权利人或官方认为本项目内容不当，请通过仓库 Issue 联系维护者，我们将在 24 小时内配合删除或暂停部署。
+
+### Disclaimer (English)
+
+> *Fards* is an **unofficial, non-commercial fan project**, not affiliated with, endorsed by,
+> sponsored by, or associated with **1939 Games**. KARDS™ and all related card images, names,
+> artwork, audio and trademarks are the property of **1939 Games ehf.**
+>
+> This project is provided purely for deck-building tests and personal entertainment. It is
+> **not monetized in any form** (no ads, sponsorship, donations, in-app purchases or paid tiers).
+>
+> This project **condemns fascism, wars of aggression and war crimes**. It must not be used to
+> promote extreme nationalism, hate speech, harassment or discrimination.
+>
+> Game assets are used in the spirit of 1939 Games' [Community Content Policy](https://support.kards.com/hc/en-us/articles/360027838532-KARDS-Community-License).
+> Rights holders may request removal via a repository issue; we will comply within 24 hours.
+>
+> The source code is licensed **AGPL-3.0**; that license covers original code only, not
+> third-party game assets. See [NOTICE](NOTICE) for attributions.
 
 ## 许可证
 

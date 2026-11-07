@@ -366,6 +366,41 @@ async function fetchCardBacks() {
   return { failed, total: backs.length };
 }
 
+/** 扫描 public/cards 目录，生成"已下载卡图清单"（运行时本地优先/远程兜底靠它） */
+async function writeImagesManifest(allCards) {
+  const outDir = resolve(ROOT, opt.out);
+  const downloaded = [];
+  let bytes = 0;
+  for (const card of allCards) {
+    const cardId = card.cardId ?? card.card_id;
+    try {
+      const st = await stat(resolve(outDir, `${cardId}.webp`));
+      if (st.size >= MIN_VALID_BYTES) {
+        downloaded.push(cardId);
+        bytes += st.size;
+      }
+    } catch {
+      /* 缺失 */
+    }
+  }
+  const payload = {
+    generatedAt: new Date().toISOString(),
+    format: 'webp',
+    width: opt.width,
+    dir: opt.out,
+    total: allCards.length,
+    count: downloaded.length,
+    missing: allCards.length - downloaded.length,
+    bytes,
+    cardIds: downloaded,
+  };
+  const file = resolve(ROOT, 'public/data/images-manifest.json');
+  await mkdir(dirname(file), { recursive: true });
+  await writeFile(file, JSON.stringify(payload), 'utf8');
+  log(`卡图清单写入 public/data/images-manifest.json：${downloaded.length}/${allCards.length} 张，${(bytes / 1048576).toFixed(1)}MB`);
+  return payload;
+}
+
 /* ------------------------------------------------------------------ main */
 
 async function main() {
@@ -374,6 +409,7 @@ async function main() {
   const limited = opt.limit > 0 ? cards.slice(0, opt.limit) : cards;
 
   const cardResult = opt.backsOnly ? { ok: 0, failed: [], viaStats: {} } : await fetchCardImages(limited);
+  if (!opt.backsOnly && opt.limit === 0) await writeImagesManifest(limited);
   const backResult = opt.cardsOnly || opt.skipBacks ? { failed: [], total: 0 } : await fetchCardBacks();
 
   const payload = {

@@ -23,9 +23,11 @@ export interface Card extends CardDef {
   /**
    * 本地卡图 URL（**已含部署 base**，可直接作为 <img src> 使用）。
    * 例：base='/' → `/cards/gb_xxx.webp`；base='/Fards/' → `/Fards/cards/gb_xxx.webp`。
-   * 文件缺失时请用 `cardImageFallbackUrl(card)`（或 <img onError>）回退到远程。
+   * 文件缺失时请用 `cardImageFallbackUrl(card)` / `imageRemote`（或 <img onError>）回退远程。
    */
   imageLocal: string;
+  /** 远程兜底卡图（wsrv.nl 代理 webp；`imageProxyUrl` 为官方代理，二者都可用） */
+  imageRemote?: string;
   /**
    * 归一化关键字（由 API `attributes` 推出，去掉了 `BecomesVeteran:*` / `VeteranOf:*` /
    * `OnlySpawnable` 这类数据标记，并把 `heavyArmor1`/`intel2` 等带等级关键字归一为基名）。
@@ -243,10 +245,13 @@ export function rarityLabel(rarity: Rarity | string): string {
  *    校验结果类型放 deckRules.ts（DeckValidation），避免重复定义。
  * ============================================================ */
 
-/** 卡组代码解码结果（便捷类型，供 deckcode/deckRules 共用） */
+/** 卡组代码解码结果（deckcode.ts 的返回类型；类型放这里避免多模块循环引用） */
 export interface DecodedDeck {
+  /** 码格式版本（官方 `%%` 前缀 = 'v1'） */
+  codeVersion?: string;
+  /** 规范化后的原始码 */
   raw: string;
   mainFaction: string;
   allyFaction: string | null;
-  cards: { cardId?: string; importId: string; count: number }[];
+  cards: Array<{ cardId: string; importId?: string; count: number }>;
 }

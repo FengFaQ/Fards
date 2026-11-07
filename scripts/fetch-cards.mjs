@@ -103,27 +103,31 @@ function countBy(list, keyFn) {
 
 /* ------------------------------------------------- 原始 → Card（camelCase） */
 
-/** 非"关键字"的 attributes：衍生标记与解锁标记 */
-const NON_KEYWORD = new Set(['onlyspawnable']);
-
 /**
  * attributes 里混了三种东西：
  *   1. 真关键字：blitz / guard / smokescreen / ambush / fury / shock / bond / alpine / pincer / covert / salvage / mobilize …
- *   2. 带等级的关键字：heavyArmor1|2|3、intel1|2|3  → 归一为 'heavyarmor' / 'intel'
+ *   2. 带等级的关键字：heavyArmor1|2|3、intel1|2|3  → 归一为 `heavyArmor:1` / `intel:2`
+ *      （格式与 src/engine/keywords.ts 的 parseAttribute 完全一致，含数值）
  *   3. 数据关联标记：BecomesVeteran:<cardId> / VeteranOf:<cardId>（老兵升级链）、OnlySpawnable（仅生成池）
- * 归一化只保留 (1)(2)，且去掉等级数字；UI 可据此做关键字图标。
+ * 归一化只保留 (1)(2)。
  */
 function normalizeKeywords(attributes) {
-  const out = new Set();
-  for (const raw of attributes ?? []) {
-    if (typeof raw !== 'string') continue;
-    if (raw.includes(':')) continue; // BecomesVeteran:xxx / VeteranOf:xxx
-    const lower = raw.toLowerCase();
-    if (NON_KEYWORD.has(lower)) continue;
-    const base = lower.replace(/^(heavyarmor|intel|armor)\d+$/, '$1');
-    out.add(base);
+  const out = [];
+  for (const attr of attributes ?? []) {
+    if (typeof attr !== 'string' || !attr) continue;
+    if (attr === 'OnlySpawnable') continue;
+    if (attr.startsWith('BecomesVeteran:') || attr.startsWith('VeteranOf:')) continue;
+    const m = /^([a-zA-Z]+)(\d+)$/.exec(attr);
+    const id = m ? `${m[1].charAt(0).toLowerCase()}${m[1].slice(1)}:${Number(m[2])}` : attr;
+    if (!out.includes(id)) out.push(id);
   }
-  return [...out];
+  return out;
+}
+
+/** wsrv.nl 代理（webp 400w）：运行时卡图远程兜底 */
+function wsrvImageUrl(rawUrl, width = 400) {
+  if (!rawUrl) return '';
+  return `https://wsrv.nl/?url=${encodeURIComponent(String(rawUrl).replace(/^https?:\/\//, ''))}&output=webp&w=${width}`;
 }
 
 function toCard(raw) {
@@ -152,6 +156,8 @@ function toCard(raw) {
     imageProxyUrl: raw.image_proxy_url,
     /** 本地卡图 URL（BASE_URL='/' 时为 /cards/<cardId>.webp；loadCards 会按部署 base 拼前缀） */
     imageLocal: `/cards/${raw.card_id}.webp`,
+    /** 远程兜底卡图（wsrv.nl webp） */
+    imageRemote: wsrvImageUrl(raw.image_url),
     keywordsNormalized: normalizeKeywords(raw.attributes),
   };
 }

@@ -42,6 +42,9 @@ export function matchesFilter(
     if (!def || !types.includes(def.type)) return false;
   }
   if (filter.keyword && !hasKeyword(unit, filter.keyword)) return false;
+  if (filter.faction && def?.faction !== filter.faction) return false;
+  if (filter.minCost !== undefined && (def?.kredits ?? 0) < filter.minCost) return false;
+  if (filter.maxCost !== undefined && (def?.kredits ?? 0) > filter.maxCost) return false;
   if (filter.minAttack !== undefined && unit.attack < filter.minAttack) return false;
   if (filter.maxAttack !== undefined && unit.attack > filter.maxAttack) return false;
   if (filter.minHp !== undefined && unit.hp < filter.minHp) return false;

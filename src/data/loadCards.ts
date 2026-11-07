@@ -77,14 +77,16 @@ export function clearDataCache(): void {
  * 3. 卡牌
  * ============================================================ */
 
-/** 规范化单张卡：补齐 imageLocal / keywordsNormalized，URL 拼上 base */
+/** 规范化单张卡：补齐 imageLocal / imageRemote / keywordsNormalized，URL 拼上 base */
 function normalizeCard(raw: Partial<Card> & { cardId?: string; card_id?: string }): Card {
   const cardId = String(raw.cardId ?? raw.card_id ?? '');
   const imageLocalRaw = String(raw.imageLocal ?? `/cards/${cardId}.webp`);
+  const imageRemote = String(raw.imageRemote ?? wsrvImageUrl(raw.imageUrl) ?? raw.imageProxyUrl ?? '');
   const card = {
     ...raw,
     cardId,
     imageLocal: withBase(imageLocalRaw),
+    imageRemote,
     keywordsNormalized: Array.isArray(raw.keywordsNormalized) ? raw.keywordsNormalized : [],
   } as Card;
   return card;

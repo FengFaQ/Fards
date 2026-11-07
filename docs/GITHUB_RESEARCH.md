@@ -160,10 +160,10 @@ repak v0.2.3 list →
 |---|---|
 | 规模 | `docs/_cards.json` 共 **1646** 张，全部有 `image_url`（`/v53/zh-Hans/`），`card_id` 无非法文件名字符、无重复 |
 | 目标路径 | `public/cards/<card_id>.webp`（应用 `dataBridge.ts:225` 的兜底是 `cards/<card_id>.avif`，**需改扩展名或去掉扩展名**） |
-| 单张体积 | wsrv `output=webp&q=82` 约 **40–65 KB**（原生尺寸）；全量约 **88 MB** |
+| 单张体积 | wsrv `output=webp` 约 **30 KB**（实测 14.8MB / 482 张）；全量约 **50 MB**（`dist/` 同步包含，Pages 1GB 限额内） |
 | 源可用性 | `www.kards.com` 直连**不可用**（本机 30s 超时；7897/7890/1080 端口无本地代理）；`herokuapi.kards.com` 同样超时 |
-| wsrv 代理 | 可用但**慢**：首取（回源）实测 **9.7s/张**；`--parallel 8` 并发会触发限流（连接 reset / 90s 超时） |
-| 全量耗时 | 本机限速慢跑约 **4–5 小时**；有代理直连 kards.com 的网络可几分钟完成 |
+| wsrv 代理 | 可用；**并发要克制**。`--parallel 8` 连续打会触发限流（连接 reset / 90s 超时），冷却后恢复 |
+| 实测吞吐 | 3–4 并发 + 150–300ms 间隔，稳定 **约 67 张/分钟** → 全量 **约 25 分钟**（首取 9.7s/张是冷启动单请求，不代表批量速率） |
 | 格式 | wsrv **不支持输出 AVIF**（`output=avif` 报 400，`format=avif` 被忽略返回 JPEG），故只能存 WebP |
 
 **已提供**：`scripts/fetch-card-images.mjs`（Node 22，零依赖，可断点续传、限速、失败重试）。
@@ -250,9 +250,9 @@ repak v0.2.3 list →
 
 ## 7. 给实现方的落地清单
 
-1. **卡图加载**：统一走 `https://wsrv.nl/?url=www.kards.com/images/card/v53/{lang}/{card_id}.avif&output=png`（本机直连 kards.com 超时，请勿硬编码直连）。
+1. **卡图加载**：本地 `public/cards/<card_id>.webp` 优先；远程兜底 `https://wsrv.nl/?url=www.kards.com/images/card/v53/{lang}/{card_id}.avif&output=webp`（本机直连 kards.com 超时，请勿硬编码直连）。`dataBridge.ts:225` 的兜底扩展名需从 `.avif` 改为 `.webp`。
 2. **卡组码**：按 §1.1 格式实现 `parseDeckCode` / `encodeDeckCode`，参考 `Infinovast/kards-toolbox`（MIT）。
 3. **导出图**：`snapdom` → PNG@2x；打印用 `@page`。字体先 `document.fonts.ready`。
 4. **状态管理**：`zustand` + 自研 effect 表；规则分层照抄 `arcomage-hd` 的思路（规则/动画/AI 解耦）。
-5. **素材**：字体取 §5.1 直链；音效取 Kenney CC0。**不提取 pak、不入库卡图。**
-6. **合规**：README 顶部放 §6.3/§6.4 声明；页脚放 AGPL 源码链接（§13 要求）与非商业声明。
+5. **素材**：字体取 §5.1 直链；音效取 Kenney CC0；卡图已按 §5.3 入库（**不提取 pak**）。
+6. **合规**：README 顶部放 §6.3/§6.4 声明；页面显著位置标注「非官方、非商业、反对法西斯主义」；页脚放 AGPL 源码链接（§13 要求）。

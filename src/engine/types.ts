@@ -459,10 +459,13 @@ export type PickMode =
 export interface UnitFilter {
   type?: CardType | CardType[];
   keyword?: KeywordId;
+  faction?: Faction;
   minAttack?: number;
   maxAttack?: number;
   minHp?: number;
   maxHp?: number;
+  minCost?: number;
+  maxCost?: number;
   damaged?: boolean;
   undamaged?: boolean;
   token?: boolean;
