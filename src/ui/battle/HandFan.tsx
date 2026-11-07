@@ -7,7 +7,7 @@ import { playCost } from '@/engine';
 import type { CardInstance, LegalAction } from '@/engine/types';
 import type { UiCard } from '../lib/dataBridge';
 import { cardKeywords, factionMeta } from '../lib/format';
-import { useBattleStore, HUMAN } from '../stores/battleStore';
+import { useBattleStore } from '../stores/battleStore';
 import CardFace from './CardFace';
 
 export interface HandFanProps {
@@ -116,9 +116,10 @@ export function HandFan({ legalByCard, byId, onHover, hoveredId }: HandFanProps)
   const selection = useBattleStore((s) => s.selection);
   const selectCard = useBattleStore((s) => s.selectCard);
   const registry = useBattleStore((s) => s.registry);
+  const myIndex = useBattleStore((s) => s.myIndex);
 
-  const hand = state?.players[HUMAN].hand ?? [];
-  const kredits = state?.players[HUMAN].kredits ?? 0;
+  const hand = state?.players[myIndex].hand ?? [];
+  const kredits = state?.players[myIndex].kredits ?? 0;
 
   const layout = useMemo(() => {
     const count = hand.length;
@@ -135,7 +136,7 @@ export function HandFan({ legalByCard, byId, onHover, hoveredId }: HandFanProps)
       {hand.map((instance, index) => {
         const card = byId.get(instance.cardId);
         const distance = index - layout.mid;
-        const cost = playCost(state, registry, HUMAN, instance);
+        const cost = playCost(state, registry, myIndex, instance);
         const action = legalByCard.get(instance.instanceId);
         const playable = !!action;
         const style = {

@@ -423,3 +423,29 @@
 | **合计** | **1517**（另 129 张衍生） | **322**（其中可构筑 298 + 衍生 24） | **19.6%（可构筑卡口径）** |
 
 脚本总数以 `src/engine/cards/index.ts#scriptCount()` 为准；脚本引用的卡牌 id 均已通过存在性校验（`_work/validate-scripts.mjs`）；custom 原语用量见第 6 节。
+
+## 10. 交付状态（脚本冻结）
+
+> 交付冻结时间：2026-11-07（阶段二收尾）。**此后不再新增卡牌脚本**，避免交付前引入回归。
+
+| 指标 | 数值 |
+|---|---|
+| 脚本注册表总数 | **322**（`src/engine/cards/index.ts#scriptCount()`） |
+| 其中可构筑卡脚本 | **298** |
+| 其中衍生卡（Token/老兵形态）脚本 | **24** |
+| 可构筑卡覆盖率 | **298 / 1517 = 19.6%** |
+| META top150 需脚本卡覆盖 | **148 / 148 = 100%** |
+| META top200 需脚本卡覆盖 | **195 / 195 = 100%** |
+| 零脚本卡（vanilla + 纯关键字） | 95（无需实现） |
+| 未实现长尾 | 可构筑约 1219 张 + 衍生老兵形态 105 张（清单：`_work/longtail-manual.md`） |
+| 未实现 custom 原语 | 见第 6 节规格表 + 6.3 长尾表（未实现时静默 no-op，不阻断对局） |
+| 质量门禁 | `npm test` 全绿（4 个测试文件 / 38 个测试，含 60 局随机对局 integration）；`tsc --noEmit` 零错误 |
+
+复现方式（全部为脚本，不依赖手工步骤）：
+
+```bash
+node _work/report.mjs            # 语料统计 + META 热度 → _work/report.json
+node _work/validate-scripts.mjs  # 注册表/引用/阵营归档校验 → _work/script-stats.json
+node _work/gen-docs.mjs          # 重新生成本文件与 META_CARDS.md
+npm test                         # 引擎 + 卡牌 + AI 全量测试
+```

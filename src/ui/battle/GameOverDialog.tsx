@@ -2,7 +2,7 @@
  * 结算弹窗：胜负 / 原因 / 关键统计 + 再来一局 / 返回部署。
  */
 import { Link } from 'react-router-dom';
-import { useBattleStore, HUMAN, AI } from '../stores/battleStore';
+import { useBattleStore } from '../stores/battleStore';
 import Dialog from '../components/Dialog';
 import { IconRefresh, IconSwords, IconTrophy, IconAlert } from '../components/icons';
 
@@ -20,39 +20,52 @@ export function GameOverDialog() {
   const difficulty = useBattleStore((state) => state.difficulty);
   const retry = useBattleStore((state) => state.restartBattle);
   const quit = useBattleStore((state) => state.quitToSetup);
+  const myIndex = useBattleStore((state) => state.myIndex);
+  const oppIndex = useBattleStore((state) => state.oppIndex);
+  const mode = useBattleStore((state) => state.mode);
+  const lanPeerName = useBattleStore((state) => state.lanPeerName);
 
   const open = phase === 'finished' && !!result;
   if (!open || !result) return null;
 
-  const won = result.winner === HUMAN;
+  const isLan = mode === 'lan-host' || mode === 'lan-guest';
+  const won = result.winner === myIndex;
   const draw = result.winner === null;
   const title = draw ? '战局胶着' : won ? '胜利' : '败北';
   const tone = draw ? 'text-brass-300' : won ? 'text-emerald-300' : 'text-red-300';
   const Icon = draw ? IconAlert : won ? IconTrophy : IconAlert;
-  const me = state?.players[HUMAN];
-  const enemy = state?.players[AI];
+  const me = state?.players[myIndex];
+  const enemy = state?.players[oppIndex];
   const unitsDeployed = state?.trackers.unitsDeployed ?? 0;
 
   return (
     <Dialog
       open
       onClose={quit}
-      eyebrow="战斗结束"
+      eyebrow={isLan ? '局域网对战结束' : '战斗结束'}
       title={title}
       width="md"
       footer={
         <div className="flex flex-wrap items-center justify-between gap-2">
           <button type="button" className="fards-btn fards-btn-ghost" onClick={quit}>
-            返回部署
+            {isLan ? '返回准备' : '返回部署'}
           </button>
           <div className="flex items-center gap-2">
-            <Link to="/deck" className="fards-btn fards-btn-ghost">
-              返回卡组
-            </Link>
-            <button type="button" className="fards-btn fards-btn-primary" onClick={() => void retry()}>
-              <IconRefresh size={13} />
-              再来一局
-            </button>
+            {isLan ? (
+              <Link to="/lan" className="fards-btn fards-btn-primary" onClick={() => quit()}>
+                返回大厅
+              </Link>
+            ) : (
+              <>
+                <Link to="/deck" className="fards-btn fards-btn-ghost">
+                  返回卡组
+                </Link>
+                <button type="button" className="fards-btn fards-btn-primary" onClick={() => void retry()}>
+                  <IconRefresh size={13} />
+                  再来一局
+                </button>
+              </>
+            )}
           </div>
         </div>
       }
@@ -70,6 +83,7 @@ export function GameOverDialog() {
             <p className="mt-1.5 font-body text-[11px] text-field-400">
               结束原因：{REASON_TEXT[result.reason] ?? result.reason}
               {state ? ` · 共 ${state.turn} 个回合 / ${state.round} 轮` : ''}
+              {isLan && lanPeerName ? ` · 对手 ${lanPeerName}` : ''}
             </p>
           </div>
         </div>
@@ -80,9 +94,17 @@ export function GameOverDialog() {
             { label: '敌方总部', value: `${enemy?.hq.hp ?? 0}/${enemy?.hq.maxHp ?? 0}`, hint: '剩余生命' },
             { label: '部署单位', value: `${unitsDeployed}`, hint: '全场累计' },
             {
-              label: '难度',
-              value: difficulty === 'easy' ? '新兵' : difficulty === 'hard' ? '王牌' : '老兵',
-              hint: 'AI 档位',
+              label: isLan ? '模式' : '难度',
+              value: isLan
+                ? mode === 'lan-host'
+                  ? '房主'
+                  : '客机'
+                : difficulty === 'easy'
+                  ? '新兵'
+                  : difficulty === 'hard'
+                    ? '王牌'
+                    : '老兵',
+              hint: isLan ? '局域网' : 'AI 档位',
             },
           ].map((item) => (
             <div
@@ -98,7 +120,9 @@ export function GameOverDialog() {
 
         <p className="flex items-center gap-2 font-body text-[10px] leading-relaxed text-field-500">
           <IconSwords size={12} className="shrink-0 text-brass-500" />
-          本局使用同一套卡组重开；换卡组请返回卡组页调整编制。
+          {isLan
+            ? '局域网对局不保存战绩；返回大厅可再开一局（双方卡组会重新交接）。'
+            : '本局使用同一套卡组重开；换卡组请返回卡组页调整编制。'}
         </p>
       </div>
     </Dialog>

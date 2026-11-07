@@ -3,14 +3,14 @@
  * 只读 store，所有交互经 store 里的 legalActions 校验后提交引擎。
  */
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { legalActions } from '@/engine';
 import type { LegalAction } from '@/engine/types';
 import type { UiCard } from '../lib/dataBridge';
 import { cardTypeMeta, factionMeta, factionZh, rarityMeta } from '../lib/format';
 import { IconAlert, IconArrowRight, IconPlay, IconSwords, IconX } from '../components/icons';
 import Dialog from '../components/Dialog';
-import { AI, HUMAN, useBattleStore } from '../stores/battleStore';
-import BattleRows, { refsToKeys } from './BattleRows';
+import { AI, HUMAN, useBattleStore } from '../stores/battleStore';import BattleRows, { refsToKeys } from './BattleRows';
 import CardFace from './CardFace';
 import ChoiceDialog from './ChoiceDialog';
 import GameOverDialog from './GameOverDialog';
@@ -68,6 +68,30 @@ export function BattleScreen() {
   const hqHits = useBattleStore((s) => s.hqHits);
   const logOpen = useBattleStore((s) => s.logOpen);
 
+  /* ---------------- 局域网 ---------------- */
+  const mode = useBattleStore((s) => s.mode);
+  const myIndex = useBattleStore((s) => s.myIndex);
+  const oppIndex = useBattleStore((s) => s.oppIndex);
+  const lanRole = useBattleStore((s) => s.lanRole);
+  const lanRoomCode = useBattleStore((s) => s.lanRoomCode);
+  const lanPeerName = useBattleStore((s) => s.lanPeerName);
+  const lanStatus = useBattleStore((s) => s.lanStatus);
+  const lanError = useBattleStore((s) => s.lanError);
+  const lanLegal = useBattleStore((s) => s.lanLegal);
+  const lanPeerLeft = useBattleStore((s) => s.lanPeerLeft);
+  const lanLeave = useBattleStore((s) => s.lanLeave);
+  const navigate = useNavigate();
+  const goLobby = () => {
+    lanLeave();
+    navigate('/lan');
+  };
+  const goSetup = () => {
+    lanLeave();
+    quitToSetup();
+  };
+  const isLan = mode === 'lan-host' || mode === 'lan-guest';
+  const lanBroken = isLan && (lanStatus === 'closed' || lanStatus === 'error' || lanPeerLeft);
+
   const selectUnit = useBattleStore((s) => s.selectUnit);
   const clickTarget = useBattleStore((s) => s.clickTarget);
   const cancelSelection = useBattleStore((s) => s.cancelSelection);
@@ -82,8 +106,10 @@ export function BattleScreen() {
 
   const legal = useMemo(() => {
     if (!state || !registry || phase !== 'playing') return EMPTY_LEGAL;
-    if (state.pendingChoice || state.activePlayer !== HUMAN) return EMPTY_LEGAL;
-    const actions = legalActions(state, registry, HUMAN);
+    if (state.pendingChoice || state.activePlayer !== myIndex) return EMPTY_LEGAL;
+    // 客机只认 host 下发的合法动作，绝不本地计算
+    const actions =
+      mode === 'lan-guest' ? lanLegal : legalActions(state, registry, myIndex);
     const byCard = new Map<string, LegalAction>();
     const byUnit = new Map<string, LegalAction>();
     const moveByUnit = new Map<string, LegalAction>();
@@ -93,7 +119,7 @@ export function BattleScreen() {
       else if (action.kind === 'moveUnit' && action.unitId) moveByUnit.set(action.unitId, action);
     }
     return { byCard, byUnit, moveByUnit };
-  }, [state, registry, phase]);
+  }, [state, registry, phase, mode, lanLegal, myIndex]);
 
   const targetKeys = useMemo(
     () => (selection ? refsToKeys(selection.refs) : EMPTY_KEYS),
@@ -136,13 +162,13 @@ export function BattleScreen() {
 
   if (!state) return null;
 
-  const me = state.players[HUMAN];
-  const enemy = state.players[AI];
-  const myTurn = phase === 'playing' && state.activePlayer === HUMAN && !state.pendingChoice;
+  const me = state.players[myIndex];
+  const enemy = state.players[oppIndex];
+  const myTurn = phase === 'playing' && state.activePlayer === myIndex && !state.pendingChoice;
   const hoveredCard = hoveredId ? byId.get(hoveredId) ?? null : null;
   const myFaction = factionMeta(me.faction);
-  const hqTargetEnemy = targetKeys.has('hq:1');
-  const hqTargetSelf = targetKeys.has('hq:0');
+  const hqTargetEnemy = targetKeys.has(`hq:${oppIndex}`);
+  const hqTargetSelf = targetKeys.has(`hq:${myIndex}`);
 
   return (
     <div
@@ -172,6 +198,17 @@ export function BattleScreen() {
             <span style={{ color: myFaction.color }}>{factionZh(me.faction)}</span>
             {playerDeck ? ` · ${playerDeck.name}` : ''}
           </span>
+          {isLan && (
+            <span
+              className="flex items-center gap-1.5 rounded-sm border border-brass-500/50 bg-brass-500/10 px-2 py-[3px] font-body text-[9px] tracking-[0.14em] text-brass-200"
+              title={`局域网对战 · 我是${lanRole === 'host' ? '房主（权威端）' : '客机（渲染端）'}`}
+            >
+              <span className="battle-pulse-dot h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              局域网{lanRoomCode ? ` · 房间 ${lanRoomCode}` : ''}
+              {lanPeerName ? ` · 对手 ${lanPeerName}` : ''}
+              <span className="text-brass-400/70">{lanRole === 'host' ? 'HOST' : 'GUEST'}</span>
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-2">
@@ -182,15 +219,15 @@ export function BattleScreen() {
           </span>
           <span
             className={`flex items-center gap-1.5 rounded-sm border px-2 py-[3px] font-body text-[9px] tracking-[0.16em] ${
-              state.activePlayer === HUMAN
+              state.activePlayer === myIndex
                 ? 'border-brass-500/60 bg-brass-500/10 text-brass-200'
                 : 'border-ink-red/50 bg-ink-red/10 text-red-300'
             }`}
           >
             <span
-              className={`h-1.5 w-1.5 rounded-full ${state.activePlayer === HUMAN ? 'bg-brass-400' : 'bg-ink-red'} ${aiThinking ? 'battle-pulse-dot' : ''}`}
+              className={`h-1.5 w-1.5 rounded-full ${state.activePlayer === myIndex ? 'bg-brass-400' : 'bg-ink-red'} ${aiThinking ? 'battle-pulse-dot' : ''}`}
             />
-            {state.activePlayer === HUMAN ? '我方行动' : '敌方行动'}
+            {state.activePlayer === myIndex ? '我方行动' : isLan ? '对手行动' : '敌方行动'}
           </span>
           {aiThinking && (
             <span className="flex items-center gap-1.5 rounded-sm border border-field-600/60 bg-field-950/80 px-2 py-[3px] font-body text-[9px] tracking-[0.16em] text-field-300">
@@ -198,9 +235,11 @@ export function BattleScreen() {
               AI 行动中
             </span>
           )}
-          <span className="hidden rounded-sm border border-field-700/60 px-2 py-[3px] font-body text-[9px] tracking-[0.14em] text-field-500 sm:block">
-            {DIFFICULTY_ZH[difficulty] ?? difficulty}
-          </span>
+          {!isLan && (
+            <span className="hidden rounded-sm border border-field-700/60 px-2 py-[3px] font-body text-[9px] tracking-[0.14em] text-field-500 sm:block">
+              {DIFFICULTY_ZH[difficulty] ?? difficulty}
+            </span>
+          )}
           <button
             type="button"
             onClick={toggleLog}
@@ -228,11 +267,11 @@ export function BattleScreen() {
           <PlayerBar
             player={enemy}
             isSelf={false}
-            isActive={state.activePlayer === AI}
+            isActive={state.activePlayer === oppIndex}
             targetable={hqTargetEnemy}
-            hqHitAt={hqHits['hq:1']}
-            floats={fxByKey['hq:1']}
-            onClick={() => clickTarget({ kind: 'hq', player: AI })}
+            hqHitAt={hqHits[`hq:${oppIndex}`]}
+            floats={fxByKey[`hq:${oppIndex}`]}
+            onClick={() => clickTarget({ kind: 'hq', player: oppIndex })}
           />
 
           <BattleRows
@@ -240,16 +279,18 @@ export function BattleScreen() {
             onUnitClick={selectUnit}
             moveTarget={moveTarget}
             onSlotClick={chooseSlot}
+            myIndex={myIndex}
+            oppIndex={oppIndex}
           />
 
           <PlayerBar
             player={me}
             isSelf
-            isActive={state.activePlayer === HUMAN}
+            isActive={state.activePlayer === myIndex}
             targetable={hqTargetSelf}
-            hqHitAt={hqHits['hq:0']}
-            floats={fxByKey['hq:0']}
-            onClick={() => clickTarget({ kind: 'hq', player: HUMAN })}
+            hqHitAt={hqHits[`hq:${myIndex}`]}
+            floats={fxByKey[`hq:${myIndex}`]}
+            onClick={() => clickTarget({ kind: 'hq', player: myIndex })}
           />
         </div>
 
@@ -396,13 +437,38 @@ export function BattleScreen() {
         </div>
       )}
 
+      {/* 局域网断线/离开覆盖层 */}
+      {lanBroken && (
+        <div className="absolute inset-0 z-[70] flex items-center justify-center bg-field-950/85 backdrop-blur-sm">
+          <div className="fards-panel w-[min(92vw,420px)] border-ink-red/40 p-5 text-center">
+            <p className="fards-label text-[10px] text-ink-red">局域网连接中断</p>
+            <h2 className="mt-1 font-display text-lg tracking-[0.14em] text-field-100">
+              {lanPeerLeft ? '对手已离开房间' : lanStatus === 'closed' ? '连接已断开' : '连接异常'}
+            </h2>
+            <p className="mt-2 font-body text-[11px] leading-relaxed text-field-400">
+              {lanPeerLeft
+                ? '对手离开了房间或关闭了页面，本局无法继续。返回大厅可以重新建房/加入。'
+                : lanError ?? '与对端的连接已断开，本局无法继续。'}
+            </p>
+            <div className="mt-4 flex items-center justify-center gap-2">
+              <button type="button" className="fards-btn fards-btn-primary" onClick={goLobby}>
+                返回大厅
+              </button>
+              <button type="button" className="fards-btn fards-btn-ghost" onClick={goSetup}>
+                退出到准备
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ChoiceDialog />
       <GameOverDialog />
 
       <Dialog
         open={confirm !== null}
         onClose={() => setConfirm(null)}
-        eyebrow={confirm === 'surrender' ? '确认投降' : '撤离战场'}
+        eyebrow={confirm === 'surrender' ? '确认投降' : isLan ? '离开对局' : '撤离战场'}
         title={confirm === 'surrender' ? '放弃本局？' : '离开战场？'}
         width="sm"
         footer={
@@ -417,6 +483,7 @@ export function BattleScreen() {
                 const action = confirm;
                 setConfirm(null);
                 if (action === 'surrender') surrender();
+                else if (isLan) goLobby();
                 else quitToSetup();
               }}
             >
@@ -428,7 +495,9 @@ export function BattleScreen() {
         <p className="font-body text-[12px] leading-relaxed text-field-300">
           {confirm === 'surrender'
             ? '投降将立即判负并结束本局，战绩不会保存。准备换一套编制再战？'
-            : '撤离会放弃当前对局并返回部署界面，本局进度不会保留。'}
+            : isLan
+              ? '离开会断开与对手的局域网连接（对手会收到“对手已离开”提示），本局进度不会保留。'
+              : '撤离会放弃当前对局并返回部署界面，本局进度不会保留。'}
         </p>
       </Dialog>
     </div>

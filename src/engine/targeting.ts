@@ -344,9 +344,13 @@ export function legalActions(state: GameState, reg: EngineRegistry, player: Play
   if (state.pendingChoice) return [];
   const actions: LegalAction[] = [];
   const p = state.players[player];
+  const deployLocked = (p.trackers['restrict:deploy:untilTurn'] ?? 0) >= state.turn;
+  const attackLocked = (p.trackers['restrict:attack:untilTurn'] ?? 0) >= state.turn;
   for (const instance of p.hand) {
     const def = getDef(reg, instance.cardId);
     if (!def) continue;
+    // 被反制封锁部署时，单位卡不可打出（指令/反制仍可用）
+    if (deployLocked && !isOrderCardType(def.type)) continue;
     const cost = playCost(state, reg, player, instance);
     if (cost > p.kredits) continue;
     const action = legalActionsForCard(state, reg, player, instance);
@@ -358,6 +362,7 @@ export function legalActions(state: GameState, reg: EngineRegistry, player: Play
     actions.push(action);
   }
   for (const unit of playerUnits(state, player)) {
+    if (attackLocked) break;
     if (!canUnitAttack(state, unit)) continue;
     const refs = legalAttackTargets(state, reg, unit);
     if (refs.length === 0) continue;

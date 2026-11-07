@@ -222,6 +222,55 @@ export function IconRefresh(props: IconProps) {
   );
 }
 
+export function IconWifi(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M2.5 8.5a15 15 0 0 1 19 0" />
+      <path d="M5.5 12a10.5 10.5 0 0 1 13 0" />
+      <path d="M8.5 15.4a6 6 0 0 1 7 0" />
+      <path d="M12 19h.01" />
+    </svg>
+  );
+}
+
+export function IconUser(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M4.5 21a7.5 7.5 0 0 1 15 0" />
+    </svg>
+  );
+}
+
+export function IconUsers(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <circle cx="9" cy="8" r="3.5" />
+      <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+      <path d="M16 5.2a3.5 3.5 0 0 1 0 6.6M17.5 20a6.5 6.5 0 0 0-2-4.7" />
+    </svg>
+  );
+}
+
+export function IconLogout(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5" />
+      <path d="M15 8l4 4-4 4M19 12H9" />
+    </svg>
+  );
+}
+
+export function IconServer(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="3" y="4" width="18" height="6" rx="1.2" />
+      <rect x="3" y="14" width="18" height="6" rx="1.2" />
+      <path d="M7 7h.01M7 17h.01M11 7h6M11 17h6" />
+    </svg>
+  );
+}
+
 export function IconCompass(props: IconProps) {
   return (
     <svg {...base(props)}>

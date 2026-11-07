@@ -12,8 +12,9 @@ export function ChoiceDialog() {
   const state = useBattleStore((state) => state.state);
   const byId = useBattleStore((state) => state.byId);
   const resolve = useBattleStore((state) => state.resolveChoiceWith);
+  const myIndex = useBattleStore((state) => state.myIndex);
 
-  if (!choice || choice.player !== 0 || !state) return null;
+  if (!choice || choice.player !== myIndex || !state) return null;
 
   const options = (choice.options ?? []).filter((option) => !option.disabled);
   const unitCandidates = (choice.unitCandidates ?? [])

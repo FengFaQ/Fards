@@ -6,9 +6,13 @@
  */
 import { useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { getLanSession } from '@/net/lanSession';
 import { useBattleStore } from '../ui/stores/battleStore';
+import { useDeckStore } from '../ui/stores/deckStore';
 import BattleScreen from '../ui/battle/BattleScreen';
+import LanWaiting from '../ui/battle/LanWaiting';
 import SetupScreen from '../ui/battle/SetupScreen';
+import { lanDeckForFaction, fromDeckPayload, toDeckPayload } from '../ui/battle/lan';
 import { IconAlert } from '../ui/components/icons';
 import '../ui/battle/battle.css';
 
@@ -74,7 +78,12 @@ export default function BattlePage() {
   const difficultyArg = params.get('difficulty');
   const seedArg = params.get('seed');
   const simulate = Number(params.get('simulate') ?? '0');
+  const modeParam = params.get('mode');
+  const roleParam = params.get('role');
+  const roomParam = params.get('room');
+  const nameParam = params.get('name');
   const autoStarted = useRef(false);
+  const lanInitRef = useRef(false);
 
   useEffect(() => {
     void init();
@@ -92,6 +101,7 @@ export default function BattlePage() {
   useEffect(() => {
     if (!autostart || autoStarted.current) return;
     if (!hasRegistry || phase !== 'setup') return;
+    if (modeParam === 'lan') return;
     autoStarted.current = true;
     void (async () => {
       await startFromQuery({ deck: deckArg, faction: factionArg, difficulty: difficultyArg, seed: seedArg });
@@ -99,10 +109,70 @@ export default function BattlePage() {
         useBattleStore.getState().debugSimulate(Math.floor(simulate));
       }
     })();
-  }, [autostart, deckArg, factionArg, difficultyArg, seedArg, simulate, hasRegistry, phase, startFromQuery]);
+  }, [autostart, deckArg, factionArg, difficultyArg, seedArg, simulate, hasRegistry, phase, startFromQuery, modeParam]);
+
+  // 局域网入口：#/battle?mode=lan&role=host|guest[&room=ABCD][&deck=Germany][&name=xxx][&seed=1]
+  // 连接保持在 getLanSession() 单例里，路由切换不会断开；大厅已建房/加入时这里只挂监听。
+  useEffect(() => {
+    if (modeParam !== 'lan' || (roleParam !== 'host' && roleParam !== 'guest')) return;
+    if (!hasRegistry || lanInitRef.current) return;
+    lanInitRef.current = true;
+    void (async () => {
+      const session = getLanSession();
+      const role: 'host' | 'guest' = roleParam === 'guest' ? 'guest' : 'host';
+      const name = (nameParam ?? '').trim() || (role === 'host' ? '房主' : '客机');
+      const seedNum = Number(seedArg);
+      const seed = Number.isFinite(seedNum) && seedNum > 0 ? Math.floor(seedNum) : 20261107;
+      const store = useBattleStore.getState();
+      const cards = store.cards;
+      const savedDecks = useDeckStore.getState().decks;
+      const wanted = (deckArg ?? '').trim();
+      const saved = savedDecks.find((deck) => deck.id === wanted || deck.name === wanted) ?? null;
+      // 优先用大厅已交给 session 的卡组（joinRoom/createRoom 时传入的真实卡组）
+      const sessionDeck = session.getDeck();
+      const deck =
+        (sessionDeck ? fromDeckPayload(sessionDeck) : null) ??
+        saved ??
+        lanDeckForFaction(wanted || (role === 'host' ? 'Germany' : 'Soviet'), cards, seed).deck;
+      const deckName = sessionDeck?.name ?? saved?.name ?? `${deck.faction} 局域网战斗群`;
+      try {
+        if (role === 'host') {
+          if (!session.snapshot.roomCode) {
+            await session.createRoom(name, toDeckPayload(deck, name));
+          }
+          store.lanAttachHost({ selfDeck: deck, selfName: name, autoStart: true, seed });
+          await store.lanStartHostGame({ seed });
+        } else {
+          const room = (roomParam ?? '').trim();
+          if (!session.snapshot.roomCode) {
+            if (!room) throw new Error('缺少房间码（room=XXXX）');
+            await session.joinRoom(room, name, toDeckPayload(deck, name));
+          }
+          store.lanAttachGuest({ selfDeck: deck, selfName: name });
+        }
+        useBattleStore.setState({
+          playerDeck: {
+            faction: deck.faction,
+            allyFaction: deck.allyFaction,
+            name: deckName,
+            count: deck.cards.reduce((sum, entry) => sum + entry.count, 0),
+          },
+        });
+      } catch (err) {
+        console.error('[battle] 局域网初始化失败', err);
+        useBattleStore.getState().lanFail(err instanceof Error ? err.message : '局域网连接失败');
+      }
+    })();
+  }, [modeParam, roleParam, roomParam, deckArg, nameParam, seedArg, hasRegistry]);
+
+  const mode = useBattleStore((state) => state.mode);
+  const storeState = useBattleStore((state) => state.state);
 
   if (phase === 'boot' || (booting && !hasRegistry)) return <BootScreen />;
   if (!hasRegistry) return <ErrorScreen message={error ?? '未加载到任何卡牌'} />;
+  if (mode === 'lan-host' || mode === 'lan-guest') {
+    return storeState ? <BattleScreen /> : <LanWaiting />;
+  }
   if (phase === 'setup') return <SetupScreen />;
   return <BattleScreen />;
 }

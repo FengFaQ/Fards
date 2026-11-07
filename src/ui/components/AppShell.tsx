@@ -6,6 +6,7 @@ const NAV = [
   { to: '/cards', label: '卡牌图鉴', hint: 'COLLECTION' },
   { to: '/deck', label: '卡组构筑', hint: 'DECK BUILDER' },
   { to: '/battle', label: '开始对战', hint: 'BATTLE' },
+  { to: '/lan', label: '局域网', hint: 'LAN' },
   { to: '/about', label: '关于', hint: 'ABOUT' },
 ];
 

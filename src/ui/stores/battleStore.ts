@@ -21,8 +21,10 @@ import type {
   TargetRef,
 } from '@/engine/types';
 import type { DeckData, UiCard } from '../lib/dataBridge';
-import { loadAllCards } from '../lib/dataBridge';
+import { loadAllCards, validateDeckWithLayer } from '../lib/dataBridge';
 import { DECK_FACTIONS, factionMeta } from '../lib/format';
+import { getLanSession, type LanStatus } from '@/net/lanSession';
+import type { LanDeckPayload, LanGameView } from '@/net/protocol';
 import { useDeckStore } from './deckStore';
 import {
   getEngineAI,
@@ -32,11 +34,15 @@ import {
   type EngineAIModule,
 } from '../battle/aiBridge';
 import { visibleLegalActions } from '../battle/legal';
+import { buildGuestView, fromDeckPayload, readLanHandoffSafe, toDeckPayload } from '../battle/lan';
 import { buildQuickDeck, divisionName, quickDeckName } from '../battle/decks';
 import { buildCardIndex, buildRegistry } from '../battle/registry';
 
 export const HUMAN: PlayerIndex = 0;
 export const AI: PlayerIndex = 1;
+
+/** 对局运行模式：本地 AI / 局域网房主（权威端）/ 局域网客机（只渲染） */
+export type BattleMode = 'ai' | 'lan-host' | 'lan-guest';
 
 export type BattlePhase = 'boot' | 'setup' | 'playing' | 'finished';
 
@@ -105,6 +111,24 @@ export interface HintFx {
   at: number;
 }
 
+/** host/guest 挂载局域网监听时的可选参数（大厅与调试参数共用） */
+export interface LanAttachOptions {
+  /** 自己的卡组（host 用于开局，guest 仅记录） */
+  selfDeck?: DeckData;
+  selfName?: string;
+  /** 调试：收到 guest 报到并校验通过后自动开局 */
+  autoStart?: boolean;
+  seed?: number;
+}
+
+/** host 开局参数（大厅点「开始对战」时也可直接调用） */
+export interface LanStartOptions {
+  hostDeck?: DeckData;
+  guestDeck?: DeckData;
+  seed?: number;
+  firstPlayer?: PlayerIndex;
+}
+
 interface BattleStore {
   /* ---------------- 数据 ---------------- */
   phase: BattlePhase;
@@ -130,6 +154,30 @@ interface BattleStore {
   hint: HintFx | null;
   shakeKey: string | null;
 
+  /* ---------------- 局域网对战 ---------------- */
+  mode: BattleMode;
+  /** 我方的玩家下标（AI 对局/房主 = 0，客机 = 1） */
+  myIndex: PlayerIndex;
+  oppIndex: PlayerIndex;
+  lanRole: 'host' | 'guest' | null;
+  lanRoomCode: string | null;
+  lanSelfName: string | null;
+  lanPeerName: string | null;
+  lanStatus: LanStatus;
+  lanError: string | null;
+  lanDeckOk: boolean;
+  lanDeckErrors: string[];
+  /** guest 视角：host 下发的合法动作（禁止本地计算） */
+  lanLegal: LegalAction[];
+  /** 已应用的视图版本（用于丢弃过期视图） */
+  lanSeq: number;
+  lanGuestDeck: DeckData | null;
+  lanHostDeck: DeckData | null;
+  /** 对手已离开（对端断开/退房） */
+  lanPeerLeft: boolean;
+  /** 是否已挂载 lan 监听（幂等保护） */
+  lanAttached: boolean;
+
   /* ---------------- 特效 ---------------- */
   banner: BannerFx | null;
   fxByKey: Record<string, FloatFx[]>;
@@ -147,6 +195,20 @@ interface BattleStore {
   /** 调试/QA 入口：#/battle?autostart=1&deck=<deckId|faction>&faction=...&difficulty=...&seed=... */
   startFromQuery: (query: StartQuery) => Promise<void>;
   debugSimulate: (rounds: number) => void;
+
+  /* ---------------- 局域网 ---------------- */
+  /** host：挂监听（guest 指令/抉择/报到/视图镜像）。幂等 */
+  lanAttachHost: (options?: LanAttachOptions) => void;
+  /** guest：挂监听（start/view）。幂等 */
+  lanAttachGuest: (options?: LanAttachOptions) => void;
+  /** 解绑 lan 监听 */
+  lanDetach: () => void;
+  /** host：建房开局并把初始视图下发给 guest（大厅点开始 / BattlePage 自动调用） */
+  lanStartHostGame: (options?: LanStartOptions) => Promise<void>;
+  /** 任一方：失败提示（连接异常等） */
+  lanFail: (message: string) => void;
+  /** 任一方：离开房间并回到准备界面 */
+  lanLeave: () => void;
 
   /* ---------------- 玩家操作 ---------------- */
   selectCard: (instanceId: string) => void;
@@ -328,6 +390,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       setHint('操作执行失败，已忽略');
       return false;
     }
+    lanLastEvents = events;
 
     const patch = buildFxPatch(current, next, events);
     const updates: Partial<BattleStore> = {
@@ -340,18 +403,174 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       updates.phase = 'finished';
       updates.result = { winner: next.winner, reason: next.endReason ?? 'hq_destroyed' };
       updates.aiThinking = false;
-    } else if (next.activePlayer === HUMAN && !next.pendingChoice) {
+    } else if (next.activePlayer === snapshot.myIndex && !next.pendingChoice) {
       aiActionCount = 0;
       updates.aiThinking = false;
     }
     set(updates);
+    // 房主权威：任何状态变化后都要把脱敏视图同步给客机
+    if (get().mode === 'lan-host') broadcastGuestView(events);
     // 移动不产生事件（引擎只在撤退时记日志），因此单独放行
     return events.length > 0 || command.type === 'moveUnit';
+  };
+
+  /* ---------------- 局域网（host 权威 / guest 只渲染） ---------------- */
+
+  let lanUnsubs: Array<() => void> = [];
+  let lanLastEvents: GameEvent[] = [];
+  let lanAutoStart = false;
+  let lanAutoSeed = 1;
+
+  const clearLanListeners = () => {
+    for (const off of lanUnsubs) {
+      try {
+        off();
+      } catch {
+        /* 忽略 */
+      }
+    }
+    lanUnsubs = [];
+    set({ lanAttached: false });
+  };
+
+  const mirrorLanSnapshot = () => {
+    const snapshot = getLanSession().snapshot;
+    const previousPeer = get().lanPeerName;
+    const peerLeft =
+      get().lanPeerLeft ||
+      // 对局中对手名字从有到无 = 对端已离开（服务器发 peerLeave）
+      (!snapshot.peerName && !!previousPeer && !!get().state);
+    set({
+      lanRole: snapshot.role ?? get().lanRole,
+      lanRoomCode: snapshot.roomCode,
+      lanStatus: snapshot.status,
+      lanError: snapshot.error,
+      lanDeckOk: snapshot.guestDeckOk,
+      lanDeckErrors: snapshot.guestDeckErrors,
+      lanPeerName: snapshot.peerName ?? get().lanPeerName,
+      lanSelfName: snapshot.selfName || get().lanSelfName,
+      lanPeerLeft: peerLeft,
+    });
+  };
+
+  /** guest：应用 host 下发的视图（丢弃过期 seq） */
+  const applyGuestView = (view: LanGameView, events: GameEvent[] = []) => {
+    const snapshot = get();
+    if (!view || typeof view.seq !== 'number') return;
+    if (view.seq <= snapshot.lanSeq) return;
+    const prev = snapshot.state;
+    const fx = prev ? buildFxPatch(prev, view.state, events) : {};
+    const finished = view.state.status === 'finished';
+    set({
+      state: view.state,
+      lanLegal: view.legalActions ?? [],
+      lanSeq: view.seq,
+      phase: finished ? 'finished' : 'playing',
+      result: finished
+        ? { winner: view.state.winner, reason: view.state.endReason ?? 'hq_destroyed' }
+        : null,
+      selection: null,
+      aiThinking: false,
+      ...fx,
+    });
+  };
+
+  /** host：构造并广播 guest 视图 */
+  const broadcastGuestView = (events: GameEvent[] = lanLastEvents) => {
+    const snapshot = get();
+    if (snapshot.mode !== 'lan-host' || !snapshot.state || !snapshot.registry) return;
+    const seq = snapshot.lanSeq + 1;
+    set({ lanSeq: seq });
+    try {
+      getLanSession().broadcastView(buildGuestView(snapshot.state, snapshot.registry, seq), events);
+    } catch (error) {
+      console.warn('[battle] 广播对局视图失败', error);
+    }
+  };
+
+  const handleGuestCommand = (command: GameCommand) => {
+    const snapshot = get();
+    if (snapshot.mode !== 'lan-host' || !snapshot.state || !snapshot.registry) return;
+    if (!command || typeof command !== 'object') return;
+    if (snapshot.state.activePlayer !== AI) return;
+    // 客机永远是玩家 1（引擎校验 player 必须等于 activePlayer）
+    commitCmd({ ...command, player: AI } as GameCommand);
+  };
+
+  const handleGuestChoice = (choiceId: string, selection: string[]) => {
+    const snapshot = get();
+    if (snapshot.mode !== 'lan-host' || !snapshot.state) return;
+    const choice = snapshot.state.pendingChoice;
+    if (!choice || choice.choiceId !== choiceId) return;
+    commitCmd({
+      type: 'resolveChoice',
+      player: snapshot.state.activePlayer,
+      choiceId,
+      selection: Array.isArray(selection) ? selection : [],
+    });
+  };
+
+  const handleHello = (message: { name?: string; deck?: LanDeckPayload }) => {
+    const snapshot = get();
+    if (snapshot.mode !== 'lan-host' || !message?.deck) return;
+    const deck = fromDeckPayload(message.deck);
+    const check = validateDeckWithLayer(deck);
+    const ok = check ? check.legal : deck.cards.length > 0;
+    const errors = check ? check.errors : [];
+    if (message.name) set({ lanPeerName: message.name });
+    try {
+      getLanSession().sendDeckCheck(ok, errors);
+    } catch {
+      /* 忽略 */
+    }
+    if (!ok) {
+      set({ lanDeckOk: false, lanDeckErrors: errors });
+      return;
+    }
+    set({ lanGuestDeck: deck, lanDeckOk: true, lanDeckErrors: [] });
+    if (lanAutoStart && !get().state) {
+      void get().lanStartHostGame({ guestDeck: deck, seed: lanAutoSeed });
+    }
+  };
+
+  const bindLanSnapshot = () => {
+    const session = getLanSession();
+    lanUnsubs.push(session.subscribe(() => mirrorLanSnapshot()));
+    mirrorLanSnapshot();
+  };
+
+  /** 统一提交通道：guest 发网络、host/ai 本地 applyCommand */
+  const submitCommand = (command: GameCommand): boolean => {
+    if (get().mode === 'lan-guest') {
+      try {
+        getLanSession().sendCommand({ ...command, player: get().myIndex } as GameCommand);
+      } catch (error) {
+        console.warn('[battle] 指令发送失败', error);
+        setHint('网络异常，指令未发出');
+        return false;
+      }
+      set({ selection: null });
+      return true;
+    }
+    return commitCmd(command);
+  };
+
+  /**
+   * 当前玩家可执行动作：
+   * - AI 对局 / 局域网房主：本地 legalActions（过滤反制限制）
+   * - 局域网客机：只用 host 下发的 lanLegal（禁止本地计算）
+   */
+  const currentActions = (): LegalAction[] => {
+    const snapshot = get();
+    if (!snapshot.state || !snapshot.registry) return [];
+    if (snapshot.mode === 'lan-guest') return snapshot.lanLegal;
+    return visibleLegalActions(snapshot.state, snapshot.registry, snapshot.myIndex);
   };
 
   /* ---------------- AI 循环 ---------------- */
 
   const shouldAI = (state: GameState | null): boolean => {
+    if (get().mode !== 'ai') return false;
     if (!state || state.status !== 'playing') return false;
     if (state.pendingChoice) return state.pendingChoice.player === AI;
     return state.activePlayer === AI;
@@ -360,6 +579,10 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
   async function aiStep(): Promise<void> {
     const snapshot = get();
     const state = snapshot.state;
+    if (snapshot.mode !== 'ai') {
+      set({ aiThinking: false });
+      return;
+    }
     if (snapshot.phase !== 'playing' || !state || !snapshot.registry) {
       set({ aiThinking: false });
       return;
@@ -514,6 +737,24 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
     hint: null,
     shakeKey: null,
 
+    mode: 'ai',
+    myIndex: HUMAN,
+    oppIndex: AI,
+    lanRole: null,
+    lanRoomCode: null,
+    lanSelfName: null,
+    lanPeerName: null,
+    lanStatus: 'idle',
+    lanError: null,
+    lanDeckOk: false,
+    lanDeckErrors: [],
+    lanLegal: [],
+    lanSeq: 0,
+    lanGuestDeck: null,
+    lanHostDeck: null,
+    lanPeerLeft: false,
+    lanAttached: false,
+
     banner: null,
     fxByKey: {},
     ghosts: [],
@@ -557,9 +798,21 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       if (!registry) return;
       const { state } = createGame(setup, registry);
       get().stopAI();
+      get().lanDetach();
       set({
         state,
         phase: 'playing',
+        mode: 'ai',
+        myIndex: HUMAN,
+        oppIndex: AI,
+        lanRole: null,
+        lanRoomCode: null,
+        lanPeerName: null,
+        lanStatus: 'idle',
+        lanError: null,
+        lanLegal: [],
+        lanSeq: 0,
+        lanPeerLeft: false,
         selection: null,
         result: null,
         aiThinking: false,
@@ -598,8 +851,20 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
 
     quitToSetup: () => {
       get().stopAI();
+      if (get().mode !== 'ai') get().lanDetach();
       set({
         phase: 'setup',
+        mode: 'ai',
+        myIndex: HUMAN,
+        oppIndex: AI,
+        lanRole: null,
+        lanRoomCode: null,
+        lanPeerName: null,
+        lanStatus: 'idle',
+        lanError: null,
+        lanLegal: [],
+        lanSeq: 0,
+        lanPeerLeft: false,
         state: null,
         result: null,
         selection: null,
@@ -731,29 +996,209 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       if (current.status === 'playing' && current.activePlayer === AI) scheduleAI(500);
     },
 
+    /* ---------------- 局域网 ---------------- */
+
+    lanAttachHost: (options = {}) => {
+      const session = getLanSession();
+      const snapshot = get();
+      clearLanListeners();
+      lanAutoStart = !!options.autoStart;
+      lanAutoSeed = options.seed ?? 1;
+      set({
+        mode: 'lan-host',
+        myIndex: HUMAN,
+        oppIndex: AI,
+        phase: snapshot.state ? 'playing' : 'setup',
+        lanRole: 'host',
+        lanSelfName: options.selfName ?? snapshot.lanSelfName ?? session.snapshot.selfName ?? '房主',
+        lanHostDeck: options.selfDeck ?? snapshot.lanHostDeck,
+        lanAttached: true,
+        lanPeerLeft: false,
+        selection: null,
+        aiThinking: false,
+        hint: null,
+      });
+      if (options.selfDeck) {
+        try {
+          session.setDeck(toDeckPayload(options.selfDeck, options.selfName ?? '房主'));
+        } catch {
+          /* 忽略 */
+        }
+      }
+      lanUnsubs.push(session.onCommand((command) => handleGuestCommand(command)));
+      lanUnsubs.push(session.onChoice((choiceId, selection) => handleGuestChoice(choiceId, selection)));
+      lanUnsubs.push(session.onHello((message) => handleHello(message)));
+      bindLanSnapshot();
+    },
+
+    lanAttachGuest: (options = {}) => {
+      const session = getLanSession();
+      const snapshot = get();
+      clearLanListeners();
+      set({
+        mode: 'lan-guest',
+        myIndex: AI,
+        oppIndex: HUMAN,
+        phase: snapshot.state ? 'playing' : 'setup',
+        lanRole: 'guest',
+        lanSelfName: options.selfName ?? snapshot.lanSelfName ?? session.snapshot.selfName ?? '客机',
+        lanAttached: true,
+        lanPeerLeft: false,
+        selection: null,
+        aiThinking: false,
+        hint: null,
+      });
+      if (options.selfDeck) {
+        try {
+          session.setDeck(toDeckPayload(options.selfDeck, options.selfName ?? '客机'));
+        } catch {
+          /* 忽略 */
+        }
+      }
+      lanUnsubs.push(session.onStart((message) => applyGuestView(message.view, [])));
+      lanUnsubs.push(session.onView((view, events) => applyGuestView(view, events)));
+      bindLanSnapshot();
+      const lastView = session.snapshot.lastView;
+      if (lastView) applyGuestView(lastView, []);
+    },
+
+    lanDetach: () => {
+      clearLanListeners();
+      lanAutoStart = false;
+      lanLastEvents = [];
+    },
+
+    lanStartHostGame: async (options = {}) => {
+      const snapshot = get();
+      if (!snapshot.registry || !snapshot.lanAttached) return;
+      // 已经有一局在跑时忽略重复调用（例如 hello 重发/大厅重复触发）
+      if (snapshot.state && snapshot.phase === 'playing') return;
+      const session = getLanSession();
+      let hostDeck = options.hostDeck ?? snapshot.lanHostDeck ?? null;
+      if (!hostDeck) {
+        const own = session.getDeck();
+        if (own) hostDeck = fromDeckPayload(own);
+      }
+      let guestDeck = options.guestDeck ?? snapshot.lanGuestDeck ?? null;
+      if (!guestDeck) {
+        const handoff = await readLanHandoffSafe();
+        if (handoff?.peerDeck) guestDeck = fromDeckPayload(handoff.peerDeck);
+      }
+      if (!hostDeck || !guestDeck) {
+        set({ lanError: '等待对手卡组就绪…' });
+        return;
+      }
+      const seed = (options.seed ?? Date.now()) >>> 0;
+      const firstPlayer = options.firstPlayer ?? HUMAN;
+      let state: GameState;
+      try {
+        state = createGame(
+          {
+            seed,
+            firstPlayer,
+            players: [
+              {
+                name: snapshot.lanSelfName ?? '房主',
+                faction: hostDeck.faction,
+                allyFaction: hostDeck.allyFaction,
+                deck: hostDeck.cards,
+                isAI: false,
+              },
+              {
+                name: snapshot.lanPeerName ?? '对手',
+                faction: guestDeck.faction,
+                allyFaction: guestDeck.allyFaction,
+                deck: guestDeck.cards,
+                isAI: false,
+              },
+            ],
+          },
+          snapshot.registry,
+        ).state;
+      } catch (error) {
+        console.error('[battle] 局域网开局失败', error);
+        set({ lanError: '开局失败：卡组或引擎异常' });
+        return;
+      }
+      const seq = snapshot.lanSeq + 1;
+      get().stopAI();
+      set({
+        mode: 'lan-host',
+        myIndex: HUMAN,
+        oppIndex: AI,
+        state,
+        phase: 'playing',
+        lanSeq: seq,
+        lanHostDeck: hostDeck,
+        lanGuestDeck: guestDeck,
+        lanError: null,
+        lanLegal: [],
+        selection: null,
+        result: null,
+        aiThinking: false,
+        playerDeck: {
+          faction: hostDeck.faction,
+          allyFaction: hostDeck.allyFaction,
+          name: snapshot.lanSelfName ?? '房主',
+          count: hostDeck.cards.reduce((sum, entry) => sum + entry.count, 0),
+        },
+        banner: {
+          text: '对局开始',
+          sub: `局域网对战 · ${snapshot.lanPeerName ?? '对手'}`,
+          tone: 'system',
+          at: Date.now(),
+        },
+        fxByKey: {},
+        ghosts: [],
+        attacks: {},
+        hqHits: {},
+        hint: null,
+        shakeKey: null,
+        lastConfig: null,
+      });
+      try {
+        session.startGame(seed, firstPlayer, buildGuestView(state, snapshot.registry, seq));
+      } catch (error) {
+        console.warn('[battle] 下发开局视图失败', error);
+        set({ lanError: '下发开局信息失败' });
+      }
+    },
+
+    lanFail: (message) => {
+      set({ lanError: message, lanStatus: 'error' });
+    },
+
+    lanLeave: () => {
+      try {
+        getLanSession().close('离开房间');
+      } catch {
+        /* 忽略 */
+      }
+      get().quitToSetup();
+    },
+
     /* ---------------- 玩家操作 ---------------- */
 
     selectCard: (instanceId) => {
       const snapshot = get();
-      const { state, registry, phase } = snapshot;
+      const { state, registry, phase, myIndex } = snapshot;
       if (!state || !registry || phase !== 'playing') return;
-      if (state.pendingChoice || state.activePlayer !== HUMAN) return;
+      if (state.pendingChoice || state.activePlayer !== myIndex) return;
 
-      const handCard = state.players[HUMAN].hand.find((card) => card.instanceId === instanceId);
+      const handCard = state.players[myIndex].hand.find((card) => card.instanceId === instanceId);
       if (!handCard) return;
-      const actions = visibleLegalActions(state, registry, HUMAN);
-      const action = actions.find(
+      const action = currentActions().find(
         (item) => item.kind === 'playCard' && item.cardInstanceId === instanceId,
       );
 
       if (!action) {
         const def = registry.cardDefs[handCard.cardId];
-        const cost = playCost(state, registry, HUMAN, handCard);
+        const cost = playCost(state, registry, myIndex, handCard);
         let reason = '当前无法打出这张卡';
         if (!def) reason = '未知卡牌（不在当前数据集）';
-        else if (cost > state.players[HUMAN].kredits) reason = `克雷迪特不足：需要 ${cost}`;
+        else if (cost > state.players[myIndex].kredits) reason = `克雷迪特不足：需要 ${cost}`;
         else {
-          const would = legalActionsForCard(state, registry, HUMAN, handCard);
+          const would = legalActionsForCard(state, registry, myIndex, handCard);
           if (would.targets?.mode === 'target' && would.targets.refs.length < (would.targets.count ?? 1))
             reason = '没有合法目标';
           else if (would.deployLines && would.deployLines.length === 0) reason = '战场已满';
@@ -779,9 +1224,9 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
         return;
       }
 
-      const changed = commitCmd({
+      const changed = submitCommand({
         type: 'playCard',
-        player: HUMAN,
+        player: myIndex,
         instanceId,
         line: preferredLine(state, registry, instanceId, action.deployLines),
       });
@@ -791,19 +1236,19 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
 
     selectUnit: (unitId) => {
       const snapshot = get();
-      const { state, registry, phase } = snapshot;
+      const { state, registry, phase, myIndex } = snapshot;
       if (!state || !registry || phase !== 'playing') return;
-      if (state.pendingChoice || state.activePlayer !== HUMAN) return;
+      if (state.pendingChoice || state.activePlayer !== myIndex) return;
       const unit = state.units[unitId];
       if (!unit) return;
-      if (unit.owner !== HUMAN) {
+      if (unit.owner !== myIndex) {
         const def = registry.cardDefs[unit.cardId];
         setHint(
           `${def?.nameZh ?? '单位'} · ${unit.attack}/${unit.hp}${unit.armor ? ` · 护甲 ${unit.armor}` : ''}`,
         );
         return;
       }
-      const actions = visibleLegalActions(state, registry, HUMAN);
+      const actions = currentActions();
       const action = actions.find((item) => item.kind === 'attack' && item.attackerId === unitId);
       const moveAction = actions.find((item) => item.kind === 'moveUnit' && item.unitId === unitId);
       if (!action) {
@@ -833,7 +1278,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
         else if ((unit.statuses.cannotAttackTurns ?? 0) > 0) reason = '单位处于无法攻击状态';
         else if (unit.attacksUsed >= unit.maxAttacks) reason = '该单位本回合已行动';
         else if (unit.deployedTurn === state.turn) reason = '部署当回合无法行动（无闪击）';
-        else if (state.config.attackCostsKredits && state.players[HUMAN].kredits < unit.operationCost)
+        else if (state.config.attackCostsKredits && state.players[myIndex].kredits < unit.operationCost)
           reason = `克雷迪特不足：行动需要 ${unit.operationCost}`;
         else if (unit.hp <= 0) reason = '单位已阵亡';
         setHint(reason);
@@ -871,18 +1316,19 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       if (!state || !registry) return;
 
       let changed = false;
+      const myIndex = after.myIndex;
       if (selection.kind === 'attack' && selection.attackerId) {
-        changed = commitCmd({
+        changed = submitCommand({
           type: 'attack',
-          player: HUMAN,
+          player: myIndex,
           attackerId: selection.attackerId,
           target: chosen[0],
         });
         if (!changed) setHint('攻击未能执行');
       } else if (selection.kind === 'play' && selection.cardInstanceId) {
-        changed = commitCmd({
+        changed = submitCommand({
           type: 'playCard',
-          player: HUMAN,
+          player: myIndex,
           instanceId: selection.cardInstanceId,
           targets: chosen,
           line: preferredLine(state, registry, selection.cardInstanceId, selection.deployLines),
@@ -895,11 +1341,12 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
     chooseSlot: (line) => {
       const selection = get().selection;
       if (!selection) return;
+      const myIndex = get().myIndex;
       if (selection.kind === 'move' && selection.unitId) {
         if (selection.toLine && line !== selection.toLine) return;
-        const moved = commitCmd({
+        const moved = submitCommand({
           type: 'moveUnit',
-          player: HUMAN,
+          player: myIndex,
           unitId: selection.unitId,
           toLine: line,
         });
@@ -914,9 +1361,9 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       if (selection.kind !== 'play' || !selection.cardInstanceId) return;
       const { state, registry } = get();
       if (!state || !registry) return;
-      const changed = commitCmd({
+      const changed = submitCommand({
         type: 'playCard',
-        player: HUMAN,
+        player: myIndex,
         instanceId: selection.cardInstanceId,
         targets: selection.chosen.length ? selection.chosen : undefined,
         line,
@@ -933,7 +1380,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       if (!unitId) return;
       const unit = state.units[unitId];
       if (!unit) return;
-      const moveAction = visibleLegalActions(state, registry, HUMAN).find(
+      const moveAction = currentActions().find(
         (item) => item.kind === 'moveUnit' && item.unitId === unitId,
       );
       if (!moveAction) {
@@ -964,34 +1411,46 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
     },
 
     endTurn: () => {
-      const { state, phase } = get();
+      const { state, phase, myIndex } = get();
       if (!state || phase !== 'playing') return;
       if (state.pendingChoice) return;
-      if (state.activePlayer !== HUMAN) {
-        setHint('敌方行动中，请稍候');
+      if (state.activePlayer !== myIndex) {
+        setHint('还没轮到你行动');
         return;
       }
-      commitCmd({ type: 'endTurn', player: HUMAN });
+      const ok = submitCommand({ type: 'endTurn', player: myIndex });
+      if (!ok) setHint('结束回合失败');
       get().kickAI();
     },
 
     surrender: () => {
-      const { state, phase } = get();
+      const { state, phase, myIndex } = get();
       if (!state || phase !== 'playing') return;
-      if (state.activePlayer !== HUMAN || state.pendingChoice) {
-        setHint('请等待敌方回合结束后再投降');
+      if (state.activePlayer !== myIndex || state.pendingChoice) {
+        setHint('请等待对手回合结束后再投降');
         return;
       }
-      commitCmd({ type: 'concede', player: HUMAN });
+      submitCommand({ type: 'concede', player: myIndex });
     },
 
     resolveChoiceWith: (selection) => {
-      const { state, phase } = get();
+      const { state, phase, mode } = get();
       if (!state || phase !== 'playing' || !state.pendingChoice) return;
+      const choice = state.pendingChoice;
+      if (mode === 'lan-guest') {
+        try {
+          getLanSession().sendChoice(choice.choiceId, selection);
+        } catch (error) {
+          console.warn('[battle] 抉择发送失败', error);
+          setHint('网络异常，抉择未发出');
+        }
+        set({ selection: null });
+        return;
+      }
       commitCmd({
         type: 'resolveChoice',
         player: state.activePlayer,
-        choiceId: state.pendingChoice.choiceId,
+        choiceId: choice.choiceId,
         selection,
       });
       get().kickAI();
@@ -1016,6 +1475,11 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
     },
 
     kickAI: (delay = 520) => {
+      if (get().mode !== 'ai') {
+        clearAITimer();
+        set({ aiThinking: false });
+        return;
+      }
       if (get().phase !== 'playing') {
         clearAITimer();
         set({ aiThinking: false });

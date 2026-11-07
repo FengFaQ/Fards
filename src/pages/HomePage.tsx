@@ -11,6 +11,7 @@ import {
   IconShield,
   IconSwords,
   IconTrophy,
+  IconWifi,
 } from '../ui/components/icons';
 import { copyText } from '../ui/lib/clipboard';
 import { factionMeta } from '../ui/lib/format';
@@ -67,6 +68,14 @@ const ENTRIES = [
     title: '开始对战',
     text: '用你的战斗群对局 AI，检验开局节奏、解场手段与后期续航。',
     action: '进入战场',
+  },
+  {
+    to: '/lan',
+    icon: IconWifi,
+    eyebrow: 'LAN',
+    title: '局域网对战',
+    text: '同一 Wi-Fi 下和朋友实时对战，房主浏览器跑规则引擎，无需注册。',
+    action: '创建 / 加入房间',
   },
 ];
 
@@ -202,6 +211,10 @@ export default function HomePage() {
                 直接对战
                 <IconArrowRight size={14} />
               </Link>
+              <Link to="/lan" className="fards-btn fards-btn-ghost px-4 py-2.5">
+                <IconWifi size={14} />
+                和朋友对战
+              </Link>
             </div>
 
             <div className="mt-9 flex flex-wrap items-center gap-x-9 gap-y-4 border-t border-field-700/60 pt-5">
@@ -254,7 +267,7 @@ export default function HomePage() {
 
       {/* ============ 三个入口 ============ */}
       <section className="mx-auto w-full max-w-[1500px] px-4 pt-10 sm:px-6 lg:px-8">
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {ENTRIES.map((entry) => {
             const Icon = entry.icon;
             return (
@@ -312,6 +325,41 @@ export default function HomePage() {
               </article>
             );
           })}
+        </div>
+      </section>
+
+      {/* ============ 局域网双人对战 ============ */}
+      <section className="mx-auto w-full max-w-[1500px] px-4 pt-12 sm:px-6 lg:px-8">
+        <div className="fards-panel relative overflow-hidden border-brass-600/30">
+          <div className="pointer-events-none absolute inset-0 fards-grid-bg opacity-40" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-1 fards-hazard opacity-60" />
+          <div className="relative flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-3">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm border border-brass-600/50 bg-field-950/60 text-brass-400">
+                <IconWifi size={20} />
+              </span>
+              <div>
+                <p className="fards-label text-brass-500">LOCAL NETWORK · 双人同屏</p>
+                <h2 className="mt-1 font-display text-xl tracking-wide text-field-100">
+                  和朋友在同一局域网对战
+                </h2>
+                <p className="mt-1 max-w-2xl font-body text-[12px] leading-relaxed text-field-400">
+                  房主创建房间拿到 4 位房间码，朋友用局域网地址加入；房主浏览器运行规则引擎，
+                  服务器只负责房间与消息中转。需要房主在本机运行{' '}
+                  <code className="rounded bg-field-950/80 px-1 py-0.5 font-mono text-[10px] text-brass-300">
+                    npm run lan
+                  </code>
+                  ，GitHub Pages 静态站本身不提供该服务。
+                </p>
+              </div>
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <Link to="/lan" className="fards-btn fards-btn-primary px-4 py-2.5">
+                <IconWifi size={14} />
+                进入局域网大厅
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 

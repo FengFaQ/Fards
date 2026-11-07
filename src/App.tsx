@@ -8,6 +8,7 @@ import CardsPage from './pages/CardsPage';
 import DeckBuilderPage from './pages/DeckBuilderPage';
 import DeckOverviewPage from './pages/DeckOverviewPage';
 import HomePage from './pages/HomePage';
+import LanPage from './pages/LanPage';
 
 /**
  * 路由骨架
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="/cards" element={<CardsPage />} />
           <Route path="/deck" element={<DeckBuilderPage />} />
           <Route path="/deck/:shareId" element={<DeckBuilderPage />} />
+          <Route path="/lan" element={<LanPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

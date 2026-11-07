@@ -7,7 +7,7 @@
  * 死亡单位在本行用幽灵卡淡出。
  */
 import type { Line, PlayerIndex, TargetRef, Unit } from '@/engine/types';
-import { useBattleStore, AI, HUMAN, targetKey, type FloatFx } from '../stores/battleStore';
+import { useBattleStore, targetKey, type FloatFx } from '../stores/battleStore';
 import CardFace from './CardFace';
 import UnitCard from './UnitCard';
 
@@ -85,7 +85,8 @@ function UnitRow({
   label,
   moveTarget = null,
   onSlotClick,
-}: RowProps & { owner: PlayerIndex; slots: number; label: string }) {
+  myIndex,
+}: RowProps & { owner: PlayerIndex; slots: number; label: string; myIndex: PlayerIndex }) {
   const state = useBattleStore((s) => s.state);
   const byId = useBattleStore((s) => s.byId);
   const ghosts = useBattleStore((s) => s.ghosts);
@@ -99,7 +100,7 @@ function UnitRow({
     .map((unitId) => state.units[unitId])
     .filter((unit): unit is Unit => !!unit);
   const rowGhosts = ghosts.filter((ghost) => ghost.owner === owner && ghost.line === 'support');
-  const hot = owner === HUMAN && moveTarget === 'support';
+  const hot = owner === myIndex && moveTarget === 'support';
 
   return (
     <div
@@ -144,7 +145,7 @@ function UnitRow({
 }
 
 /** 前线：共享 5 槽，同一时间只有一方占领 */
-function FrontlineRow({ targetKeys, onUnitClick, moveTarget = null, onSlotClick }: RowProps) {
+function FrontlineRow({ targetKeys, onUnitClick, moveTarget = null, onSlotClick, myIndex, oppIndex }: RowProps & { myIndex: PlayerIndex; oppIndex: PlayerIndex }) {
   const state = useBattleStore((s) => s.state);
   const byId = useBattleStore((s) => s.byId);
   const ghosts = useBattleStore((s) => s.ghosts);
@@ -155,10 +156,10 @@ function FrontlineRow({ targetKeys, onUnitClick, moveTarget = null, onSlotClick 
 
   if (!state) return null;
   const slots = state.config.frontlineSlots || FRONTLINE_SLOTS;
-  const enemyUnits = state.players[AI].frontline
+  const enemyUnits = state.players[oppIndex].frontline
     .map((unitId) => state.units[unitId])
     .filter((unit): unit is Unit => !!unit);
-  const myUnits = state.players[HUMAN].frontline
+  const myUnits = state.players[myIndex].frontline
     .map((unitId) => state.units[unitId])
     .filter((unit): unit is Unit => !!unit);
   // 正常规则下只会有一方；极端争夺态下两侧都渲染
@@ -167,8 +168,8 @@ function FrontlineRow({ targetKeys, onUnitClick, moveTarget = null, onSlotClick 
   const totalSlots = Math.max(slots, used);
   const controller = state.frontlineController;
   const controllerLabel =
-    controller === HUMAN ? '我方占领' : controller === AI ? '敌方占领' : used > 0 ? '争夺中' : '无人占领';
-  const controllerColor = controller === HUMAN ? '#c39b3a' : controller === AI ? '#b0543f' : '#8d8258';
+    controller === myIndex ? '我方占领' : controller === oppIndex ? '敌方占领' : used > 0 ? '争夺中' : '无人占领';
+  const controllerColor = controller === myIndex ? '#c39b3a' : controller === oppIndex ? '#b0543f' : '#8d8258';
   const frontlineGhosts = ghosts.filter((ghost) => ghost.line === 'frontline');
   const hot = moveTarget === 'frontline';
 
@@ -243,21 +244,32 @@ export interface BattleRowsProps {
   onUnitClick: (unitId: string) => void;
   moveTarget?: Line | null;
   onSlotClick?: (line: Line) => void;
+  /** 我方/对方玩家下标（AI 对局 0/1；局域网客机 1/0） */
+  myIndex: PlayerIndex;
+  oppIndex: PlayerIndex;
 }
 
 /** 敌方支援线 + 共享前线 + 我方支援线 */
-export function BattleRows({ targetKeys, onUnitClick, moveTarget = null, onSlotClick }: BattleRowsProps) {
+export function BattleRows({
+  targetKeys,
+  onUnitClick,
+  moveTarget = null,
+  onSlotClick,
+  myIndex,
+  oppIndex,
+}: BattleRowsProps) {
   return (
     <div className="relative flex min-h-0 flex-1 flex-col justify-between overflow-hidden py-[2px]">
       <div className="relative flex flex-1 items-center justify-center">
         <UnitRow
-          owner={AI}
+          owner={oppIndex}
           slots={SUPPORT_SLOTS}
           targetKeys={targetKeys}
           onUnitClick={onUnitClick}
           label="敌方支援线"
           moveTarget={moveTarget}
           onSlotClick={onSlotClick}
+          myIndex={myIndex}
         />
       </div>
 
@@ -266,17 +278,20 @@ export function BattleRows({ targetKeys, onUnitClick, moveTarget = null, onSlotC
         onUnitClick={onUnitClick}
         moveTarget={moveTarget}
         onSlotClick={onSlotClick}
+        myIndex={myIndex}
+        oppIndex={oppIndex}
       />
 
       <div className="relative flex flex-1 items-center justify-center">
         <UnitRow
-          owner={HUMAN}
+          owner={myIndex}
           slots={SUPPORT_SLOTS}
           targetKeys={targetKeys}
           onUnitClick={onUnitClick}
           label="我方支援线"
           moveTarget={moveTarget}
           onSlotClick={onSlotClick}
+          myIndex={myIndex}
         />
       </div>
     </div>
