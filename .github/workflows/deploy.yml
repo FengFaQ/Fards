@@ -28,11 +28,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: package-lock.json
+          # npm cache is re-enabled once package-lock.json is committed;
+          # with no lockfile present the cache step fails hard.
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        with:
+          # Enable Pages (build_type: workflow) on first run, so the project
+          # does not depend on a manual Settings -> Pages toggle.
+          enablement: true
 
       - name: Install dependencies
         run: |
