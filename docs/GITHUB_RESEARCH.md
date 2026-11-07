@@ -166,9 +166,21 @@ repak v0.2.3 list →
 | 实测吞吐 | 3–4 并发 + 150–300ms 间隔，稳定 **约 67 张/分钟** → 全量 **约 25 分钟**（首取 9.7s/张是冷启动单请求，不代表批量速率） |
 | 格式 | wsrv **不支持输出 AVIF**（`output=avif` 报 400，`format=avif` 被忽略返回 JPEG），故只能存 WebP |
 
-**已提供**：`scripts/fetch-card-images.mjs`（Node 22，零依赖，可断点续传、限速、失败重试）。
-用法：`node scripts/fetch-card-images.mjs --concurrency 2 --delay 800`；中断后重跑会自动跳过已存在文件。
-若网络能直连 kards.com，加 `--direct` 直接下载原生 `.avif`（省一次转码、体积更小）。
+**已提供**：`scripts/fetch-images.mjs`（项目内置，支持 wsrv/kardsdecker/直链三通道、卡图+卡背、断点续传、缺失清单）。
+用法：`node scripts/fetch-images.mjs --cards-only --via=wsrv --concurrency=4`；中断后重跑自动跳过已存在文件。
+
+**执行结果（2026-11-07，已完成）**
+
+| 项 | 结果 |
+|---|---|
+| 下载 | **1646/1646**，无缺失、无重复 `card_id`；文件头均为 `RIFF....WEBP` |
+| 体积 | **47.7 MB**（平均 30 KB/张） |
+| 入库 | commit `6e826fc` 已推送 `main`；`.gitignore` 取消对 `public/cards/` 的忽略 |
+| 发布 | GitHub Actions 部署 **success**（run 42335759360，主分支→`gh-pages` 分支） |
+| 线上核验 | `https://fengfaq.github.io/Fards/` → 200；`/Fards/cards/1005th_rifles.webp` → 200（26,060 B，与本地一致） |
+
+**路径对齐（已核对）**：`src/data/loadCards.ts:83` 默认 `/cards/<id>.webp`，`src/ui/lib/dataBridge.ts:237-238`
+先试 `.webp` 再退 `.avif`，与实际产物一致，**无需改代码**。本地图命中后，远程 wsrv 仅作兜底。
 
 ---
 
