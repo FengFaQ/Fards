@@ -677,8 +677,8 @@ export interface EngineRegistry {
 /** 规则数值集中在此，便于按考据结论校准 */
 export const DEFAULT_CONFIG: GameConfig = {
   hqHp: 20,
-  startingHandSize: 5,
-  secondPlayerExtraCards: 0,
+  startingHandSize: 4,
+  secondPlayerExtraCards: 1,
   handLimit: 9,
   startingKredits: 1,
   secondPlayerKredits: 0,
@@ -694,5 +694,5 @@ export const DEFAULT_CONFIG: GameConfig = {
   supportCanAttack: true,
   hqAttackRequiresFrontline: true,
   guardAnyLine: false,
-  firstTurnSkipsDraw: true,
+  firstTurnSkipsDraw: false,
 };

@@ -7,7 +7,7 @@ import { legalActions } from '@/engine';
 import type { LegalAction } from '@/engine/types';
 import type { UiCard } from '../lib/dataBridge';
 import { cardTypeMeta, factionMeta, factionZh, rarityMeta } from '../lib/format';
-import { IconAlert, IconPlay, IconSwords, IconX } from '../components/icons';
+import { IconAlert, IconArrowRight, IconPlay, IconSwords, IconX } from '../components/icons';
 import Dialog from '../components/Dialog';
 import { AI, HUMAN, useBattleStore } from '../stores/battleStore';
 import BattleRows, { refsToKeys } from './BattleRows';
@@ -21,11 +21,14 @@ import PlayerBar from './PlayerBar';
 const EMPTY_LEGAL: {
   byCard: Map<string, LegalAction>;
   byUnit: Map<string, LegalAction>;
-} = { byCard: new Map(), byUnit: new Map() };
+  moveByUnit: Map<string, LegalAction>;
+} = { byCard: new Map(), byUnit: new Map(), moveByUnit: new Map() };
 
 const EMPTY_KEYS = new Set<string>();
 
 const DIFFICULTY_ZH: Record<string, string> = { easy: '新兵', normal: '老兵', hard: '王牌' };
+
+const moveCostLabel = (cost?: number): string => (cost && cost > 0 ? ` · ${cost} 克` : ' · 免费');
 
 function CardInspector({ card, fallback }: { card: UiCard | null; fallback: React.ReactNode }) {
   if (!card) return <>{fallback}</>;
@@ -83,17 +86,31 @@ export function BattleScreen() {
     const actions = legalActions(state, registry, HUMAN);
     const byCard = new Map<string, LegalAction>();
     const byUnit = new Map<string, LegalAction>();
+    const moveByUnit = new Map<string, LegalAction>();
     for (const action of actions) {
       if (action.kind === 'playCard' && action.cardInstanceId) byCard.set(action.cardInstanceId, action);
       else if (action.kind === 'attack' && action.attackerId) byUnit.set(action.attackerId, action);
+      else if (action.kind === 'moveUnit' && action.unitId) moveByUnit.set(action.unitId, action);
     }
-    return { byCard, byUnit };
+    return { byCard, byUnit, moveByUnit };
   }, [state, registry, phase]);
 
   const targetKeys = useMemo(
     () => (selection ? refsToKeys(selection.refs) : EMPTY_KEYS),
     [selection],
   );
+  const moveTarget = selection?.kind === 'move' ? selection.toLine ?? null : null;
+  const selectedMoveAction =
+    selection?.kind === 'attack' && selection.attackerId
+      ? legal.moveByUnit.get(selection.attackerId)
+      : undefined;
+  const selectedMoveUnit =
+    selection?.kind === 'attack' && selection.attackerId
+      ? state?.units[selection.attackerId]
+      : undefined;
+  const moveLabel = selectedMoveUnit?.line === 'frontline' ? '撤退至支援线' : '移动到前线';
+  const chooseSlot = useBattleStore((s) => s.chooseSlot);
+  const moveSelected = useBattleStore((s) => s.moveSelected);
 
   useEffect(() => {
     const timer = window.setInterval(() => pruneFx(Date.now()), 700);
@@ -123,7 +140,6 @@ export function BattleScreen() {
   const enemy = state.players[AI];
   const myTurn = phase === 'playing' && state.activePlayer === HUMAN && !state.pendingChoice;
   const hoveredCard = hoveredId ? byId.get(hoveredId) ?? null : null;
-  const enemyFaction = factionMeta(aiFactionSafe(enemy.faction, state));
   const myFaction = factionMeta(me.faction);
   const hqTargetEnemy = targetKeys.has('hq:1');
   const hqTargetSelf = targetKeys.has('hq:0');
@@ -206,41 +222,38 @@ export function BattleScreen() {
         </div>
       </header>
 
-      {/* ---------------- 战场主体 ---------------- */}
-      <div className="relative flex min-h-0 flex-1 flex-col">
-        <PlayerBar
-          player={enemy}
-          isSelf={false}
-          isActive={state.activePlayer === AI}
-          targetable={hqTargetEnemy}
-          hqHitAt={hqHits['hq:1']}
-          floats={fxByKey['hq:1']}
-          onClick={() => clickTarget({ kind: 'hq', player: AI })}
-        />
+      {/* ---------------- 战场主体（左侧战场 + 右侧停靠日志） ---------------- */}
+      <div className="relative flex min-h-0 flex-1">
+        <div className="relative flex min-h-0 flex-1 flex-col">
+          <PlayerBar
+            player={enemy}
+            isSelf={false}
+            isActive={state.activePlayer === AI}
+            targetable={hqTargetEnemy}
+            hqHitAt={hqHits['hq:1']}
+            floats={fxByKey['hq:1']}
+            onClick={() => clickTarget({ kind: 'hq', player: AI })}
+          />
 
-        <BattleRows targetKeys={targetKeys} onUnitClick={selectUnit} />
+          <BattleRows
+            targetKeys={targetKeys}
+            onUnitClick={selectUnit}
+            moveTarget={moveTarget}
+            onSlotClick={chooseSlot}
+          />
 
-        <PlayerBar
-          player={me}
-          isSelf
-          isActive={state.activePlayer === HUMAN}
-          targetable={hqTargetSelf}
-          hqHitAt={hqHits['hq:0']}
-          floats={fxByKey['hq:0']}
-          onClick={() => clickTarget({ kind: 'hq', player: HUMAN })}
-        />
+          <PlayerBar
+            player={me}
+            isSelf
+            isActive={state.activePlayer === HUMAN}
+            targetable={hqTargetSelf}
+            hqHitAt={hqHits['hq:0']}
+            floats={fxByKey['hq:0']}
+            onClick={() => clickTarget({ kind: 'hq', player: HUMAN })}
+          />
+        </div>
 
         <LogPanel />
-
-        {/* 敌方身份角标（右上，日志抽屉收起时可见） */}
-        <div
-          className="pointer-events-none absolute top-[2px] left-1/2 z-10 -translate-x-1/2"
-          style={{ color: enemyFaction.color }}
-        >
-          <span className="font-body text-[8px] tracking-[0.34em] opacity-70">
-            {enemyFaction.zh} · {enemy.name}
-          </span>
-        </div>
       </div>
 
       {/* ---------------- 手牌区 ---------------- */}
@@ -253,10 +266,10 @@ export function BattleScreen() {
               <div className="text-field-500">
                 <p className="fards-label text-[9px] text-brass-500">战术提示</p>
                 <p className="mt-1 font-body text-[10px] leading-relaxed">
-                  悬停手牌查看详情；点击手牌打出，点击我方单位发起攻击。
+                  点击手牌部署到支援线；点击我方单位可发起攻击或移动到前线。
                 </p>
                 <p className="mt-1 font-body text-[9px] leading-relaxed text-field-600">
-                  高亮金框 = 合法目标 / 可行动 · 右键或 Esc 取消选择
+                  只有前线单位（炮兵/空军除外）才能攻击敌方总部。高亮金框 = 合法目标 · 右键或 Esc 取消
                 </p>
               </div>
             }
@@ -327,16 +340,47 @@ export function BattleScreen() {
         </div>
       )}
 
-      {/* 选目标提示 */}
+      {/* 选目标 / 移动提示 */}
       {selection && (
         <div className="pointer-events-none absolute inset-x-0 bottom-[calc(clamp(150px,21vh,206px)+10px)] z-40 flex justify-center">
           <div className="flex items-center gap-3 rounded-sm border border-brass-500/70 bg-field-950/92 px-3 py-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.6)]">
-            <IconSwords size={13} className="text-brass-400" />
-            <span className="font-body text-[10px] tracking-[0.14em] text-brass-200">{selection.label}</span>
-            <span className="font-body text-[10px] text-field-300">
-              选择目标 <span className="font-display text-brass-300">{selection.chosen.length}</span>/
-              {selection.count}
-            </span>
+            {selection.kind === 'move' ? (
+              <>
+                <IconArrowRight size={13} className="text-brass-400" />
+                <span className="font-body text-[10px] tracking-[0.14em] text-brass-200">{selection.label}</span>
+                <span className="font-body text-[10px] text-field-300">
+                  点击高亮的{selection.toLine === 'frontline' ? '前线' : '支援线'}确认移动
+                </span>
+                <button
+                  type="button"
+                  onClick={() => chooseSlot(selection.toLine ?? 'frontline')}
+                  className="pointer-events-auto rounded-sm border border-brass-500/70 bg-brass-500/15 px-2 py-[2px] font-body text-[9px] tracking-[0.14em] text-brass-200 transition-colors hover:bg-brass-500/25"
+                >
+                  确认移动
+                </button>
+              </>
+            ) : (
+              <>
+                <IconSwords size={13} className="text-brass-400" />
+                <span className="font-body text-[10px] tracking-[0.14em] text-brass-200">{selection.label}</span>
+                <span className="font-body text-[10px] text-field-300">
+                  选择目标 <span className="font-display text-brass-300">{selection.chosen.length}</span>/
+                  {selection.count}
+                </span>
+                {selectedMoveAction && (
+                  <button
+                    type="button"
+                    onClick={moveSelected}
+                    className="pointer-events-auto flex items-center gap-1 rounded-sm border border-field-500/70 bg-field-800/80 px-2 py-[2px] font-body text-[9px] tracking-[0.14em] text-field-200 transition-colors hover:border-brass-500/70 hover:text-brass-200"
+                    title={selectedMoveUnit?.line === 'frontline' ? '撤退回支援线（免费）' : '改为移动到前线（消耗行动花费）'}
+                  >
+                    <IconArrowRight size={11} />
+                    {moveLabel}
+                    {moveCostLabel(selectedMoveAction.cost)}
+                  </button>
+                )}
+              </>
+            )}
             <span className="font-body text-[9px] tracking-[0.1em] text-field-500">右键 / Esc 取消</span>
           </div>
         </div>

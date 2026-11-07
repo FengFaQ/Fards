@@ -18,7 +18,7 @@ Fards 是一个纯前端的网页版「KARDS 风格」卡牌对战工具：把�
 | 🛠 卡组构筑 | 主阵营 + 盟军阵营；按官方规则实时校验（39 张、标准 4 / 限定 3 / 特殊 2 / 精英 1、盟军 ≤ 12 张）；费用曲线、类型分布；本地多卡组保存 |
 | 📥 导入导出 | 兼容官方 `deck_code`（`%%51\|...` 分组格式），支持粘贴代码 / URL；导出 deck_code、JSON、出图链接 |
 | ⚔️ 对战 AI | 三档难度（新兵 / 老兵 / 王牌）；完整回合制、克雷迪特与行动花费、前线争夺、支援线、士气伤害、反制牌 |
-| 🖼 卡组自动出图 | `?action=overview_horizontal` / `overview_vertical` / `print_template`，支持 `deck_code` 与 `deck_slug`，PNG 导出与 A4 打印模板 |
+| 🖼 卡组自动出图 | `?action=overview_horizontal` / `overview_vertical` / `print_template`，支持 `deck_code` 与 `deck_slug`，PNG 导出与 A4 打印模板（3 列、裁切线） |
 | 📖 规则文档 | [`docs/RULES_SPEC.md`](docs/RULES_SPEC.md)、[`docs/KEYWORDS.md`](docs/KEYWORDS.md)、[`docs/CARD_COVERAGE.md`](docs/CARD_COVERAGE.md) |
 
 ## ⚔️ 已实现的对战规则（依据考据校准）
@@ -48,7 +48,7 @@ Vite 8 · React 19 · TypeScript 5.9 · Tailwind CSS 4 · zustand 5 · Vitest 5
 ```bash
 npm install
 npm run dev        # http://127.0.0.1:5173
-npm test           # 引擎 / 脚本 / AI 回归测试（36 项）
+npm test           # 引擎 / 脚本 / AI 回归测试（40 项）
 npm run build      # 产物在 dist/
 ```
 

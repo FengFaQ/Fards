@@ -367,4 +367,151 @@ export const USA_CARD_SCRIPTS: Record<string, CardScript> = {
       { trigger: 'death', effects: [{ op: 'custom', id: 'buffDeckUnitsWithRandomKeyword', params: { attack: 2, hp: 3 } }] },
     ],
   },
+
+
+
+  // ==== 长尾自动生成批次（严格模板解析，META 外高热度/Elite/Special）====
+
+  // 中文原文：亡计：将 1 张“激怒”加入手牌。
+  '121st_infantry_regiment': {
+    cardId: '121st_infantry_regiment',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'addCardToHand',
+            side: 'self',
+            cardId: 'outrage',
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：友方单位被消灭时，将 1 张“激怒”加入手牌。
+  blue_and_gray: {
+    cardId: 'blue_and_gray',
+    abilities: [
+      {
+        trigger: 'unitDestroyed',
+        anySide: true,
+        condition: {
+          kind: 'custom',
+          id: 'eventVictimIsFriendly',
+        },
+        effects: [
+          {
+            op: 'addCardToHand',
+            side: 'self',
+            cardId: 'outrage',
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：抑制 1 个敌方单位。
+  m10a1: {
+    cardId: 'm10a1',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'silence',
+            target: {
+              kind: 'chosen',
+            },
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'enemy',
+          line: 'any',
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：部署：将 1 个“M4A2”加入支援阵线。
+  m4a2: {
+    cardId: 'm4a2',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'summon',
+            side: 'self',
+            cardId: 'm4a2',
+            count: 1,
+            line: 'support',
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：亡计：使所有友方单位获得 +2+2，抽 2 张牌。
+  p51_b: {
+    cardId: 'p51_b',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'buff',
+            target: {
+              kind: 'query',
+              side: 'self',
+              line: 'any',
+            },
+            attack: 2,
+            hp: 2,
+            permanent: true,
+          },
+          {
+            op: 'draw',
+            side: 'self',
+            count: 2,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：抽 1 张空军。
+  usaaf_spitfire_ix: {
+    cardId: 'usaaf_spitfire_ix',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'custom',
+            id: 'drawByType',
+            params: {
+              type: 'fighter',
+              count: 1,
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // ==== 手写批次（模板无法覆盖的高热度卡）====
+
+  // 中文原文：部署：前线每有 1 个单位，获得 1 个指挥点槽。使所有友方单位获得同等攻击力。
+  // TODO(原语): 需要“按前线单位数循环”的复合效果
+  '15th_engineers': {
+    cardId: '15th_engineers',
+    abilities: [
+      { trigger: 'deploy', effects: [{ op: 'custom', id: 'kreditSlotAndBuffPerFrontlineUnit' }] },
+    ],
+  },
 };

@@ -20,7 +20,7 @@ import type {
   UnitId,
 } from './types';
 import { getDef, getScript, opponentOf, playerUnits, randomValue, frontlineUsed } from './state';
-import { hasKeyword, isAirType, isGroundType, isRangedType } from './keywords';
+import { hasKeyword, isAirType, isGroundType, isRangedType, isHiddenKeyword } from './keywords';
 
 export function resolveSide(controller: PlayerIndex, side: PlayerSide | 'any'): PlayerIndex[] {
   if (side === 'self') return [controller];
@@ -64,6 +64,8 @@ export interface ResolveQueryOptions {
   excludeUnitId?: UnitId;
   /** 是否允许包含 HQ 目标（默认否） */
   includeHQ?: boolean;
+  /** 是否包含隐藏单位（伏击/隐蔽，默认排除） */
+  includeHidden?: boolean;
 }
 
 /** 把目标查询解析成 TargetRef 列表（不做随机挑选，由调用方决定） */
@@ -75,10 +77,12 @@ export function resolveQueryTargets(
   options: ResolveQueryOptions = {},
 ): TargetRef[] {
   const out: TargetRef[] = [];
+  const includeHidden = options.includeHidden ?? false;
   if (query.kind === 'query' && (query.side === 'any' || query.side)) {
     for (const player of resolveSide(controller, query.side)) {
       for (const unit of playerUnits(state, player)) {
         if (options.excludeUnitId && unit.unitId === options.excludeUnitId) continue;
+        if (!includeHidden && targetIsHidden(state, unit)) continue;
         if (query.line && query.line !== 'any' && unit.line !== query.line) continue;
         if (!matchesFilter(state, reg, unit, query.filter, options.chosen)) continue;
         out.push({ kind: 'unit', unitId: unit.unitId });
@@ -139,7 +143,7 @@ export function canUnitAttack(state: GameState, unit: Unit): boolean {
 
 function targetIsHidden(state: GameState, unit: Unit): boolean {
   if (hasKeyword(unit, 'smokescreen')) return true;
-  if (hasKeyword(unit, 'ambush') && unit.ambush) return true;
+  if (unit.ambush && isHiddenKeyword(unit)) return true;
   return false;
 }
 
@@ -190,6 +194,7 @@ export function canAttackHQ(state: GameState, reg: EngineRegistry, attacker: Uni
     const enemyFighters = playerUnits(state, enemy).filter((u) => attackerType(reg, u) === 'fighter');
     if (enemyFighters.length > 0) return false;
   }
+  // 规则：所有兵种都可攻击敌方总部（不受守护限制），但地面单位需在前线
   if (isRangedType(atkType)) return true;
   return !state.config.hqAttackRequiresFrontline || attacker.line === 'frontline';
 }
@@ -198,14 +203,30 @@ export function legalAttackTargets(state: GameState, reg: EngineRegistry, attack
   if (!canUnitAttack(state, attacker)) return [];
   const enemy = opponentOf(attacker.owner);
   const guards = guardUnitsOf(state, reg, enemy);
-  const ignoresGuard = attackerType(reg, attacker) === 'artillery';
+  const attackerKind = attackerType(reg, attacker);
+  // 炮兵/轰炸机无视守护
+  const ignoresGuard = attackerKind === 'artillery' || attackerKind === 'bomber';
+  const isGuarded = (unit: Unit): boolean => {
+    if (!guards.some((g) => g.unitId === unit.unitId)) {
+      // 与守护单位相邻的单位同样受到保护
+      const lineArr = state.players[unit.owner][unit.line];
+      const idx = lineArr.indexOf(unit.unitId);
+      const neighbors = [lineArr[idx - 1], lineArr[idx + 1]].filter((id): id is string => !!id);
+      return neighbors.some((id) => guards.some((g) => g.unitId === id));
+    }
+    return true;
+  };
   const targets: TargetRef[] = [];
   for (const unit of playerUnits(state, enemy)) {
     if (!canAttackUnitTarget(state, reg, attacker, unit)) continue;
-    if (!ignoresGuard && guards.length > 0 && !guards.some((g) => g.unitId === unit.unitId)) continue;
+    if (!ignoresGuard && guards.length > 0) {
+      const guardSelf = guards.some((g) => g.unitId === unit.unitId);
+      if (!guardSelf) continue;
+    }
     targets.push({ kind: 'unit', unitId: unit.unitId });
   }
-  if ((ignoresGuard || guards.length === 0) && canAttackHQ(state, reg, attacker)) {
+  void isGuarded;
+  if (canAttackHQ(state, reg, attacker)) {
     targets.push({ kind: 'hq', player: enemy });
   }
   return targets;
@@ -227,10 +248,8 @@ export function canDeployToFrontline(state: GameState, player: PlayerIndex): boo
 }
 
 export function legalDeployLines(state: GameState, player: PlayerIndex): Line[] {
-  const lines: Line[] = [];
-  if (canDeployToFrontline(state, player)) lines.push('frontline');
-  if (lineSpace(state, player, 'support') > 0) lines.push('support');
-  return lines;
+  // 官方规则：从手牌打出的单位部署到支援阵线；进入前线需要「移动」（支付行动花费）
+  return lineSpace(state, player, 'support') > 0 ? ['support'] : [];
 }
 
 // ============================================================
@@ -331,7 +350,10 @@ export function legalActions(state: GameState, reg: EngineRegistry, player: Play
     const cost = playCost(state, reg, player, instance);
     if (cost > p.kredits) continue;
     const action = legalActionsForCard(state, reg, player, instance);
-    if (action.targets?.mode === 'target' && action.targets.refs.length === 0) continue;
+    if (action.targets?.mode === 'target') {
+      const required = action.targets.count ?? 1;
+      if (action.targets.refs.length < required) continue;
+    }
     if (action.deployLines && action.deployLines.length === 0) continue;
     actions.push(action);
   }

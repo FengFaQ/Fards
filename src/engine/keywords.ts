@@ -134,6 +134,11 @@ export function isRangedType(type: CardType): boolean {
   return type === 'artillery' || isAirType(type);
 }
 
+/** 单位当前是否处于隐藏状态（伏击/隐蔽，攻击后解除） */
+export function isHiddenKeyword(unit: Pick<Unit, 'keywords'>): boolean {
+  return hasKeyword(unit, 'ambush') || hasKeyword(unit, 'covert');
+}
+
 /** 单位当前是否具有“可先攻”类关键字 */
 export function hasImmediateAction(unit: Unit): boolean {
   return hasKeyword(unit, 'blitz') || hasKeyword(unit, 'shock');

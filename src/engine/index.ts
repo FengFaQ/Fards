@@ -8,6 +8,7 @@ export * from './keywords';
 export * from './state';
 export * from './targeting';
 export * from './game';
+export * from './ai';
 export {
   createCtx,
   executeEffects,

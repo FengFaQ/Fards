@@ -268,7 +268,7 @@ async function checkCardBacks() {
 async function buildDeckCodeModule() {
   const outDir = resolve(ROOT, '_work/tstable');
   await mkdir(outDir, { recursive: true });
-  for (const name of ['types', 'importMap', 'deckcode']) {
+  for (const name of ['types', 'importMap', 'deckcode', 'loadCards', 'deckRules']) {
     const src = await readFile(resolve(ROOT, 'src/data', `${name}.ts`), 'utf8');
     const { outputText } = ts.transpileModule(src, {
       compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022, isolatedModules: true },
@@ -277,7 +277,9 @@ async function buildDeckCodeModule() {
     const patched = outputText.replace(/(from\s+['"])(\.\/[A-Za-z0-9_]+)(['"])/g, '$1$2.mjs$3');
     await writeFile(resolve(outDir, `${name}.mjs`), patched, 'utf8');
   }
-  return import(new URL(`file://${resolve(outDir, 'deckcode.mjs').replace(/\\/g, '/')}`).href);
+  const deckcode = await import(new URL(`file://${resolve(outDir, 'deckcode.mjs').replace(/\\/g, '/')}`).href);
+  const deckRules = await import(new URL(`file://${resolve(outDir, 'deckRules.mjs').replace(/\\/g, '/')}`).href);
+  return { ...deckcode, deckRules };
 }
 
 async function checkDeckCode() {
@@ -391,8 +393,67 @@ async function checkDeckCode() {
   return { passRate: exactOk / Math.max(decodeOk, 1), total, sane, garbage, exactOk, decodeOk, cardsOk, factionOk, legacyHeader };
 }
 
-/* ------------------------------------------------------------------ F 字体 */
+/* ------------------------------------------------------------------ E2 规则 */
 
+async function checkRules(mod) {
+  head('E2. 卡组合法性规则（validateDeck 打在真实公开卡组上）');
+  const { validateDeck, DECK_RULES } = mod.deckRules;
+  if (!validateDeck || !DECK_RULES) {
+    bad('deckRules 导出', 'validateDeck / DECK_RULES 缺失');
+    return null;
+  }
+  ok('deckRules 加载', `deckSize=${DECK_RULES.deckSize}，盟军≤${DECK_RULES.maxAllyCards}，同名上限=${JSON.stringify(DECK_RULES.maxCopiesByRarity)}`);
+
+  let decks;
+  try {
+    decks = await readJSON('_work/decks.json');
+  } catch {
+    warn('规则复核', '缺少 _work/decks.json，跳过');
+    return null;
+  }
+  const cardMap = new Map(cards.map((c) => [c.cardId, c]));
+  let checked = 0;
+  let valid = 0;
+  const errorCounts = new Map();
+  const examples = [];
+  for (const deck of decks) {
+    const snap = deck.cards_snapshot ?? [];
+    const total = snap.reduce((s, c) => s + (c.count ?? 0), 0);
+    const maxCount = Math.max(0, ...snap.map((c) => c.count ?? 0));
+    if (total !== 39 || maxCount > 4) continue; // 只看快照合法的卡组
+    checked++;
+    const result = validateDeck(
+      {
+        mainFaction: deck.main_faction,
+        allyFaction: deck.ally_faction,
+        cards: snap.map((c) => ({ cardId: c.card_id, count: c.count })),
+      },
+      cardMap
+    );
+    if (result.valid) {
+      valid++;
+      continue;
+    }
+    for (const err of result.errors) {
+      const key = String(err)
+        .replace(/"[^"]*"/g, '"…"')
+        .replace(/\d+/g, 'N')
+        .slice(0, 90);
+      errorCounts.set(key, (errorCounts.get(key) ?? 0) + 1);
+      if (examples.length < 6) examples.push({ deck: deck.name, main: deck.main_faction, ally: deck.ally_faction, error: err });
+    }
+  }
+  const rate = checked ? valid / checked : 0;
+  const pct = `${(rate * 100).toFixed(2)}%`;
+  if (rate >= 0.95) ok('真实卡组校验通过率', `${valid}/${checked} ${pct}（余下为广场里违反构筑规则的少数卡组，见 docs/DECK_RULES.md §6）`);
+  else bad('真实卡组校验通过率', `${valid}/${checked} ${pct}（<95%，规则可能过严）`);
+  const top = [...errorCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
+  if (top.length) console.log(`    错误类型 top${top.length}：${JSON.stringify(top)}`);
+  if (examples.length) console.log(`    示例：${JSON.stringify(examples.slice(0, 3))}`);
+  return { checked, valid, rate, topErrors: top, examples };
+}
+
+/* ------------------------------------------------------------------ F 字体 */
 async function checkFonts() {
   head('F. 字体');
   const dir = resolve(ROOT, 'public/fonts');
@@ -441,6 +502,7 @@ async function main() {
   await checkImages();
   await checkCardBacks();
   const deckcode = await checkDeckCode();
+  const rules = await checkRules(await buildDeckCodeModule());
   await checkFonts();
   await checkFeatured();
 
@@ -458,6 +520,7 @@ async function main() {
     failures,
     warnings,
     deckcode,
+    rules,
     sections,
   };
   await mkdir(dirname(resolve(ROOT, opt.json)), { recursive: true });

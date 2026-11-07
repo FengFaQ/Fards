@@ -22,6 +22,8 @@ import type {
 } from '@/engine/types';
 import type { DeckData, UiCard } from '../lib/dataBridge';
 import { loadAllCards } from '../lib/dataBridge';
+import { DECK_FACTIONS, factionMeta } from '../lib/format';
+import { useDeckStore } from './deckStore';
 import {
   actionToCommand,
   loadEngineAI,
@@ -62,10 +64,13 @@ export interface BannerFx {
 }
 
 export interface Selection {
-  kind: 'play' | 'attack';
+  kind: 'play' | 'attack' | 'move';
   label: string;
   cardInstanceId?: string;
   attackerId?: string;
+  /** 移动模式：要移动的单位与目标战线 */
+  unitId?: string;
+  toLine?: Line;
   refs: TargetRef[];
   count: number;
   chosen: TargetRef[];
@@ -83,6 +88,16 @@ export interface StartConfig {
   aiFaction: string;
   difficulty: AIDifficulty;
   seed?: number;
+}
+
+/** 调试/QA 查询参数（autostart 用） */
+export interface StartQuery {
+  /** 已保存卡组 id / 名称，或阵营名（阵营名 → 快速编组 39 张） */
+  deck?: string | null;
+  /** 敌方阵营（AI） */
+  faction?: string | null;
+  difficulty?: string | null;
+  seed?: string | null;
 }
 
 export interface HintFx {
@@ -129,6 +144,8 @@ interface BattleStore {
   restartBattle: () => Promise<void>;
   quitToSetup: () => void;
   startDemoBattle: (rounds?: number) => Promise<void>;
+  /** 调试/QA 入口：#/battle?autostart=1&deck=<deckId|faction>&faction=...&difficulty=...&seed=... */
+  startFromQuery: (query: StartQuery) => Promise<void>;
   debugSimulate: (rounds: number) => void;
 
   /* ---------------- 玩家操作 ---------------- */
@@ -136,6 +153,8 @@ interface BattleStore {
   selectUnit: (unitId: string) => void;
   clickTarget: (ref: TargetRef) => void;
   chooseSlot: (line: Line) => void;
+  /** 攻击模式下追加「移动到前线/支援线」 */
+  moveSelected: () => void;
   cancelSelection: () => void;
   endTurn: () => void;
   surrender: () => void;
@@ -322,7 +341,8 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       updates.aiThinking = false;
     }
     set(updates);
-    return events.length > 0;
+    // 移动不产生事件（引擎只在撤退时记日志），因此单独放行
+    return events.length > 0 || command.type === 'moveUnit';
   };
 
   /* ---------------- AI 循环 ---------------- */
@@ -606,6 +626,59 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       if (get().phase === 'playing' && rounds > 0) get().debugSimulate(rounds);
     },
 
+    startFromQuery: async (query) => {
+      const snapshot = get();
+      if (!snapshot.registry) return;
+      const norm = (value?: string | null) => (value ?? '').trim();
+      const difficultyRaw = norm(query.difficulty).toLowerCase();
+      const difficulty: AIDifficulty =
+        difficultyRaw === 'easy' || difficultyRaw === 'hard' ? difficultyRaw : 'normal';
+      const seedRaw = Number(norm(query.seed));
+      const seed = Number.isFinite(seedRaw) && seedRaw > 0 ? Math.floor(seedRaw) : 20261107;
+
+      const resolveFaction = (value: string): string | null => {
+        const text = value.trim();
+        if (!text) return null;
+        const lower = text.toLowerCase();
+        const byKey = DECK_FACTIONS.find((faction) => faction.toLowerCase() === lower);
+        if (byKey) return byKey;
+        const byZh = DECK_FACTIONS.find((faction) => factionMeta(faction).zh === text);
+        return byZh ?? null;
+      };
+
+      // 卡组来源：已保存卡组 id/名称 → 阵营名（快速编组） → 第一套已保存 → 默认德国快速编组
+      const savedDecks = useDeckStore.getState().decks;
+      const deckParam = norm(query.deck);
+      let deck: DeckData | null = null;
+      let deckName = '';
+
+      if (deckParam) {
+        const saved = savedDecks.find((item) => item.id === deckParam || item.name === deckParam);
+        if (saved) {
+          deck = saved;
+          deckName = saved.name;
+        }
+      }
+      let playerFaction = deck ? (deck.faction as string) : resolveFaction(deckParam) ?? savedDecks[0]?.faction ?? 'Germany';
+      if (!deck) {
+        if (savedDecks.length && !resolveFaction(deckParam)) {
+          deck = savedDecks[0];
+          deckName = savedDecks[0].name;
+          playerFaction = savedDecks[0].faction;
+        } else {
+          deck = buildQuickDeck(playerFaction, snapshot.cards, seed);
+          deckName = quickDeckName(playerFaction);
+        }
+      }
+
+      const requestedAi = resolveFaction(norm(query.faction));
+      const aiCandidate = requestedAi && requestedAi !== factionMeta(playerFaction).key ? requestedAi : null;
+      const aiFaction =
+        aiCandidate ?? DECK_FACTIONS.find((faction) => faction !== factionMeta(playerFaction).key) ?? 'Soviet';
+
+      await get().startBattle({ deck, deckName, aiFaction, difficulty, seed });
+    },
+
     debugSimulate: (rounds) => {
       const snapshot = get();
       const registry = snapshot.registry;
@@ -718,7 +791,29 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       }
       const actions = legalActions(state, registry, HUMAN);
       const action = actions.find((item) => item.kind === 'attack' && item.attackerId === unitId);
+      const moveAction = actions.find((item) => item.kind === 'moveUnit' && item.unitId === unitId);
       if (!action) {
+        // 不能攻击时，若可移动就进入移动模式
+        if (moveAction) {
+          const toLine: Line = unit.line === 'support' ? 'frontline' : 'support';
+          set({
+            selection: {
+              kind: 'move',
+              label: moveAction.label,
+              unitId,
+              toLine,
+              refs: [],
+              count: 1,
+              chosen: [],
+            },
+          });
+          setHint(
+            `移动至${toLine === 'frontline' ? '前线' : '支援线'}：消耗 ${
+              moveAction.cost ?? 0
+            } 克雷迪特，点击${toLine === 'frontline' ? '前线空位' : '支援线'}确认`,
+          );
+          return;
+        }
         let reason = '该单位本回合无法行动';
         if (unit.statuses.pinned) reason = '单位被压制，本回合无法攻击';
         else if ((unit.statuses.cannotAttackTurns ?? 0) > 0) reason = '单位处于无法攻击状态';
@@ -785,7 +880,24 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
 
     chooseSlot: (line) => {
       const selection = get().selection;
-      if (!selection || selection.kind !== 'play' || !selection.cardInstanceId) return;
+      if (!selection) return;
+      if (selection.kind === 'move' && selection.unitId) {
+        if (selection.toLine && line !== selection.toLine) return;
+        const moved = commitCmd({
+          type: 'moveUnit',
+          player: HUMAN,
+          unitId: selection.unitId,
+          toLine: line,
+        });
+        if (moved) {
+          setHint(`已移动至${line === 'frontline' ? '前线' : '支援线'}`);
+          get().kickAI();
+        } else {
+          setHint('无法移动该单位');
+        }
+        return;
+      }
+      if (selection.kind !== 'play' || !selection.cardInstanceId) return;
       const { state, registry } = get();
       if (!state || !registry) return;
       const changed = commitCmd({
@@ -797,6 +909,40 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       });
       if (!changed) setHint('该战场线无法部署');
       else get().kickAI();
+    },
+
+    moveSelected: () => {
+      const snapshot = get();
+      const { selection, state, registry } = snapshot;
+      if (!selection || !state || !registry) return;
+      const unitId = selection.kind === 'attack' ? selection.attackerId : selection.unitId;
+      if (!unitId) return;
+      const unit = state.units[unitId];
+      if (!unit) return;
+      const moveAction = legalActions(state, registry, HUMAN).find(
+        (item) => item.kind === 'moveUnit' && item.unitId === unitId,
+      );
+      if (!moveAction) {
+        setHint('该单位本回合无法移动');
+        return;
+      }
+      const toLine: Line = unit.line === 'support' ? 'frontline' : 'support';
+      set({
+        selection: {
+          kind: 'move',
+          label: moveAction.label,
+          unitId,
+          toLine,
+          refs: [],
+          count: 1,
+          chosen: [],
+        },
+      });
+      setHint(
+        `移动至${toLine === 'frontline' ? '前线' : '支援线'}：消耗 ${
+          moveAction.cost ?? 0
+        } 克雷迪特，点击${toLine === 'frontline' ? '前线空位' : '支援线'}确认`,
+      );
     },
 
     cancelSelection: () => {

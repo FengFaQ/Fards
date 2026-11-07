@@ -4,7 +4,7 @@
  * 调试参数（仅本地验证用）：
  *   #/battle?demo=1&auto=3  —— 自动生成双方卡组、模拟 3 轮后停在玩家回合，便于截图/回归
  */
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useBattleStore } from '../ui/stores/battleStore';
 import BattleScreen from '../ui/battle/BattleScreen';
@@ -62,11 +62,19 @@ export default function BattlePage() {
   const demoStarted = useBattleStore((state) => state.demoStarted);
   const init = useBattleStore((state) => state.init);
   const startDemoBattle = useBattleStore((state) => state.startDemoBattle);
+  const startFromQuery = useBattleStore((state) => state.startFromQuery);
   const stopAI = useBattleStore((state) => state.stopAI);
 
   const [params] = useSearchParams();
   const demo = params.get('demo');
   const auto = Number(params.get('auto') ?? '3');
+  const autostart = params.get('autostart');
+  const deckArg = params.get('deck');
+  const factionArg = params.get('faction');
+  const difficultyArg = params.get('difficulty');
+  const seedArg = params.get('seed');
+  const simulate = Number(params.get('simulate') ?? '0');
+  const autoStarted = useRef(false);
 
   useEffect(() => {
     void init();
@@ -78,6 +86,20 @@ export default function BattlePage() {
     if (!demo || demoStarted || !hasRegistry || phase !== 'setup') return;
     void startDemoBattle(Number.isFinite(auto) ? auto : 3);
   }, [demo, auto, demoStarted, hasRegistry, phase, startDemoBattle]);
+
+  // QA/截图入口：#/battle?autostart=1&deck=<deckId|faction>&faction=Germany&difficulty=normal&seed=1
+  // 附加 simulate=N：开局后用本地 AI 快进 N 轮（仅用于截图/回归，不参与正常对局）
+  useEffect(() => {
+    if (!autostart || autoStarted.current) return;
+    if (!hasRegistry || phase !== 'setup') return;
+    autoStarted.current = true;
+    void (async () => {
+      await startFromQuery({ deck: deckArg, faction: factionArg, difficulty: difficultyArg, seed: seedArg });
+      if (Number.isFinite(simulate) && simulate > 0) {
+        useBattleStore.getState().debugSimulate(Math.floor(simulate));
+      }
+    })();
+  }, [autostart, deckArg, factionArg, difficultyArg, seedArg, simulate, hasRegistry, phase, startFromQuery]);
 
   if (phase === 'boot' || (booting && !hasRegistry)) return <BootScreen />;
   if (!hasRegistry) return <ErrorScreen message={error ?? '未加载到任何卡牌'} />;

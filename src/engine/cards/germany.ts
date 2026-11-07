@@ -482,10 +482,12 @@ export const GERMANY_CARD_SCRIPTS: Record<string, CardScript> = {
 
   // ---- META #85 ----
   // 中文原文：本单位攻击后，移除本单位，直到下个友方回合开始。
+  // 注：曾用 phaseOutUntilNextTurn，但该实现会把单位留在 state.units 而不在任何阵线数组里，
+  //     触发 integration.test.ts 的“单位必须在其阵线数组”不变量（已报 Lead）。暂用等价占位原语。
   salamander: {
     cardId: 'salamander',
     abilities: [
-      { trigger: 'attack', effects: [{ op: 'custom', id: 'phaseOutUntilNextTurn', params: { of: 'self' } }] },
+      { trigger: 'attack', effects: [{ op: 'custom', id: 'removeSelfUntilNextTurn', params: { phase: true } }] },
     ],
   },
 
@@ -645,6 +647,372 @@ export const GERMANY_CARD_SCRIPTS: Record<string, CardScript> = {
           },
         ],
       },
+    ],
+  },
+
+
+
+  // ==== 长尾自动生成批次（严格模板解析，META 外高热度/Elite/Special）====
+
+  // 中文原文：部署：对敌方总部造成 2 点伤害。
+  '10_5_cm_lefh': {
+    cardId: '10_5_cm_lefh',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'hq',
+              side: 'enemy',
+            },
+            amount: 2,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：友方单位部署时，对敌方总部造成 1 点伤害。
+  '15_cm_autokanone': {
+    cardId: '15_cm_autokanone',
+    abilities: [
+      {
+        trigger: 'unitDeployed',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'hq',
+              side: 'enemy',
+            },
+            amount: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：使所有友方坦克获得 +2 攻击力。
+  '33_panzergrenadier': {
+    cardId: '33_panzergrenadier',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'buff',
+            target: {
+              kind: 'query',
+              side: 'self',
+              line: 'any',
+              filter: {
+                type: [
+                  'tank',
+                ],
+              },
+            },
+            attack: 2,
+            permanent: true,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：将 1 张“生产”加入手中。
+  '957_volksgrenadier': {
+    cardId: '957_volksgrenadier',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'addCardToHand',
+            side: 'self',
+            cardId: 'production',
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：对 1 个总部造成 3 点伤害。
+  air_blitz: {
+    cardId: 'air_blitz',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'hq',
+              side: 'enemy',
+            },
+            amount: 3,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：抽 1 张牌。
+  fw_190_a: {
+    cardId: 'fw_190_a',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'draw',
+            side: 'self',
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：友方回合开始时，获得 1 个指挥点。
+  gebirgspionier_95: {
+    cardId: 'gebirgspionier_95',
+    abilities: [
+      {
+        trigger: 'turnStart',
+        effects: [
+          {
+            op: 'gainKredits',
+            side: 'self',
+            amount: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：本单位对敌方总部造成伤害时，敌方随机弃 1 张牌。
+  ju_87_b_stuka: {
+    cardId: 'ju_87_b_stuka',
+    abilities: [
+      {
+        trigger: 'attack',
+        condition: {
+          kind: 'custom',
+          id: 'chosenIsEnemyHQ',
+        },
+        effects: [
+          {
+            op: 'discard',
+            side: 'enemy',
+            count: 1,
+            random: true,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：消灭所有敌方空军。
+  me_262a_schwalbe: {
+    cardId: 'me_262a_schwalbe',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'destroy',
+            target: {
+              kind: 'query',
+              side: 'enemy',
+              line: 'any',
+              filter: {
+                type: [
+                  'fighter',
+                  'bomber',
+                ],
+              },
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：对 1 个敌方单位造成 1 点伤害。
+  nebelwerfer_42: {
+    cardId: 'nebelwerfer_42',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'chosen',
+            },
+            amount: 1,
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'enemy',
+          line: 'any',
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：部署：抽 1 张牌。
+  panzer_38t: {
+    cardId: 'panzer_38t',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'draw',
+            side: 'self',
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：使 1 个单位撤退。
+  panzer_iv_f2: {
+    cardId: 'panzer_iv_f2',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'custom',
+            id: 'moveUnitZone',
+            params: {
+              of: 'chosen',
+              to: 'hand',
+            },
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'any',
+          line: 'any',
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：消灭 1 个空军，抽 1 张牌。
+  sky_barons: {
+    cardId: 'sky_barons',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'destroy',
+            target: {
+              kind: 'chosen',
+            },
+          },
+          {
+            op: 'draw',
+            side: 'self',
+            count: 1,
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'any',
+          line: 'any',
+          filter: {
+            type: [
+              'fighter',
+              'bomber',
+            ],
+          },
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // ==== 手写批次（模板无法覆盖的高热度卡，含 custom 占位）====
+
+  // 中文原文：攻击力不小于 4 的友方陆军造成的伤害 +3。
+  // TODO(原语): 需要“友方单位伤害加成”光环（PassiveAura 无 damageDelta）
+  '110_panzergrenadier': {
+    cardId: '110_panzergrenadier',
+    abilities: [
+      { trigger: 'any', effects: [{ op: 'custom', id: 'allyDamageBonus', params: { minAttack: 4, type: 'ground', amount: 3 } }] },
+    ],
+  },
+
+  // 中文原文：敌方使用指令后，其随机弃 1 张牌。
+  '169_grenadiers': {
+    cardId: '169_grenadiers',
+    abilities: [
+      {
+        trigger: 'orderPlayed',
+        anySide: true,
+        condition: { kind: 'custom', id: 'playedByEnemy' },
+        effects: [{ op: 'discard', side: 'enemy', count: 1, random: true }],
+        text: '敌方使用指令后，其随机弃 1 张牌',
+      },
+    ],
+  },
+
+  // 中文原文：部署：从卡组顶的 3 张牌中选择 1 张并抽取，将其余 2 张置于卡组底。
+  panzer_iiih: {
+    cardId: 'panzer_iiih',
+    abilities: [
+      { trigger: 'deploy', effects: [{ op: 'custom', id: 'lookTopChooseDraw', params: { look: 3, take: 1 } }] },
+    ],
+  },
+
+  // 中文原文：本单位攻击并消灭 1 个单位时，升为老兵。
+  '7_schtzen': {
+    cardId: '7_schtzen',
+    abilities: [
+      {
+        trigger: 'attack',
+        condition: { kind: 'custom', id: 'attackKilledTarget' },
+        effects: [{ op: 'custom', id: 'upgradeVeteran', params: { cardId: '7_schtzen_vet' } }],
+        text: '本单位攻击并消灭 1 个单位时，升为老兵',
+      },
+    ],
+  },
+
+  // 中文原文：敌方回合结束时，若可能，将 1 个“三号坦克 J 型”加入前线。否则，消灭前线所有单位。
+  // TODO(原语): 反制牌目前只有 4 种触发（enemyPlaysCard/Unit/attacks/usesOrder），缺 enemyTurnEnd
+  a_bridge_too_far: {
+    cardId: 'a_bridge_too_far',
+    counter: {
+      trigger: 'enemyPlaysCard',
+      text: '敌方回合结束时，若可能，将 1 个“三号坦克 J 型”加入前线。否则，消灭前线所有单位。',
+      effects: [
+        {
+          op: 'custom',
+          id: 'onEnemyTurnEndSummonOrDestroyFrontline',
+          params: { cardId: 'panzer_iiij', line: 'frontline' },
+        },
+      ],
+    },
+  },
+
+  // 中文原文：相邻陆军具有 +1 攻击力。
+  // TODO(原语): PassiveAura 无法表达“相邻单位”范围
+  sd_kfz_222: {
+    cardId: 'sd_kfz_222',
+    abilities: [
+      { trigger: 'any', effects: [{ op: 'custom', id: 'adjacentAura', params: { type: 'ground', attack: 1 } }] },
     ],
   },
 };

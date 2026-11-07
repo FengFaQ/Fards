@@ -812,6 +812,8 @@ export function moveUnitToLine(ctx: ExecCtx, unit: Unit, toLine: Line): void {
   if (unit.line === toLine) return;
   const fromLine = unit.line;
   removeUnitFromBoard(state, unit.unitId);
+  // moveUnitToLine 是“移出再放入”，需要把单位重新登记回 state.units
+  state.units[unit.unitId] = unit;
   const cap =
     toLine === 'frontline'
       ? state.config.frontlineSlots - frontlineUsed(state)
@@ -1400,6 +1402,7 @@ Object.assign(CUSTOM_HANDLERS, {
     const newOwner = ctx.controller;
     if (!lineHasSpace(ctx, newOwner, unit.line) && unit.line === 'support') return;
     removeUnitFromBoard(ctx.state, unit.unitId);
+    ctx.state.units[unit.unitId] = unit;
     unit.owner = newOwner;
     const line = unit.line;
     placeUnit(ctx.state, unit, line);
@@ -1551,6 +1554,8 @@ Object.assign(CUSTOM_HANDLERS, {
     const unitId = unit.unitId;
     const owner = unit.owner;
     removeUnitFromBoard(ctx.state, unitId);
+    ctx.state.units[unitId] = unit;
+    unit.statuses.phasedOut = true;
     ctx.state.scheduled.push({
       id: `phase_${unitId}`,
       player: owner,
@@ -1566,9 +1571,10 @@ Object.assign(CUSTOM_HANDLERS, {
     const unitId = pStr(params.unitId);
     const unit = ctx.state.units[unitId];
     if (!unit) return;
+    delete unit.statuses.phasedOut;
     const targetLine = bestLineForSummon(ctx, unit.owner, unit.line);
     if (!targetLine) {
-      leaveBoard(ctx.state, unitId);
+      delete ctx.state.units[unitId];
       return;
     }
     placeUnit(ctx.state, unit, targetLine);
@@ -1851,5 +1857,153 @@ Object.assign(CUSTOM_HANDLERS, {
   /** 敌方抽牌时对敌方总部造成伤害（简化：立即造成 1 点） */
   damageEnemyHqIfEnemyDrew: (ctx: ExecCtx) => {
     dealDamage(ctx, { kind: 'hq', player: opponentOf(ctx.controller) }, 1);
+  },
+} as Record<string, CustomHandler>);
+
+// ============================================================
+// 追加：事件上下文相关的 custom condition（card-smith 长尾需要）
+// ============================================================
+
+Object.assign(CUSTOM_CONDITIONS, {
+  /** 本次触发涉及的“受害/行动单位”是友方 */
+  eventVictimIsFriendly: (ctx: ExecCtx) => {
+    const ref = ctx.chosen;
+    if (!ref || ref.kind !== 'unit') return false;
+    const unit = ctx.state.units[ref.unitId];
+    return !!unit && unit.owner === ctx.controller;
+  },
+  /** 本次事件由敌方发起 */
+  playedByEnemy: (ctx: ExecCtx) => {
+    const ref = ctx.chosen;
+    if (ref && ref.kind === 'unit') {
+      const unit = ctx.state.units[ref.unitId];
+      if (unit) return unit.owner !== ctx.controller;
+    }
+    return ctx.state.activePlayer !== ctx.controller;
+  },
+  /** 本次行动单位是友方且属于指定阵营 */
+  actedUnitIsFriendlyFaction: (ctx: ExecCtx, params) => {
+    const faction = pStr(params.faction, '');
+    const ref = ctx.chosen;
+    if (!ref || ref.kind !== 'unit') return false;
+    const unit = ctx.state.units[ref.unitId];
+    if (!unit || unit.owner !== ctx.controller) return false;
+    const def = getDef(ctx.reg, unit.cardId);
+    return !faction || def?.faction === faction;
+  },
+  /** 本次行动单位是敌方 */
+  actedUnitIsEnemy: (ctx: ExecCtx) => {
+    const ref = ctx.chosen;
+    if (!ref || ref.kind !== 'unit') return false;
+    const unit = ctx.state.units[ref.unitId];
+    return !!unit && unit.owner !== ctx.controller;
+  },
+} as Record<string, (ctx: ExecCtx, params: Record<string, unknown>) => boolean>);
+
+// modifyCost 支持 duration:'turn'（仅本回合生效）
+Object.assign(CUSTOM_HANDLERS, {
+  modifyCostTurn: (ctx: ExecCtx, params) => {
+    const amount = pNum(params.amount, 1);
+    const target = pStr(params.target, 'handAll');
+    const p = ctx.state.players[ctx.controller];
+    const key =
+      target === 'cardId'
+        ? `costDiscountTurn:card:${pStr(params.cardId)}`
+        : target === 'faction'
+          ? `costDiscountTurn:faction:${pStr(params.faction)}`
+          : target === 'type'
+            ? `costDiscountTurn:type:${pStr(params.type)}`
+            : 'costDiscountTurn:all';
+    p.trackers[key] = (p.trackers[key] ?? 0) + amount;
+  },
+} as Record<string, CustomHandler>);
+
+// ============================================================
+// 追加：压制/抑制与关键字机制（官方规则）
+// ============================================================
+
+Object.assign(CUSTOM_HANDLERS, {
+  /** 抑制 pin：失去所有关键词和效果，攻/防/行动花费重置为原值（可解除） */
+  pinUnit: (ctx: ExecCtx, params) => {
+    const refs = ctx.chosenList ?? (ctx.chosen ? [ctx.chosen] : []);
+    for (const ref of refs) {
+      if (ref.kind !== 'unit') continue;
+      const unit = ctx.state.units[ref.unitId];
+      if (!unit) continue;
+      const def = getDef(ctx.reg, unit.cardId);
+      if (!def) continue;
+      unit.statuses.pinBackup = {
+        baseKeywords: [...unit.baseKeywords],
+        baseAttack: unit.baseAttack,
+        baseHp: unit.baseHp,
+        operationCost: unit.operationCost,
+        buffAttack: unit.buffAttack,
+        buffHp: unit.buffHp,
+      };
+      unit.baseKeywords = [];
+      unit.auraKeywords = [];
+      unit.baseAttack = def.attack;
+      unit.baseHp = def.defense;
+      unit.buffAttack = 0;
+      unit.buffHp = 0;
+      unit.operationCost = def.operationCost;
+      unit.hp = Math.min(unit.hp, def.defense);
+      unit.statuses.pinned = true;
+      unit.silenced = true;
+      recalcUnit(unit);
+    }
+    void params;
+  },
+
+  /** 解除抑制 */
+  unpinUnit: (ctx: ExecCtx) => {
+    const refs = ctx.chosenList ?? (ctx.chosen ? [ctx.chosen] : []);
+    for (const ref of refs) {
+      if (ref.kind !== 'unit') continue;
+      const unit = ctx.state.units[ref.unitId];
+      if (!unit) continue;
+      const backup = unit.statuses.pinBackup as
+        | { baseKeywords: string[]; baseAttack: number; baseHp: number; operationCost: number; buffAttack: number; buffHp: number }
+        | undefined;
+      if (backup) {
+        unit.baseKeywords = backup.baseKeywords;
+        unit.baseAttack = backup.baseAttack;
+        unit.baseHp = backup.baseHp;
+        unit.operationCost = backup.operationCost;
+        unit.buffAttack = backup.buffAttack;
+        unit.buffHp = backup.buffHp;
+        delete unit.statuses.pinBackup;
+      }
+      unit.statuses.pinned = false;
+      unit.silenced = false;
+      recalcUnit(unit);
+      recomputeAuras(ctx.state, ctx.reg);
+    }
+  },
+
+  /** 山地 alpine：每有 1 个其他友方山地单位，+1/+1 */
+  applyAlpine: (ctx: ExecCtx) => {
+    const unit = ctx.sourceUnitId ? ctx.state.units[ctx.sourceUnitId] : undefined;
+    if (!unit) return;
+    const others = playerUnits(ctx.state, unit.owner).filter(
+      (u) => u.unitId !== unit.unitId && hasKeyword(u, 'alpine'),
+    );
+    if (others.length > 0) buffUnit(unit, others.length, others.length, true);
+  },
+
+  /** 动员 mobilize：回合开始 +1/+1（受伤后由引擎自动移除动员） */
+  mobilizeBuff: (ctx: ExecCtx) => {
+    const unit = ctx.sourceUnitId ? ctx.state.units[ctx.sourceUnitId] : undefined;
+    if (!unit) return;
+    buffUnit(unit, 1, 1, true);
+  },
+
+  /** 收缴 salvage：消灭敌方单位后获得 1/1 复制（简化：加入手牌一张同名牌并在部署时 1/1） */
+  salvageCopy: (ctx: ExecCtx) => {
+    const unit = ctx.sourceUnitId ? ctx.state.units[ctx.sourceUnitId] : undefined;
+    if (!unit) return;
+    const instance = createCardInstance(ctx.state, unit.cardId, ctx.controller, 'created');
+    ctx.state.players[ctx.controller].hand.push(instance);
+    ctx.state.players[ctx.controller].trackers[`salvage1of1:${instance.instanceId}`] = 1;
   },
 } as Record<string, CustomHandler>);

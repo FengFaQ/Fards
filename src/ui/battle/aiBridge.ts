@@ -1,16 +1,20 @@
 /**
  * AI 桥接层
  * ------------------------------------------------------------------
- * engine/ai.ts 由 ai-forge 实现（签名已冻结）：
+ * 正式 AI 已落地：engine/ai.ts（通过 @/engine 公共出口导出）
  *   chooseAIAction(state, reg, player, difficulty?) => GameCommand | null
  *   aiDeckPreset(faction, cards, seed?) => { cardId, count }[]
  *
- * 该文件尚未落地（或构建时不存在）时，本模块用本地贪心兜底：
- * 从 legalActions 里按启发式评分选一条合法动作，并自己补齐目标。
- * 通过 import.meta.glob 探测文件是否存在 —— 一旦 engine/ai.ts 出现，
- * 构建/热更新会自动切到正式实现，两套实现都能跑。
+ * 本模块的职责：
+ * 1) 包一层 try/catch：正式 AI 抛错时不中断对局，落回本地贪心兜底；
+ * 2) 提供本地兜底（从 legalActions 里按启发式评分选一条合法动作）；
+ * 3) 提供「动作 → 指令」的通用翻译（本地兜底 / 调试脚本复用）。
  */
-import { legalActions } from '@/engine';
+import {
+  aiDeckPreset as engineDeckPreset,
+  chooseAIAction as engineChooseAIAction,
+  legalActions,
+} from '@/engine';
 import type {
   CardDef,
   EngineRegistry,
@@ -35,64 +39,36 @@ type ChooseFn = (
   player: PlayerIndex,
   difficulty?: AIDifficulty,
 ) => GameCommand | null;
-type DeckPresetFn = (
-  faction: string,
-  cards: CardDef[],
-  seed?: number,
-) => { cardId: string; count: number }[];
+type DeckPresetFn = (faction: string, cards: CardDef[], seed?: number) => { cardId: string; count: number }[];
 
 export interface EngineAIModule {
   choose: ChooseFn;
-  deckPreset?: DeckPresetFn;
+  deckPreset: DeckPresetFn;
 }
 
-/* ---------------- 探测 engine/ai.ts ---------------- */
-
-const engineModules = import.meta.glob('/src/engine/ai.ts') as Record<
-  string,
-  () => Promise<Record<string, unknown>>
->;
-
-let cached: EngineAIModule | null | undefined;
-let loading: Promise<EngineAIModule | null> | null = null;
-
-/** 加载正式 AI（不存在时返回 null，调用方落回本地兜底） */
-export function loadEngineAI(): Promise<EngineAIModule | null> {
-  if (cached !== undefined) return Promise.resolve(cached);
-  if (loading) return loading;
-  const loader = Object.values(engineModules)[0];
-  if (!loader) {
-    cached = null;
-    return Promise.resolve(null);
-  }
-  loading = loader()
-    .then((mod) => {
-      const choose = mod.chooseAIAction ?? mod.default;
-      if (typeof choose !== 'function') {
-        cached = null;
+/**
+ * 取得正式 AI 模块（已静态接入 engine/ai.ts）。
+ * 每次调用都包 try/catch：AI 内部异常时返回 null，调用方落回本地兜底。
+ */
+export function getEngineAI(): EngineAIModule {
+  return {
+    choose: (state, reg, player, difficulty = 'normal') => {
+      try {
+        return engineChooseAIAction(state, reg, player, difficulty);
+      } catch (error) {
+        console.warn('[battle] 正式 AI 抛错，退回本地兜底', error);
         return null;
       }
-      const preset = mod.aiDeckPreset;
-      cached = {
-        choose: choose as ChooseFn,
-        deckPreset: typeof preset === 'function' ? (preset as DeckPresetFn) : undefined,
-      };
-      return cached;
-    })
-    .catch((err: unknown) => {
-      console.warn('[battle] engine/ai.ts 加载失败，使用本地 AI 兜底', err);
-      cached = null;
-      return null;
-    })
-    .finally(() => {
-      loading = null;
-    });
-  return loading;
-}
-
-/** 是否已切到正式 AI（UI 上做个小标记，便于排查） */
-export function hasEngineAI(): boolean {
-  return !!cached;
+    },
+    deckPreset: (faction, cards, seed = 1) => {
+      try {
+        return engineDeckPreset(faction, cards, seed);
+      } catch (error) {
+        console.warn('[battle] aiDeckPreset 抛错，改用快速编组', error);
+        return [];
+      }
+    },
+  };
 }
 
 /* ---------------- 目标挑选 ---------------- */
@@ -237,6 +213,13 @@ export function actionToCommand(
       if (!target) return null;
       return { type: 'attack', player, attackerId: action.attackerId, target };
     }
+    case 'moveUnit': {
+      if (!action.unitId) return null;
+      const unit = state.units[action.unitId];
+      if (!unit) return null;
+      const toLine: 'frontline' | 'support' = unit.line === 'support' ? 'frontline' : 'support';
+      return { type: 'moveUnit', player, unitId: action.unitId, toLine };
+    }
     default:
       return null;
   }
@@ -309,6 +292,19 @@ function scoreAction(
     }
     if (best <= -900) return -200;
     return 10 + best;
+  }
+
+  if (action.kind === 'moveUnit') {
+    const unit = action.unitId ? state.units[action.unitId] : undefined;
+    if (!unit) return -200;
+    // 支援线 → 前线：占住前哨才能攻击敌方总部，通常值得
+    if (unit.line === 'support') {
+      const enemyFront = enemy.frontline.length;
+      const myFront = me.frontline.length;
+      return 9 + unit.attack * 0.8 - (myFront > 2 ? 4 : 0) - (enemyFront > 0 ? 3 : 0);
+    }
+    // 前线 → 支援线：撤退只在残血且支援线有空间时考虑
+    return unit.hp <= 1 ? 2 : -20;
   }
 
   return -100;

@@ -110,8 +110,10 @@ export async function loadCards(): Promise<Card[]> {
         for (const card of cards) index.set(card.cardId, card);
         cardsCache = cards;
         cardIndex = index;
-        // 后台补充缺失卡图清单（非阻塞、失败不致命）
-        void loadMissingImageIds();
+        // 卡图清单只在开发环境需要（生产一律走远程 wsrv，见 cardImageUrl）；失败不致命
+        if (isDevEnv()) {
+          await Promise.all([loadImagesManifest(), loadMissingImageIds()]);
+        }
         return cards;
       } catch (err) {
         cardsPromise = null;
@@ -179,6 +181,36 @@ async function loadMissingImageIds(): Promise<Set<string>> {
   return missingImagePromise;
 }
 
+/**
+ * 读取 `public/data/images-manifest.json`（fetch-images.mjs 生成，含已下载 cardId 列表）。
+ * 部署到 GitHub Pages 等"不含图片"的环境时，manifest 会显示为 0 张 → 自动全量回退远程。
+ */
+let downloadedImageIds: Set<string> | null = null;
+let imagesManifestPromise: Promise<Set<string> | null> | null = null;
+
+export async function loadImagesManifest(): Promise<Set<string> | null> {
+  if (downloadedImageIds) return downloadedImageIds;
+  if (!imagesManifestPromise) {
+    imagesManifestPromise = (async () => {
+      try {
+        const payload = await fetchJSON<{ cardIds?: string[] }>('data/images-manifest.json');
+        const set = new Set<string>(Array.isArray(payload?.cardIds) ? payload.cardIds : []);
+        downloadedImageIds = set;
+        return set;
+      } catch {
+        // 无 manifest：无法判断本地是否存在，按"本地优先 + onError 回退远程"处理
+        return null;
+      }
+    })();
+  }
+  return imagesManifestPromise;
+}
+
+/** 同步查询：某卡本地图是否已下载（manifest 尚未加载时返回 null = 未知） */
+export function hasLocalImage(cardId: string): boolean | null {
+  return downloadedImageIds ? downloadedImageIds.has(cardId) : null;
+}
+
 /** 远程回退地址：wsrv(webp) → imageProxyUrl → imageUrl */
 export function cardImageFallbackUrl(card: Pick<Card, 'imageUrl' | 'imageProxyUrl'>): string {
   if (card.imageUrl) return wsrvImageUrl(card.imageUrl);
@@ -186,18 +218,36 @@ export function cardImageFallbackUrl(card: Pick<Card, 'imageUrl' | 'imageProxyUr
 }
 
 /**
- * 卡图 URL：本地优先（public/cards/<cardId>.webp），
- * 若已知该卡本地缺失则回退远程（wsrv.nl）。
- * UI 仍建议给 <img onError> 挂 `cardImageFallbackUrl(card)` 兜底。
+ * 是否为开发环境（Vite 注入 `import.meta.env.DEV`）。
+ * 生产构建一律用远程图，避免 Pages 部署（不含 public/cards）先 404 再 onError，浪费一次请求。
+ */
+function isDevEnv(): boolean {
+  try {
+    const env = (import.meta as unknown as { env?: { DEV?: boolean } }).env;
+    return !!env?.DEV;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 卡图 URL：
+ *   1. **开发环境**（`import.meta.env.DEV`）且该卡在 images-manifest 里 → 本地 `/cards/<id>.webp`
+ *   2. **生产构建** → 一律远程 wsrv URL（`cardImageFallbackUrl`），Pages 不含图片也能一次命中
+ *   3. manifest 不可用的开发环境 → 本地优先，UI 用 `<img onError>` 挂 `cardImageFallbackUrl(card)` 兜底
  */
 export function cardImageUrl(card: Card): string {
-  const missing = missingImageIds;
-  if (missing && missing.has(card.cardId)) {
-    const fallback = cardImageFallbackUrl(card);
+  const fallback = cardImageFallbackUrl(card);
+  const requiresLocal = isDevEnv() && !!downloadedImageIds;
+  if (requiresLocal) {
+    if (downloadedImageIds?.has(card.cardId) && card.imageLocal) return card.imageLocal;
     if (fallback) return fallback;
   }
-  if (card.imageLocal) return card.imageLocal;
-  return cardImageFallbackUrl(card);
+  // 生产：远程优先（无远程地址时才回退本地，保证极端情况下仍能显示）
+  if (fallback) return fallback;
+  const missing = missingImageIds;
+  if (missing && missing.has(card.cardId)) return '';
+  return card.imageLocal ?? '';
 }
 
 /* ============================================================

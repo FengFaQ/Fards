@@ -1,0 +1,143 @@
+/* ============================================================
+ * 卡组概览出图页（?action=overview_* / print_template）
+ * 无导航，可直接截图；print_template 走 A4 打印样式。
+ * ============================================================ */
+
+.overview-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 50% -10%, rgb(216 180 95 / 0.1), transparent 55%),
+    #0b0c07;
+}
+
+.overview-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  backdrop-filter: blur(8px);
+}
+
+.overview-stage {
+  display: flex;
+  justify-content: center;
+  padding: 16px 16px 48px;
+}
+
+.overview-poster {
+  box-shadow: 0 24px 80px rgb(0 0 0 / 0.65);
+}
+
+/* ---------------- A4 打印模板 ---------------- */
+
+.print-sheet {
+  background: #f3f1e4;
+  color: #1a190f;
+  font-family: "Oswald", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+}
+
+@media screen {
+  .print-sheet {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 22px;
+    padding: 8mm;
+    box-shadow: 0 20px 60px rgb(0 0 0 / 0.6);
+    page-break-after: always;
+  }
+}
+
+.print-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 63mm);
+  gap: 4mm;
+  justify-content: center;
+}
+
+.print-card {
+  width: 63mm;
+  height: 88mm;
+  position: relative;
+  background: #12140d;
+  overflow: hidden;
+  outline: 0.3mm dashed rgb(26 25 15 / 0.45);
+  outline-offset: 1mm;
+}
+
+.print-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.print-card-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1mm;
+  padding: 2mm;
+  text-align: center;
+  color: #e6e2cd;
+}
+
+.print-card-count {
+  position: absolute;
+  top: 1mm;
+  right: 1mm;
+  background: rgb(14 13 7 / 0.9);
+  border: 0.2mm solid #c39b3a;
+  color: #e9cf8a;
+  font-family: "Black Ops One", "Oswald", sans-serif;
+  font-size: 8pt;
+  line-height: 1.1;
+  padding: 0 1.2mm;
+  border-radius: 0.6mm;
+}
+
+.print-crop {
+  position: absolute;
+  width: 2.5mm;
+  height: 2.5mm;
+  border-color: rgb(26 25 15 / 0.7);
+  pointer-events: none;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 6mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .overview-page {
+    background: #fff !important;
+  }
+
+  .print-sheet {
+    width: auto;
+    min-height: auto;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    page-break-after: always;
+  }
+
+  .print-sheet:last-child {
+    page-break-after: auto;
+  }
+
+  .print-card {
+    break-inside: avoid;
+  }
+}

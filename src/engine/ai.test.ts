@@ -120,18 +120,28 @@ function makeTestUnit(
 // 对局驱动器
 // ============================================================
 
-/** 状态指纹：用于检测「指令被引擎忽略 / 空转」 */
+/** 状态指纹（语义层，刻意不含 log.length）：用于检测「指令被引擎忽略 / 空转」 */
 function signature(state: GameState): string {
+  let hpSum = 0;
+  for (const unit of Object.values(state.units)) hpSum += unit.hp * 100 + unit.attack;
   return [
     state.turn,
-    state.log.length,
+    state.activePlayer,
     Object.keys(state.units).length,
+    hpSum,
+    state.players[0].frontline.length,
+    state.players[1].frontline.length,
+    state.players[0].support.length,
+    state.players[1].support.length,
     state.players[0].hq.hp,
     state.players[1].hq.hp,
     state.players[0].hand.length,
     state.players[1].hand.length,
+    state.players[0].deck.length,
+    state.players[1].deck.length,
     state.players[0].kredits,
     state.players[1].kredits,
+    state.frontlineController,
     state.pendingChoice ? state.pendingChoice.choiceId : '-',
   ].join('|');
 }
@@ -151,6 +161,10 @@ interface GameStats {
   noops: string[];
   pendingChoices: number;
   maxDecisionMs: number;
+  /** 整局累计的移动指令数（moveUnit） */
+  moves: number;
+  /** 各类指令计数 */
+  kinds: Record<string, number>;
 }
 
 const COMMAND_CAP = 400;
@@ -168,6 +182,8 @@ function runGame(seed: number, d0: AIDifficulty, d1: AIDifficulty, fa: string, f
     noops: [],
     pendingChoices: 0,
     maxDecisionMs: 0,
+    moves: 0,
+    kinds: {},
   };
   let state: GameState;
   try {
@@ -202,6 +218,8 @@ function runGame(seed: number, d0: AIDifficulty, d1: AIDifficulty, fa: string, f
       break;
     }
     stats.commands += 1;
+    stats.kinds[command.type] = (stats.kinds[command.type] ?? 0) + 1;
+    if (command.type === 'moveUnit') stats.moves += 1;
     const current = signature(state);
     if (current === previous && state.status === 'playing') {
       consecutiveNoops += 1;
@@ -292,6 +310,48 @@ describe('chooseAIAction 契约', () => {
       expect(stats.errors, `${difficulty} 对局异常`).toEqual([]);
       expect(stats.noops, `${difficulty} 出现空转指令`).toEqual([]);
       expect(stats.ended, `${difficulty} 对局未结束（${stats.endReason}）`).toBe(true);
+    }
+  });
+
+  it('移动专项回归：AI 会使用 moveUnit，10 局无死循环 / 异常', () => {
+    const results: GameStats[] = [];
+    for (let i = 0; i < 10; i++) {
+      results.push(runGame(3300 + i, 'normal', 'normal', FACTIONS[i % FACTIONS.length], FACTIONS[(i + 2) % FACTIONS.length]));
+    }
+    const errors = results.flatMap((stats) => stats.errors);
+    const noops = results.flatMap((stats) => stats.noops);
+    expect(errors, `移动对局异常：${errors.slice(0, 3).join(' | ')}`).toHaveLength(0);
+    expect(noops, `移动对局出现空转指令：${noops.slice(0, 3).join(' | ')}`).toHaveLength(0);
+    expect(results.every((stats) => stats.ended), '移动对局应全部结束').toBe(true);
+
+    const moves = results.reduce((sum, stats) => sum + stats.moves, 0);
+    const gamesWithMove = results.filter((stats) => stats.moves > 0).length;
+    const kinds: Record<string, number> = {};
+    for (const stats of results) {
+      for (const [kind, count] of Object.entries(stats.kinds)) kinds[kind] = (kinds[kind] ?? 0) + count;
+    }
+    console.log(
+      `[move 专项 10局] 移动指令=${moves}（${gamesWithMove}/10 局出现过移动） 指令分布=${JSON.stringify(kinds)}`,
+    );
+    expect(moves, 'AI 从未使用 moveUnit').toBeGreaterThan(0);
+    // 移动不应把指令数顶爆上限
+    expect(Math.max(...results.map((stats) => stats.commands))).toBeLessThanOrEqual(COMMAND_CAP);
+  }, 120000);
+
+  it('反制封锁部署：不再反复尝试打单位卡（引擎会静默拒绝并只写日志）', () => {
+    const { state } = createGame(makeSetup(2468, 'Germany', 'USA'), REG);
+    const me = state.activePlayer;
+    const next = structuredClone(state);
+    next.players[me].kredits = 10;
+    // 模拟反制牌 U-48 类效果：本回合禁止部署单位
+    next.players[me].trackers['restrict:deploy:untilTurn'] = next.turn;
+    const command = chooseAIAction(next, REG, me, 'normal');
+    expect(command).not.toBeNull();
+    if (command && command.type === 'playCard') {
+      const instance = next.cards[command.instanceId];
+      const def = instance ? CARD_DEFS[instance.cardId] : undefined;
+      // 只允许打指令/反制，不允许打单位（否则会被引擎拒绝又反复重试）
+      expect(def && (def.type === 'order' || def.type === 'countermeasure')).toBe(true);
     }
   });
 

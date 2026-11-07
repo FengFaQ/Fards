@@ -237,7 +237,8 @@ export function SetupScreen() {
               {mode === 'quick' && (
                 <div>
                   <p className="mb-2 font-body text-[10px] leading-relaxed text-field-400">
-                    按阵营自动配一套 30 张的可用卡组（会随卡牌数据更新），无需先去构筑页。
+                    按阵营自动配一套 <span className="text-brass-300">合法 39 张</span> 卡组（Standard 4 / Limited 3 /
+                    Special 2 / Elite 1），会随卡牌数据更新，无需先去构筑页。
                   </p>
                   <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
                     {DECK_FACTIONS.map((faction) => {
@@ -345,7 +346,7 @@ export function SetupScreen() {
                     </div>
                   </div>
                   <div className="min-w-[190px]">
-                    <CurveChart counts={stats.byKredits} height={60} target={30} />
+                    <CurveChart counts={stats.byKredits} height={60} target={39} />
                   </div>
                 </div>
               ) : (
@@ -434,7 +435,11 @@ export function SetupScreen() {
                 <ul className="mt-1 space-y-1 font-body text-[10px] leading-relaxed text-field-400">
                   <li className="flex items-center gap-1.5">
                     <IconSwords size={11} className="shrink-0 text-brass-500" />
-                    总部 20 生命，前 2 / 支援 4，克雷迪特每回合 +1
+                    总部 20 生命 · 前线共享 5 槽 / 支援线各 4 槽 · 先攻 4 张、后攻 5 张
+                  </li>
+                  <li className="flex items-center gap-1.5">
+                    <IconArrowRight size={11} className="shrink-0 text-brass-500" />
+                    手牌单位先部署到支援线；花行动花费「移动」到前线后才能攻击总部
                   </li>
                   <li className="flex items-center gap-1.5">
                     <IconCards size={11} className="shrink-0 text-brass-500" />

@@ -151,6 +151,7 @@ describe('引擎 × 卡牌脚本集成', () => {
           expect(state.players[0].frontline.length).toBeLessThanOrEqual(state.config.frontlineSlots);
           expect(state.players[0].support.length).toBeLessThanOrEqual(state.config.supportSlots);
           for (const unit of Object.values(state.units)) {
+            if (unit.statuses.phasedOut) continue; // “移除直到下个回合”的单位暂不在场上
             if (!(unit.maxHp >= unit.hp)) {
               throw new Error(
                 `不变量破坏：maxHp=${unit.maxHp} hp=${unit.hp} card=${unit.cardId} owner=${unit.owner} line=${unit.line} lastCmd=${JSON.stringify(cmd)}`,

@@ -33,6 +33,7 @@ import {
   playerUnits,
   recalcUnit,
   buffUnit,
+  removeUnitFromBoard,
   setRegistry,
   startTurnInternal,
 } from './state';
@@ -44,6 +45,7 @@ import {
   isRefIn,
   legalAttackTargets,
   legalDeployLines,
+  lineSpace,
   playCost,
   requiredTargetCount,
   resolveLegalTargetRefs,
@@ -308,11 +310,7 @@ function resolveAttack(
   if (state.config.attackCostsKredits && !payKredits(state, cmd.player, opCost)) return;
 
   attacker.attacksUsed += 1;
-  const attackerAtk = attacker.attack;
   const attackerKind = attackerType(reg, attacker);
-  const targetType = targetUnit ? attackerType(reg, targetUnit) : '';
-  // 炮兵永不受到反击；轰炸机作为防守方不反击
-  const retaliation = targetUnit && attackerKind !== 'artillery' && targetType !== 'bomber' ? targetUnit.attack : 0;
   events.push({ type: 'attack', attackerId: attacker.unitId, target: targetRef });
   const targetLabel =
     targetRef.kind === 'hq'
@@ -327,16 +325,52 @@ function resolveAttack(
     sourceUnitId: attacker.unitId,
     chosen: targetRef,
   });
-  if (attacker.ambush) attacker.ambush = false;
+  // 行动会揭示隐蔽、失去烟幕/冲击（官方规则）
+  revealUnit(attacker);
+  removeKeywordAfterAction(attacker, 'smokescreen');
+  const shockActive = hasKeyword(attacker, 'shock');
+  if (shockActive) removeKeywordAfterAction(attacker, 'shock');
 
   // 敌方反制：被攻击时触发（chosen = 攻击者，供“消灭攻击者”类反制引用）
   triggerCounters(state, reg, events, cmd.player, 'enemyAttacks', { kind: 'unit', unitId: attacker.unitId });
   if (state.status === 'finished') return;
 
-  // 攻击前触发（先结算伤害，再触发事件，保证不会因选择挂起而丢失伤害）
-  dealDamage(ctx, targetRef, attackerAtk, { unitId: attacker.unitId, kind: 'unit' });
-  if (targetUnit && state.units[targetUnit.unitId]) {
-    dealDamage(ctx, { kind: 'unit', unitId: attacker.unitId }, retaliation, { unitId: targetUnit.unitId, kind: 'unit' });
+  // 反击矩阵（官方）：炮兵/轰炸机防守不反击；炮兵攻击不受反击；轰炸机仅遭战斗机反击；冲击免反击
+  const targetKind = targetUnit ? attackerType(reg, targetUnit) : '';
+  const takesRetaliation = (() => {
+    if (!targetUnit) return false;
+    if (targetKind === 'artillery' || targetKind === 'bomber') return false;
+    if (attackerKind === 'artillery') return false;
+    if (attackerKind === 'bomber' && targetKind !== 'fighter') return false;
+    if (hasKeyword(targetUnit, 'shock')) return false;
+    if (shockActive) return false;
+    return true;
+  })();
+  const ambushFirstStrike = !!targetUnit && targetUnit.ambush === true && !targetUnit.trackers.ambushUsed;
+  if (targetUnit && ambushFirstStrike) {
+    targetUnit.trackers.ambushUsed = 1;
+    targetUnit.ambush = false;
+  }
+  const attackerDamage = attacker.attack;
+  const retaliationDamage = takesRetaliation && targetUnit ? targetUnit.attack : 0;
+  if (ambushFirstStrike && targetUnit) {
+    // 伏击先手：目标先造成反击；若攻击者被消灭则本次攻击不结算伤害
+    dealDamage(ctx, { kind: 'unit', unitId: attacker.unitId }, retaliationDamage, {
+      unitId: targetUnit.unitId,
+      kind: 'unit',
+    });
+    processTriggers(ctx);
+    if (state.units[attacker.unitId]) {
+      dealDamage(ctx, targetRef, attackerDamage, { unitId: attacker.unitId, kind: 'unit' });
+    }
+  } else {
+    dealDamage(ctx, targetRef, attackerDamage, { unitId: attacker.unitId, kind: 'unit' });
+    if (retaliationDamage > 0 && targetUnit) {
+      dealDamage(ctx, { kind: 'unit', unitId: attacker.unitId }, retaliationDamage, {
+        unitId: targetUnit.unitId,
+        kind: 'unit',
+      });
+    }
   }
   processTriggers(ctx);
   if (ctx.suspended) return;
@@ -368,14 +402,53 @@ function resolveMove(
   if (unit.line === cmd.toLine) return;
   if (unit.movedThisTurn) return;
   if (cmd.toLine === 'frontline' && !canDeployToFrontline(state, cmd.player)) return;
-  const cost = state.config.moveCostsKredits ? getOperationCost(unit) : 0;
+  // 官方规则：支援线→前线需要支付行动花费；前线→支援线（撤退）免费
+  const cost = state.config.moveCostsKredits && cmd.toLine === 'frontline' ? getOperationCost(unit) : 0;
   if (!payKredits(state, cmd.player, cost)) return;
   unit.movedThisTurn = true;
   const ctx = createCtx(state, reg, events, { controller: cmd.player, sourceUnitId: unit.unitId });
-  moveUnitToLine(ctx, unit, cmd.toLine);
+  // 撤退：支援线已满时返回手牌
+  if (cmd.toLine === 'support' && lineSpace(state, cmd.player, 'support') <= 0) {
+    returnUnitToHand(state, reg, unit);
+    addLog(state, cmd.player, 'effect', `${nameOf(unit.cardId)} 撤退回手牌（支援线已满）`);
+  } else {
+    moveUnitToLine(ctx, unit, cmd.toLine);
+  }
+  revealUnit(unit);
+  removeKeywordAfterAction(unit, 'smokescreen');
   fireBoardTriggers(ctx, 'unitActed', { owners: [0, 1], triggerUnitId: unit.unitId });
   processTriggers(ctx);
   recomputeAuras(state, reg);
+}
+
+/** 撤退/效果：单位返回拥有者手牌（手牌满则进弃牌堆） */
+function returnUnitToHand(state: GameState, reg: EngineRegistry, unit: Unit): void {
+  removeUnitFromBoard(state, unit.unitId);
+  const instance = state.cards[unit.instanceId];
+  if (!instance || unit.token) return;
+  const p = state.players[unit.owner];
+  if (p.hand.length < state.config.handLimit) p.hand.push(instance);
+  else p.discard.push(instance);
+  recomputeAuras(state, reg);
+}
+
+/** 揭示隐蔽/伏击（攻击或移动后） */
+function revealUnit(unit: Unit): void {
+  if (unit.ambush) unit.ambush = false;
+  const hasHiddenKeyword = unit.baseKeywords.some((k) => k.startsWith('covert') || k.startsWith('ambush'));
+  if (hasHiddenKeyword) {
+    unit.baseKeywords = unit.baseKeywords.filter((k) => !k.startsWith('covert') && !k.startsWith('ambush'));
+    recalcUnit(unit);
+  }
+}
+
+/** 行动后失去某关键字（烟幕/冲击） */
+function removeKeywordAfterAction(unit: Unit, keyword: string): void {
+  const had = unit.baseKeywords.some((k) => k.startsWith(keyword)) || unit.auraKeywords.some((k) => k.startsWith(keyword));
+  if (!had) return;
+  unit.baseKeywords = unit.baseKeywords.filter((k) => !k.startsWith(keyword));
+  unit.auraKeywords = unit.auraKeywords.filter((k) => !k.startsWith(keyword));
+  recalcUnit(unit);
 }
 
 // ============================================================

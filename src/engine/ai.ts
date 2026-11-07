@@ -179,5 +179,3 @@ export function previewAICandidates(
 export function evaluateAIState(state: GameState, reg: EngineRegistry, me: PlayerIndex): number {
   return staticStateScore(state, reg, me);
 }
-
-export type { AIDeckCard as AIDeckCardType };

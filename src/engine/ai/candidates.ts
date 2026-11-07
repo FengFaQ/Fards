@@ -5,7 +5,8 @@
  * 1. 只从 `legalActions(state, reg, player)` 枚举动作，不自己猜规则。
  * 2. 生成的每个 GameCommand 都必须能通过 applyCommand 的校验：
  *    - 出牌目标全部取自 legalActions.targets.refs，多目标卡填满 count 个；
- *    - 攻击目标来自 legalActions（已含 guard / 空军对抗 / 行动花费过滤）。
+ *    - 攻击目标来自 legalActions（已含 guard / 空军对抗 / 行动花费过滤）；
+ *    - 移动方向按 legalActions 的语义推导：支援线 → 前线，或前线 → 支援线。
  * 3. 评分统一归一到 0~100：50 左右是「普通可打动作」，100 = 斩杀，20 左右 = 结束回合，
  *    纯亏牌/无意义动作给个位数。
  */
@@ -19,11 +20,11 @@ import type {
   PlayerIndex,
   TargetRef,
 } from '../types';
-import { getDef, getScript, opponentOf } from '../state';
+import { getDef, getScript, opponentOf, playerUnits } from '../state';
 import { legalActions } from '../targeting';
-import { normalizeKeywords } from '../keywords';
+import { isRangedType, normalizeKeywords } from '../keywords';
 import { bestTargetValue, pickTargets, targetIntent, collectEffectOps } from './intent';
-import { boardAttack, defUnitValue, hqThreat, keywordsValue, unitValue } from './values';
+import { boardAttack, defUnitValue, hqThreat, unitValue } from './values';
 
 /** hard 难度前瞻的候选上限（任务约定：不超过 40 个） */
 export const MAX_CANDIDATES = 40;
@@ -34,10 +35,11 @@ export interface AICandidate {
   label: string;
   cardId?: string;
   attackerId?: string;
+  unitId?: string;
   target?: TargetRef;
-  /** 实际花费克雷迪特（出牌/攻击的行动花费） */
+  /** 实际花费克雷迪特（出牌/攻击/移动的行动花费） */
   cost: number;
-  /** 启发式评分（0~120 量级） */
+  /** 启发式评分（0~100） */
   base: number;
 }
 
@@ -73,6 +75,11 @@ export function enumerateCandidates(state: GameState, reg: EngineRegistry, me: P
   if (state.status !== 'playing' || state.activePlayer !== me || state.pendingChoice) return [];
   const actions = legalActions(state, reg, me);
   const out: AICandidate[] = [];
+  const trackers = state.players[me].trackers;
+  // 反制牌会写这两个 tracker，但 legalActions 不会过滤它们；这里必须自己跳过，
+  // 否则 applyCommand 会静默拒绝（只写一条日志），AI 会在同一回合无限重试同一条指令。
+  const deployLocked = Number(trackers['restrict:deploy:untilTurn'] ?? 0) >= state.turn;
+  const attackLocked = Number(trackers['restrict:attack:untilTurn'] ?? 0) >= state.turn;
 
   for (const action of actions) {
     if (action.kind === 'endTurn') {
@@ -86,6 +93,7 @@ export function enumerateCandidates(state: GameState, reg: EngineRegistry, me: P
       continue;
     }
     if (action.kind === 'attack') {
+      if (attackLocked) continue; // 本回合被反制封锁攻击
       if (!action.attackerId || !action.targets) continue;
       const attacker = state.units[action.attackerId];
       if (!attacker) continue;
@@ -102,10 +110,31 @@ export function enumerateCandidates(state: GameState, reg: EngineRegistry, me: P
       }
       continue;
     }
+    if (action.kind === 'moveUnit') {
+      // LegalAction 只给 unitId（方向由引擎语义决定）：支援线 → 前线，否则 → 支援线
+      if (!action.unitId) continue;
+      const unit = state.units[action.unitId];
+      if (!unit || unit.owner !== me) continue;
+      const toLine: Line = unit.line === 'support' ? 'frontline' : 'support';
+      out.push({
+        cmd: { type: 'moveUnit', player: me, unitId: action.unitId, toLine },
+        kind: 'moveUnit',
+        label: action.label,
+        unitId: action.unitId,
+        cost: Math.max(0, action.cost ?? 0),
+        base: 0,
+      });
+      continue;
+    }
     if (action.kind === 'playCard') {
       if (!action.cardInstanceId) continue;
       const instance = state.cards[action.cardInstanceId];
       if (!instance) continue;
+      // 本回合被反制封锁部署：单位卡打不出去（指令/反制不受影响）
+      if (deployLocked) {
+        const cardDef = getDef(reg, instance.cardId);
+        if (isUnitDef(cardDef)) continue;
+      }
       const need = action.targets?.mode === 'target' ? Math.max(1, action.targets.count ?? 1) : 0;
       const refs = action.targets?.refs ?? [];
       // 合法目标不足 count：引擎会静默丢弃整条指令（白耗动作），直接跳过
@@ -132,7 +161,7 @@ export function enumerateCandidates(state: GameState, reg: EngineRegistry, me: P
       });
       continue;
     }
-    // 其他 kind（concede/resolveChoice/moveUnit）不在正常候选里
+    // 其他 kind（concede/resolveChoice）不在正常候选里
   }
 
   // 去重（同一指令只保留一条）
@@ -164,6 +193,9 @@ export function scoreCandidate(
     case 'attack':
       raw = scoreAttack(state, reg, me, candidate);
       break;
+    case 'moveUnit':
+      raw = scoreMove(state, reg, me, candidate);
+      break;
     case 'playCard':
       raw = scorePlayCard(state, reg, me, candidate);
       break;
@@ -181,6 +213,76 @@ function scoreEndTurn(state: GameState, me: PlayerIndex): number {
   return 20.5 - Math.min(Math.max(0, kredits), 6) * 0.35;
 }
 
+/** 敌方某条战线上的近战攻击力合计（判断进退时的“新增暴露”） */
+function enemyMeleeAttackOnLine(
+  state: GameState,
+  reg: EngineRegistry,
+  me: PlayerIndex,
+  line: Line,
+): number {
+  const foe = opponentOf(me);
+  let total = 0;
+  for (const unit of playerUnits(state, foe)) {
+    if (unit.line !== line) continue;
+    if (unit.attack <= 0) continue;
+    const def = getDef(reg, unit.cardId);
+    if (!def) continue;
+    if (isRangedType(def.type)) continue; // 远程本来就能打任意战线
+    total += unit.attack;
+  }
+  return total;
+}
+
+/**
+ * 移动评分（官方规则：部署只进支援线，进前线必须“移动”）
+ * - 支援 → 前线：
+ *   · 地面单位：上前线才能打敌方 HQ / 打敌方支援线，且抢空前线可以封锁对手入场 → 高分；
+ *   · 炮兵/空军：远程本来就能打 HQ，上前线只会多挨敌方支援线近战的打 → 低分；
+ *   · 守护：只有在前线才有嘲讽 → 总部吃紧时高分。
+ * - 前线 → 支援：主要是让位/保命；地面单位撤退会失去打 HQ 的能力 → 低分。
+ */
+function scoreMove(state: GameState, reg: EngineRegistry, me: PlayerIndex, candidate: AICandidate): number {
+  const unit = candidate.unitId ? state.units[candidate.unitId] : undefined;
+  if (!unit) return 0;
+  const def = getDef(reg, unit.cardId);
+  const isMelee = def ? !isRangedType(def.type) : true;
+  const isGuard = unit.keywords.some((k) => keywordBase(k) === 'guard');
+  const foe = opponentOf(me);
+  const myHq = state.players[me].hq;
+  const enemyHq = state.players[foe].hq;
+  const threat = hqThreat(state, reg, me);
+
+  if (unit.line === 'support') {
+    // 支援线 → 前线
+    let score = 26;
+    if (isMelee) {
+      score += 6; // 地面单位想输出/打 HQ 必须上前线
+      if (enemyHq.hp <= 12) score += 4; // 接近斩杀，需要前线解锁 HQ 攻击
+      if (state.players[foe].support.length > 0) score += 3; // 前线才能打敌方支援线
+    } else {
+      score -= 10; // 远程上前线纯挨打
+    }
+    const frontEmpty = state.players[0].frontline.length + state.players[1].frontline.length === 0;
+    if (frontEmpty) score += 10; // 抢空前线：直接封锁对手下回合入场
+    else if (state.frontlineController === me) score += 3;
+    if (isGuard) score += threat >= 3 || myHq.hp <= 12 ? 10 : 4; // 守护在前线才有嘲讽
+    if (unit.hp <= 2) score -= 6;
+    // 上前线后，敌方支援线的近战也能打到我们（原本打不到）
+    score -= Math.min(8, enemyMeleeAttackOnLine(state, reg, me, 'support') * 0.7);
+    if (state.players[me].frontline.length >= 3) score -= 8; // 不扎堆
+    return score;
+  }
+
+  // 前线 → 支援线
+  let score = 23;
+  if (isMelee) score -= 8; // 撤下前线＝放弃打 HQ / 打敌方支援线
+  if (unit.hp <= 2) score += 5; // 残血撤退保命
+  if (unit.attack <= 1) score += 2; // 打不出伤害的单位让出前线槽位
+  if (isGuard && threat > 0) score -= 14; // 守护是墙，撤了总部就裸
+  if (isMelee && enemyHq.hp <= 8) score -= 6; // 快斩杀了别撤
+  return score;
+}
+
 function scoreAttack(
   state: GameState,
   reg: EngineRegistry,
@@ -195,7 +297,7 @@ function scoreAttack(
   if (candidate.target.kind === 'hq') {
     const hq = state.players[foe].hq;
     const dmg = Math.max(0, attacker.attack - hq.armor);
-    // 斩杀：这是最高优先级（100 分上限之上单列）
+    // 斩杀：这是最高优先级（100 分上限）
     if (hq.hp <= dmg) return 130;
     let score = 46 + dmg * 2.4;
     if (hq.hp <= 6) score += 5;
@@ -207,10 +309,7 @@ function scoreAttack(
   if (candidate.target.kind === 'unit') {
     const target = state.units[candidate.target.unitId];
     if (!target) return 0;
-    const dmg = Math.max(
-      0,
-      attacker.attack - target.armor - (Number(target.trackers.damageReduction) || 0),
-    );
+    const dmg = Math.max(0, attacker.attack - target.armor - (Number(target.trackers.damageReduction) || 0));
     const kills = dmg >= target.hp;
     const retaliation = Math.max(
       0,
@@ -227,7 +326,7 @@ function scoreAttack(
     if (weDie) score -= attackerValue * 0.62;
     else score -= retaliation * 0.45;
     if (kills && !weDie) score += 5;
-    // 换命不成（自己死、对方不掉）基本是白送，除非能拖住斩杀
+    // 换命不成（自己死、对方不掉）基本是白送
     if (weDie && !kills) score -= 14;
     if (kills && weDie && targetValue + 2 < attackerValue) score -= 5;
     if (target.keywords.some((k) => keywordBase(k) === 'guard')) score += 3;
@@ -252,6 +351,7 @@ function scorePlayCard(
   const enemyHqHp = state.players[foe].hq.hp;
   const cost = candidate.cost;
 
+  // 单位卡：只看身材 + 关键字，**没有脚本的白板单位照样算价值**（有身材就该打）
   if (isUnitDef(def)) {
     const line = candidate.cmd.type === 'playCard' ? candidate.cmd.line : undefined;
     let value = defUnitValue(reg, def);
@@ -270,7 +370,6 @@ function scorePlayCard(
     }
     // 曲线：越贵的卡越应该优先打出（不然后面卡手）
     score += Math.min(cost, 8) * 0.4;
-    // 部署当回合不能行动（无 blitz）且我方场面已占满，略降权以免堵住槽位
     return score;
   }
 
@@ -310,7 +409,5 @@ export function describeCandidate(reg: EngineRegistry, candidate: AICandidate): 
         ? candidate.target.unitId
         : candidate.target.instanceId
     : '';
-  return `${candidate.kind}:${name}${targetText ? `→${targetText}` : ''}`;
+  return `${candidate.kind}:${name}${targetText ? ` → ${targetText}` : ''}`;
 }
-
-void keywordsValue;

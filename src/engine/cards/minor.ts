@@ -302,4 +302,327 @@ export const MINOR_CARD_SCRIPTS: Record<string, CardScript> = {
       { trigger: 'order', effects: [{ op: 'custom', id: 'discardChosenEnemyHandCardCopyToHand', params: { from: 3 } }] },
     ],
   },
+
+
+
+  // ==== 长尾自动生成批次（严格模板解析，META 外高热度/Elite/Special）====
+
+  // 中文原文：亡计：将 1 张“第 18 神射手团”洗入卡组。
+  '5th_bersaglieri': {
+    cardId: '5th_bersaglieri',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'custom',
+            id: 'shuffleIntoDeck',
+            params: {
+              cardId: '18th_bersaglieri',
+              count: 1,
+              side: 'self',
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：亡计：将 1 张“第 18 神射手团”洗入卡组。
+  '9th_bersaglieri': {
+    cardId: '9th_bersaglieri',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'custom',
+            id: 'shuffleIntoDeck',
+            params: {
+              cardId: '18th_bersaglieri',
+              count: 1,
+              side: 'self',
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：友方单位部署或加入时，使友方总部获得 +2 防御力。
+  caproni_ca_133: {
+    cardId: 'caproni_ca_133',
+    abilities: [
+      {
+        trigger: 'unitDeployed',
+        effects: [
+          {
+            op: 'custom',
+            id: 'gainHqDefense',
+            params: {
+              side: 'self',
+              amount: 2,
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：将 1 张“抵抗”加入敌方卡组。
+  expeditionary_corps: {
+    cardId: 'expeditionary_corps',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'custom',
+            id: 'addCardToEnemyDeck',
+            params: {
+              cardId: 'resistance_b',
+              count: 1,
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：本单位对敌方总部造成伤害时，抽 1 张牌。
+  farman_f_222: {
+    cardId: 'farman_f_222',
+    abilities: [
+      {
+        trigger: 'attack',
+        condition: {
+          kind: 'custom',
+          id: 'chosenIsEnemyHQ',
+        },
+        effects: [
+          {
+            op: 'draw',
+            side: 'self',
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：将 2 个“第 3 山地团”加入支援阵线。
+  fiat_br_20: {
+    cardId: 'fiat_br_20',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'summon',
+            side: 'self',
+            cardId: '3rd_alpini_regiment',
+            count: 2,
+            line: 'support',
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：抑制 1 个敌方单位。
+  fokker_d_xxi: {
+    cardId: 'fokker_d_xxi',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'silence',
+            target: {
+              kind: 'chosen',
+            },
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'enemy',
+          line: 'any',
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：部署：使 1 个友方单位获得动员。
+  h75c1: {
+    cardId: 'h75c1',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'grantKeyword',
+            target: {
+              kind: 'chosen',
+            },
+            keyword: 'mobilize',
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'self',
+          line: 'any',
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：亡计：使所有友方单位撤退。
+  l640: {
+    cardId: 'l640',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'custom',
+            id: 'moveUnitZone',
+            params: {
+              of: 'all',
+              side: 'self',
+              to: 'hand',
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：将 2 个“军团”加入支援阵线。
+  plan_west: {
+    cardId: 'plan_west',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'summon',
+            side: 'self',
+            cardId: 'legions',
+            count: 2,
+            line: 'support',
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：友方回合结束时，将 1 张“总参二局”加入手牌。
+  pzl_23_karas: {
+    cardId: 'pzl_23_karas',
+    abilities: [
+      {
+        trigger: 'turnEnd',
+        effects: [
+          {
+            op: 'addCardToHand',
+            side: 'self',
+            cardId: 'section_ii',
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：使 1 个敌方单位撤退。
+  raaf_lightning_f4: {
+    cardId: 'raaf_lightning_f4',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'custom',
+            id: 'moveUnitZone',
+            params: {
+              of: 'chosen',
+              to: 'hand',
+            },
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'enemy',
+          line: 'any',
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：使 1 个单位撤退。
+  zamo_uprising: {
+    cardId: 'zamo_uprising',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'custom',
+            id: 'moveUnitZone',
+            params: {
+              of: 'chosen',
+              to: 'hand',
+            },
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'any',
+          line: 'any',
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：本单位受到伤害时，抽 1 张牌。
+  zaza_division: {
+    cardId: 'zaza_division',
+    abilities: [
+      {
+        trigger: 'damageDealt',
+        condition: {
+          kind: 'custom',
+          id: 'chosenIsSelf',
+        },
+        effects: [
+          {
+            op: 'draw',
+            side: 'self',
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // ==== 手写批次（模板无法覆盖的高热度卡）====
+
+  // 中文原文：对 1 个单位造成 5 点伤害。将等同于溢出伤害的“抵抗”加入敌方卡组。
+  arming_the_resistance: {
+    cardId: 'arming_the_resistance',
+    abilities: [
+      {
+        trigger: 'order',
+        target: { kind: 'query', side: 'any', line: 'any', limit: 1 },
+        effects: [
+          { op: 'damage', target: { kind: 'chosen' }, amount: 5 },
+          { op: 'custom', id: 'addResistanceEqualToOverkill', params: { cardId: 'resistance_b' } },
+        ],
+      },
+    ],
+  },
 };

@@ -121,7 +121,10 @@ function UnitCardInner({
       data-selected={selected}
       style={{ width: 'var(--bcw)' }}
       title={title}
-      onClick={onClick}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick?.();
+      }}
       role="button"
       tabIndex={0}
       onKeyDown={(event) => {

@@ -27,9 +27,9 @@ function makeRegistry(): EngineRegistry {
   };
   const cardDefs: Record<string, CardDef> = {
     inf: def('inf', { type: 'infantry', kredits: 2, attack: 2, defense: 2, operationCost: 1 }),
-    blitz_tank: def('blitz_tank', { type: 'tank', kredits: 2, attack: 2, defense: 2, operationCost: 1, attributes: ['blitz'] }),
-    order_dmg: def('order_dmg', { type: 'order', kredits: 1, attack: 0, defense: 0, operationCost: 0 }),
     guard_inf: def('guard_inf', { type: 'infantry', kredits: 1, attack: 1, defense: 4, operationCost: 1, attributes: ['guard'] }),
+    artillery: def('artillery', { type: 'artillery', kredits: 1, attack: 1, defense: 2, operationCost: 1 }),
+    order_dmg: def('order_dmg', { type: 'order', kredits: 1, attack: 0, defense: 0, operationCost: 0 }),
   };
   const scripts: Record<string, CardScript> = {
     order_dmg: {
@@ -54,24 +54,25 @@ function setup(): GameSetup {
       { name: 'P1', faction: 'Germany', allyFaction: null, deck: [{ cardId: 'inf', count: 20 }] },
       { name: 'P2', faction: 'Germany', allyFaction: null, deck: [{ cardId: 'inf', count: 20 }] },
     ],
-    config: { startingHandSize: 3 },
+    // 测试用紧凑开局：先手 3 张、后手不额外、首回合跳过摸牌
+    config: { startingHandSize: 3, secondPlayerExtraCards: 0, firstTurnSkipsDraw: true },
   };
 }
 
 describe('引擎基础流程', () => {
   const reg = makeRegistry();
 
-  it('开局：手牌/克雷迪特/先手', () => {
+  it('开局：手牌 / 克雷迪特 / 先手', () => {
     const { state } = createGame(setup(), reg);
     expect(state.status).toBe('playing');
     expect(state.activePlayer).toBe(0);
     expect(state.players[0].hand).toHaveLength(3);
     expect(state.players[0].kredits).toBe(1);
     expect(state.players[0].maxKredits).toBe(1);
-    // 先手首回合跳过摸牌
     expect(state.players[0].deck).toHaveLength(17);
     expect(state.players[1].hand).toHaveLength(3);
     expect(state.players[1].deck).toHaveLength(17);
+    expect(state.frontlineController).toBeNull();
   });
 
   it('费用不足不能出牌', () => {
@@ -82,41 +83,52 @@ describe('引擎基础流程', () => {
     expect(Object.keys(result.state.units)).toHaveLength(0);
   });
 
-  it('结束回合→资源增长→部署与攻击', () => {
+  it('回合推进→部署到支援线→移动需花费→前线单位可攻击总部', () => {
     let { state } = createGame(setup(), reg);
+    // 回合 1: 玩家0 结束
     let r = applyCommand(state, { type: 'endTurn', player: 0 }, reg);
     state = r.state;
     expect(state.activePlayer).toBe(1);
     expect(state.players[1].kredits).toBe(1);
-    expect(state.players[1].hand).toHaveLength(4);
+    expect(state.players[1].hand).toHaveLength(4); // 摸 1 张
+    // 回合 2: 玩家1 结束
     r = applyCommand(state, { type: 'endTurn', player: 1 }, reg);
     state = r.state;
     expect(state.activePlayer).toBe(0);
     expect(state.players[0].kredits).toBe(2);
     expect(state.players[0].maxKredits).toBe(2);
 
-    // 部署 2 费步兵到前线（空前线可抢占；只有前线单位能攻击敌方总部）
+    // 部署 2 费步兵 → 只能部署到支援线
     const card = state.players[0].hand.find((c) => c.cardId === 'inf')!;
     r = applyCommand(state, { type: 'playCard', player: 0, instanceId: card.instanceId, line: 'frontline' }, reg);
     state = r.state;
-    expect(Object.values(state.units)).toHaveLength(1);
-    expect(state.frontlineController).toBe(0);
+    const unit = Object.values(state.units)[0];
+    expect(unit.line).toBe('support');
     expect(state.players[0].kredits).toBe(0);
+    expect(state.frontlineController).toBeNull();
 
-    // 没克雷迪特，无法攻击（行动花费=1）
-    expect(legalActions(state, reg, 0).filter((a) => a.kind === 'attack')).toHaveLength(0);
+    // 支援线单位没有攻击总部的合法目标（HQ 需前线单位）
+    const hqTargets = legalActions(state, reg, 0)
+      .filter((a) => a.kind === 'attack')
+      .flatMap((a) => a.targets?.refs ?? [])
+      .filter((t) => t.kind === 'hq');
+    expect(hqTargets).toHaveLength(0);
 
-    // 过一回合再攻击
+    // 过两回合，攒费用后移动 + 攻击
     r = applyCommand(state, { type: 'endTurn', player: 0 }, reg);
     state = r.state;
     r = applyCommand(state, { type: 'endTurn', player: 1 }, reg);
     state = r.state;
     expect(state.players[0].kredits).toBe(3);
-    const attacker = Object.values(state.units)[0];
-    r = applyCommand(state, { type: 'attack', player: 0, attackerId: attacker.unitId, target: { kind: 'hq', player: 1 } }, reg);
+    r = applyCommand(state, { type: 'moveUnit', player: 0, unitId: unit.unitId, toLine: 'frontline' }, reg);
+    state = r.state;
+    expect(state.units[unit.unitId].line).toBe('frontline');
+    expect(state.frontlineController).toBe(0);
+    expect(state.players[0].kredits).toBe(2); // 移动支付行动花费 1
+    r = applyCommand(state, { type: 'attack', player: 0, attackerId: unit.unitId, target: { kind: 'hq', player: 1 } }, reg);
     state = r.state;
     expect(state.players[1].hq.hp).toBe(18);
-    expect(state.players[0].kredits).toBe(2);
+    expect(state.players[0].kredits).toBe(1); // 攻击支付行动花费 1
   });
 
   it('指令结算伤害与目标合法性', () => {
@@ -151,18 +163,24 @@ describe('引擎基础流程', () => {
     expect(state.players[0].discard.some((c) => c.instanceId === orderInstance.instanceId)).toBe(true);
   });
 
-  it('guard 会限制攻击目标', () => {
+  it('前线共享槽位与部署限制', () => {
     const reg2 = makeRegistry();
     let { state } = createGame(setup(), reg2);
     let r = applyCommand(state, { type: 'endTurn', player: 0 }, reg2);
     state = r.state;
     r = applyCommand(state, { type: 'endTurn', player: 1 }, reg2);
     state = r.state;
-    // 玩家0 部署 2/2 步兵到前线
-    const inf = state.players[0].hand.find((c) => c.cardId === 'inf')!;
-    r = applyCommand(state, { type: 'playCard', player: 0, instanceId: inf.instanceId, line: 'frontline' }, reg2);
+    // 玩家0 跳费到 3，部署并移入前线
+    state.players[0].kredits = 3;
+    const card = state.players[0].hand.find((c) => c.cardId === 'inf')!;
+    r = applyCommand(state, { type: 'playCard', player: 0, instanceId: card.instanceId }, reg2);
     state = r.state;
-    expect(getDef(reg2, state.units[Object.keys(state.units)[0]].cardId)).toBeTruthy();
+    const unit = Object.values(state.units)[0];
+    r = applyCommand(state, { type: 'moveUnit', player: 0, unitId: unit.unitId, toLine: 'frontline' }, reg2);
+    state = r.state;
     expect(state.frontlineController).toBe(0);
+    expect(getDef(reg2, unit.cardId)?.type).toBe('infantry');
+    // 支援线容量 4
+    expect(state.players[0].support.length).toBeLessThanOrEqual(4);
   });
 });

@@ -44,7 +44,7 @@
   width: var(--bhw);
   height: calc(var(--bhw) * 1.404);
   position: absolute;
-  bottom: 9px;
+  bottom: 14px;
   left: calc(50% + var(--dx, 0) * var(--bhw));
   transform-origin: 50% 118%;
   transform: translateX(-50%) translateY(var(--arc, 0px)) rotate(var(--rot, 0deg));

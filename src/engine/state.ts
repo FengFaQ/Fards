@@ -208,7 +208,7 @@ export function makeUnit(
     statuses: {},
     trackers: {},
     silenced: false,
-    ambush: hasKeyword({ keywords: baseKeywords }, 'ambush'),
+    ambush: hasKeyword({ keywords: baseKeywords }, 'ambush') || hasKeyword({ keywords: baseKeywords }, 'covert'),
     token: options.token,
   };
   state.units[unit.unitId] = unit;

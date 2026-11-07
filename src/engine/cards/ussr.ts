@@ -453,4 +453,463 @@ export const USSR_CARD_SCRIPTS: Record<string, CardScript> = {
       },
     ],
   },
+
+
+
+  // ==== 长尾自动生成批次（严格模板解析，META 外高热度/Elite/Special）====
+
+  // 中文原文：部署：将 1 张“预备役”加入手牌。
+  '1271st_rifles': {
+    cardId: '1271st_rifles',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'addCardToHand',
+            side: 'self',
+            cardId: 'reserves',
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：亡计：对所有目标造成 1 点伤害。
+  '152mm_howitzer_gun': {
+    cardId: '152mm_howitzer_gun',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'query',
+              side: 'any',
+              line: 'any',
+            },
+            amount: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：亡计：将 1 个“摩托化步兵第 2 师”加入支援阵线。
+  '1st_rifles': {
+    cardId: '1st_rifles',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'summon',
+            side: 'self',
+            cardId: '2nd_rifles',
+            count: 1,
+            line: 'support',
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：友方回合结束时，将 1 个“轻步兵”加入同一阵线。
+  '25th_infantry_regiment': {
+    cardId: '25th_infantry_regiment',
+    abilities: [
+      {
+        trigger: 'turnEnd',
+        effects: [
+          {
+            op: 'summon',
+            side: 'self',
+            cardId: 'light_infantry',
+            count: 1,
+            line: 'support',
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：亡计：将 1 个“IS-2”加入支援阵线。
+  '272nd_guards': {
+    cardId: '272nd_guards',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'summon',
+            side: 'self',
+            cardId: 'iosef_stalin_ii',
+            count: 1,
+            line: 'support',
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：亡计：将 1 个“轻步兵”加入支援阵线。
+  '321st_rifle_regiment': {
+    cardId: '321st_rifle_regiment',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'summon',
+            side: 'self',
+            cardId: 'light_infantry',
+            count: 1,
+            line: 'support',
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：友方回合开始时，完全修复本单位。
+  '42nd_rifles': {
+    cardId: '42nd_rifles',
+    abilities: [
+      {
+        trigger: 'turnStart',
+        effects: [
+          {
+            op: 'heal',
+            target: {
+              kind: 'self',
+            },
+            amount: 99,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：对 1 个敌方空军造成 4 点伤害。
+  '52k': {
+    cardId: '52k',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'chosen',
+            },
+            amount: 4,
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'enemy',
+          line: 'any',
+          filter: {
+            type: [
+              'fighter',
+              'bomber',
+            ],
+          },
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：亡计：将 2 个“步兵第 16 团”加入支援阵线。
+  '573rd_rifles': {
+    cardId: '573rd_rifles',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'summon',
+            side: 'self',
+            cardId: '16th_rifles',
+            count: 2,
+            line: 'support',
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：亡计：将 2 张“爆破”加入手中。
+  '866th_rifles': {
+    cardId: '866th_rifles',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'addCardToHand',
+            side: 'self',
+            cardId: 'blast',
+            count: 2,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：抽 2 张单位。
+  arctic_convoy: {
+    cardId: 'arctic_convoy',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'custom',
+            id: 'drawByType',
+            params: {
+              type: 'infantry',
+              count: 2,
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：对 1 个敌方空军造成 4 点伤害。
+  burning_sky: {
+    cardId: 'burning_sky',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'chosen',
+            },
+            amount: 4,
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'enemy',
+          line: 'any',
+          filter: {
+            type: [
+              'fighter',
+              'bomber',
+            ],
+          },
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：抽 5 张牌，对友方总部造成 5 点伤害。
+  five_year_plan: {
+    cardId: 'five_year_plan',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'draw',
+            side: 'self',
+            count: 5,
+          },
+          {
+            op: 'damage',
+            target: {
+              kind: 'hq',
+              side: 'self',
+            },
+            amount: 5,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：对 1 个单位造成 3 点伤害。
+  from_the_people: {
+    cardId: 'from_the_people',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'chosen',
+            },
+            amount: 3,
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'any',
+          line: 'any',
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：亡计：将 1 个“伊-16 毛驴”加入支援阵线。
+  i15_chaika: {
+    cardId: 'i15_chaika',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'summon',
+            side: 'self',
+            cardId: 'i16_ishak',
+            count: 1,
+            line: 'support',
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：将 3 张“波-2-II”加入手牌。
+  night_witches: {
+    cardId: 'night_witches',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'addCardToHand',
+            side: 'self',
+            cardId: 'polikarpov_po2ii',
+            count: 3,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：对友方总部造成 2 点伤害。
+  su76m: {
+    cardId: 'su76m',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'hq',
+              side: 'self',
+            },
+            amount: 2,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：亡计：对友方总部造成 1 点伤害。
+  t80: {
+    cardId: 't80',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'hq',
+              side: 'self',
+            },
+            amount: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：将 2 个“T-34 1942”加入支援阵线。
+  tractor_factories: {
+    cardId: 'tractor_factories',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'summon',
+            side: 'self',
+            cardId: 't34_1942',
+            count: 2,
+            line: 'support',
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：对所有目标造成 1 点伤害。
+  winter_warfare: {
+    cardId: 'winter_warfare',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'query',
+              side: 'any',
+              line: 'any',
+            },
+            amount: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：友方回合开始时，抽 1 张牌，对友方总部造成 1 点伤害。
+  yak_7: {
+    cardId: 'yak_7',
+    abilities: [
+      {
+        trigger: 'turnStart',
+        effects: [
+          {
+            op: 'draw',
+            side: 'self',
+            count: 1,
+          },
+          {
+            op: 'damage',
+            target: {
+              kind: 'hq',
+              side: 'self',
+            },
+            amount: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // ==== 手写批次（模板无法覆盖的高热度卡）====
+
+  // 中文原文：将 2 张“轻步兵”加入手牌，此前每使用过 1 张“预备役”，额外加入 1 张。
+  reserves: {
+    cardId: 'reserves',
+    abilities: [
+      { trigger: 'order', effects: [{ op: 'custom', id: 'addCopiesScalingBySelfPlayed', params: { cardId: 'light_infantry', base: 2 } }] },
+    ],
+  },
 };

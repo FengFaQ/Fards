@@ -560,4 +560,426 @@ export const JAPAN_CARD_SCRIPTS: Record<string, CardScript> = {
       },
     ],
   },
+
+
+
+  // ==== 长尾自动生成批次（严格模板解析，META 外高热度/Elite/Special）====
+
+  // 中文原文：亡计：对敌方总部造成 2 点伤害。
+  '1st_taipei_regiment': {
+    cardId: '1st_taipei_regiment',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'hq',
+              side: 'enemy',
+            },
+            amount: 2,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：本单位受到伤害时，抽 1 张牌。
+  '33rd_recon': {
+    cardId: '33rd_recon',
+    abilities: [
+      {
+        trigger: 'damageDealt',
+        condition: {
+          kind: 'custom',
+          id: 'chosenIsSelf',
+        },
+        effects: [
+          {
+            op: 'draw',
+            side: 'self',
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：亡计：对所有敌方单位造成 1 点伤害。
+  '56th_recon': {
+    cardId: '56th_recon',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'query',
+              side: 'enemy',
+              line: 'any',
+            },
+            amount: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：亡计：抽 1 张牌。
+  '61st_infantry_regiment': {
+    cardId: '61st_infantry_regiment',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'draw',
+            side: 'self',
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：亡计：对敌方总部造成 2 点伤害，使友方总部获得 +2 防御力。
+  '9th_guards_regiment': {
+    cardId: '9th_guards_regiment',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'hq',
+              side: 'enemy',
+            },
+            amount: 2,
+          },
+          {
+            op: 'custom',
+            id: 'gainHqDefense',
+            params: {
+              side: 'self',
+              amount: 2,
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：消灭 1 个敌方单位。
+  blade_of_the_samurai: {
+    cardId: 'blade_of_the_samurai',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'destroy',
+            target: {
+              kind: 'chosen',
+            },
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'enemy',
+          line: 'any',
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：使所有友方单位获得 +3+1，结束回合。
+  calm_before_the_storm: {
+    cardId: 'calm_before_the_storm',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'buff',
+            target: {
+              kind: 'query',
+              side: 'self',
+              line: 'any',
+            },
+            attack: 3,
+            hp: 1,
+            permanent: true,
+          },
+          {
+            op: 'custom',
+            id: 'endTurn',
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：消灭 1 个友方单位，抽 2 张牌。
+  deadly_duty: {
+    cardId: 'deadly_duty',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'destroy',
+            target: {
+              kind: 'chosen',
+            },
+          },
+          {
+            op: 'draw',
+            side: 'self',
+            count: 2,
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'self',
+          line: 'any',
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：消灭 1 个单位，随机弃 1 张牌。
+  divine_wind: {
+    cardId: 'divine_wind',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'destroy',
+            target: {
+              kind: 'chosen',
+            },
+          },
+          {
+            op: 'discard',
+            side: 'enemy',
+            count: 1,
+            random: true,
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'any',
+          line: 'any',
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：亡计：对敌方总部造成 1 点伤害，使友方总部获得 +1 防御力。
+  kfu_regiment: {
+    cardId: 'kfu_regiment',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'hq',
+              side: 'enemy',
+            },
+            amount: 1,
+          },
+          {
+            op: 'custom',
+            id: 'gainHqDefense',
+            params: {
+              side: 'self',
+              amount: 1,
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：亡计：对敌方总部造成 2 点伤害。
+  ki43_hayabusa: {
+    cardId: 'ki43_hayabusa',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'hq',
+              side: 'enemy',
+            },
+            amount: 2,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：亡计：消灭所有单位。
+  ki49_storm_dragon: {
+    cardId: 'ki49_storm_dragon',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'destroy',
+            target: {
+              kind: 'query',
+              side: 'any',
+              line: 'any',
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：亡计：对敌方总部造成 2 点伤害。
+  mito_regiment: {
+    cardId: 'mito_regiment',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'hq',
+              side: 'enemy',
+            },
+            amount: 2,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：将 1 张“IJN 御藏号”洗入卡组。
+  n1k1_kyofu: {
+    cardId: 'n1k1_kyofu',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'custom',
+            id: 'shuffleIntoDeck',
+            params: {
+              cardId: 'ijn_mikura',
+              count: 1,
+              side: 'self',
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：亡计：抽 1 张牌。
+  shoge_detachment: {
+    cardId: 'shoge_detachment',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'draw',
+            side: 'self',
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：亡计：敌方随机弃 1 张牌。
+  takasaki_regiment: {
+    cardId: 'takasaki_regiment',
+    abilities: [
+      {
+        trigger: 'death',
+        effects: [
+          {
+            op: 'discard',
+            side: 'enemy',
+            count: 1,
+            random: true,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：对所有敌方目标造成 1 点伤害。
+  tora_tora_tora: {
+    cardId: 'tora_tora_tora',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'query',
+              side: 'enemy',
+              line: 'any',
+            },
+            amount: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // ==== 手写批次（模板无法覆盖的高热度卡）====
+
+  // 中文原文：使 1 个友方战斗机具有 +1 攻击力和奋战，直到回合结束。
+  burst_of_fire: {
+    cardId: 'burst_of_fire',
+    abilities: [
+      {
+        trigger: 'order',
+        target: { kind: 'query', side: 'self', line: 'any', filter: { type: 'fighter' }, limit: 1 },
+        effects: [
+          { op: 'buff', target: { kind: 'chosen' }, attack: 1, permanent: false },
+          // TODO(原语): 关键字需支持“直到回合结束”
+          { op: 'custom', id: 'grantKeywordUntilEndOfTurn', params: { keyword: 'fury' } },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：对 1 个敌方目标造成 1 点伤害。亡计：若是敌方回合，将 1 张复制加入手牌。
+  '106th_infantry_regiment': {
+    cardId: '106th_infantry_regiment',
+    abilities: [
+      {
+        trigger: 'deploy',
+        target: { kind: 'query', side: 'enemy', line: 'any', limit: 1 },
+        effects: [{ op: 'damage', target: { kind: 'chosen' }, amount: 1 }],
+      },
+      {
+        trigger: 'death',
+        condition: { kind: 'custom', id: 'isEnemyTurn' },
+        effects: [{ op: 'custom', id: 'copySelfToHand' }],
+        text: '亡计：若是敌方回合，将 1 张复制加入手牌',
+      },
+    ],
+  },
 };

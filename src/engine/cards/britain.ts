@@ -565,4 +565,418 @@ export const BRITAIN_CARD_SCRIPTS: Record<string, CardScript> = {
       },
     ],
   },
+
+
+
+  // ==== 长尾自动生成批次（严格模板解析，META 外高热度/Elite/Special）====
+
+  // 中文原文：本单位对敌方总部造成伤害时，抽 1 张牌。
+  a34_comet: {
+    cardId: 'a34_comet',
+    abilities: [
+      {
+        trigger: 'attack',
+        condition: {
+          kind: 'custom',
+          id: 'chosenIsEnemyHQ',
+        },
+        effects: [
+          {
+            op: 'draw',
+            side: 'self',
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：使 1 个空军撤退，使友方总部获得 +2 防御力。
+  aa_barrage: {
+    cardId: 'aa_barrage',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'custom',
+            id: 'moveUnitZone',
+            params: {
+              of: 'chosen',
+              to: 'hand',
+            },
+          },
+          {
+            op: 'custom',
+            id: 'gainHqDefense',
+            params: {
+              side: 'self',
+              amount: 2,
+            },
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'any',
+          line: 'any',
+          filter: {
+            type: [
+              'fighter',
+              'bomber',
+            ],
+          },
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：部署：使友方总部获得 +3 防御力。
+  baluch_regiment: {
+    cardId: 'baluch_regiment',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'custom',
+            id: 'gainHqDefense',
+            params: {
+              side: 'self',
+              amount: 3,
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：对所有敌方单位造成 3 点伤害。
+  carpet_bombing: {
+    cardId: 'carpet_bombing',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'query',
+              side: 'enemy',
+              line: 'any',
+            },
+            amount: 3,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：将 1 张“海军支援”加入手牌。
+  coldstream_guards: {
+    cardId: 'coldstream_guards',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'addCardToHand',
+            side: 'self',
+            cardId: 'naval_support',
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：对 1 个目标造成 2 点伤害，敌方失去 1 个指挥点槽。
+  daylight_bombing: {
+    cardId: 'daylight_bombing',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'chosen',
+            },
+            amount: 2,
+          },
+          {
+            op: 'custom',
+            id: 'loseKreditSlots',
+            params: {
+              side: 'enemy',
+              amount: 1,
+            },
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'any',
+          line: 'any',
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：对 1 个敌方坦克造成 5 点伤害。
+  for_the_king: {
+    cardId: 'for_the_king',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'chosen',
+            },
+            amount: 5,
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'enemy',
+          line: 'any',
+          filter: {
+            type: [
+              'tank',
+            ],
+          },
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：部署：将 1 张“卫戍”加入手中。
+  frontier_force: {
+    cardId: 'frontier_force',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'addCardToHand',
+            side: 'self',
+            cardId: 'garrison',
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：抽 4 张牌。
+  lend_lease: {
+    cardId: 'lend_lease',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'draw',
+            side: 'self',
+            count: 4,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：对 1 个敌方坦克造成 5 点伤害。
+  m4_firefly: {
+    cardId: 'm4_firefly',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'chosen',
+            },
+            amount: 5,
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'enemy',
+          line: 'any',
+          filter: {
+            type: [
+              'tank',
+            ],
+          },
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：部署：将 1 张“精准轰炸”加入手牌。
+  manchester_ia: {
+    cardId: 'manchester_ia',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'addCardToHand',
+            side: 'self',
+            cardId: 'precision_bombing',
+            count: 1,
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：对 1 个敌方单位造成 4 点伤害。
+  mosquito_fb_mk_vi: {
+    cardId: 'mosquito_fb_mk_vi',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'chosen',
+            },
+            amount: 4,
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'enemy',
+          line: 'any',
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：部署：对 1 个敌方单位造成 2 点伤害。
+  ox_and_bucks: {
+    cardId: 'ox_and_bucks',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'damage',
+            target: {
+              kind: 'chosen',
+            },
+            amount: 2,
+          },
+        ],
+        target: {
+          kind: 'query',
+          side: 'enemy',
+          line: 'any',
+          limit: 1,
+        },
+      },
+    ],
+  },
+
+  // 中文原文：抽 2 张指令。
+  second_chance: {
+    cardId: 'second_chance',
+    abilities: [
+      {
+        trigger: 'order',
+        effects: [
+          {
+            op: 'custom',
+            id: 'drawByType',
+            params: {
+              type: 'order',
+              count: 2,
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：将 1 个“角斗士护航机”加入支援阵线。
+  stirling_mk_i_s3: {
+    cardId: 'stirling_mk_i_s3',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'summon',
+            side: 'self',
+            cardId: 'gladiator_escort',
+            count: 1,
+            line: 'support',
+          },
+        ],
+      },
+    ],
+  },
+
+  // 中文原文：部署：将 1 张“地毯式轰炸”洗入卡组。
+  stirling_mk_iii: {
+    cardId: 'stirling_mk_iii',
+    abilities: [
+      {
+        trigger: 'deploy',
+        effects: [
+          {
+            op: 'custom',
+            id: 'shuffleIntoDeck',
+            params: {
+              cardId: 'carpet_bombing',
+              count: 1,
+              side: 'self',
+            },
+          },
+        ],
+      },
+    ],
+  },
+
+  // ==== 手写批次（模板无法覆盖的高热度卡）====
+
+  // 中文原文：友方使用英国指令时，抽 1 张牌。
+  crusader_mk_ii: {
+    cardId: 'crusader_mk_ii',
+    abilities: [
+      {
+        trigger: 'orderPlayed',
+        condition: { kind: 'custom', id: 'playedCardIsFaction', params: { faction: 'Britain' } },
+        effects: [{ op: 'draw', side: 'self', count: 1 }],
+        text: '友方使用英国指令时，抽 1 张牌',
+      },
+    ],
+  },
+
+  // 中文原文：抽 1 张构筑之外的牌。将 1 张复制加入手中。
+  seac: {
+    cardId: 'seac',
+    abilities: [
+      { trigger: 'order', effects: [{ op: 'custom', id: 'drawOutsideDeckAndCopyToHand' }] },
+    ],
+  },
+
+  // 中文原文：友方回合开始时，将 1 个具有闪击的“4TP”加入支援阵线。回合结束时，将其消灭。
+  danuta: {
+    cardId: 'danuta',
+    abilities: [
+      {
+        trigger: 'turnStart',
+        effects: [{ op: 'custom', id: 'summonThenDestroyAtTurnEnd', params: { cardId: '4tp', line: 'support', keywords: ['blitz'] } }],
+      },
+    ],
+  },
 };
