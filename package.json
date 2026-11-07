@@ -12,6 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "check:encoding": "node scripts/check-encoding.mjs",
+    "check": "npm run check:encoding && npm run typecheck && npm test",
     "data:cards": "node scripts/fetch-cards.mjs",
     "data:images": "node scripts/fetch-images.mjs",
     "data:verify": "node scripts/verify-data.mjs"

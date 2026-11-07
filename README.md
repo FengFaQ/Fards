@@ -49,6 +49,7 @@ Vite 8 · React 19 · TypeScript 5.9 · Tailwind CSS 4 · zustand 5 · Vitest 5
 npm install
 npm run dev        # http://127.0.0.1:5173
 npm test           # 引擎 / 脚本 / AI 回归测试（40 项）
+npm run check      # 编码守卫 + tsc 类型检查 + 测试（提交前跑这个）
 npm run build      # 产物在 dist/
 ```
 

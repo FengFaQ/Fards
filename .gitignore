@@ -17,8 +17,8 @@ src/assets/screenshots/
 !.env.example
 
 # KARDS 素材（版权归 1939 Games；不随仓库分发）
-# 本地开发时可下载到 public/cards/（scripts/fetch-images.mjs），运行时 co-development 用本地图；
-# 生产构建（Pages）不含图片，自动回退 wsrv.nl 远程地址（见 src/data/loadCards.ts）。
+# 本地开发可下载到 public/cards/（npm run data:images），开发环境自动使用本地图；
+# 生产构建（GitHub Pages）不含图片，自动回退 wsrv.nl 远程地址（见 src/data/loadCards.ts）。
 public/cards/
 public/cardbacks/
 public/data/images-manifest.json

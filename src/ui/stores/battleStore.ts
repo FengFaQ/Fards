@@ -8,7 +8,7 @@
  *  - UI 只读 state，不缓存副本。
  */
 import { create } from 'zustand';
-import { applyCommand, createGame, legalActions, legalActionsForCard, playCost } from '@/engine';
+import { applyCommand, createGame, legalActionsForCard, playCost } from '@/engine';
 import type {
   EngineRegistry,
   GameCommand,
@@ -25,13 +25,13 @@ import { loadAllCards } from '../lib/dataBridge';
 import { DECK_FACTIONS, factionMeta } from '../lib/format';
 import { useDeckStore } from './deckStore';
 import {
-  actionToCommand,
-  loadEngineAI,
+  getEngineAI,
   localAICommand,
   localChoiceCommand,
   type AIDifficulty,
   type EngineAIModule,
 } from '../battle/aiBridge';
+import { visibleLegalActions } from '../battle/legal';
 import { buildQuickDeck, divisionName, quickDeckName } from '../battle/decks';
 import { buildCardIndex, buildRegistry } from '../battle/registry';
 
@@ -153,7 +153,7 @@ interface BattleStore {
   selectUnit: (unitId: string) => void;
   clickTarget: (ref: TargetRef) => void;
   chooseSlot: (line: Line) => void;
-  /** 攻击模式下追加「移动到前线/支援线」 */
+  /** 攻击模式下追加「移动到前线 / 撤退至支援线」 */
   moveSelected: () => void;
   cancelSelection: () => void;
   endTurn: () => void;
@@ -186,8 +186,13 @@ const refKey = (ref: TargetRef): string => {
 
 export const targetKey = refKey;
 
-/** 部署线偏好：远程/空军进支援线，其它优先前线 */
-function preferredLine(state: GameState, reg: EngineRegistry, instanceId?: string, lines?: Line[]): Line | undefined {
+/** 部署线偏好：官方规则下从手牌只进支援阵线；此处保留通用回退 */
+function preferredLine(
+  state: GameState,
+  reg: EngineRegistry,
+  instanceId?: string,
+  lines?: Line[],
+): Line | undefined {
   if (!lines?.length) return undefined;
   const instance = instanceId ? state.cards[instanceId] : undefined;
   const def = instance ? reg.cardDefs[instance.cardId] : undefined;
@@ -204,7 +209,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
   let aiActionCount = 0;
   let aiStall = 0;
   let fxSeq = 0;
-  let engineAIModule: EngineAIModule | null | undefined;
+  let engineAIModule: EngineAIModule | null = null;
 
   const clearAITimer = () => {
     if (aiTimer !== null) {
@@ -222,10 +227,9 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
     }, 2200);
   };
 
-  const ensureEngineAI = async (): Promise<EngineAIModule | null> => {
-    if (engineAIModule !== undefined) return engineAIModule;
-    engineAIModule = await loadEngineAI();
-    set({ aiEngineReady: !!engineAIModule });
+  /** 正式 AI（engine/ai.ts 静态接入；内部已包 try/catch） */
+  const ensureEngineAI = (): EngineAIModule => {
+    if (!engineAIModule) engineAIModule = getEngineAI();
     return engineAIModule;
   };
 
@@ -254,7 +258,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
         case 'turnStart':
           banner = {
             text: event.player === HUMAN ? '你的回合' : '敌方回合',
-            sub: event.player === HUMAN ? '部署部队 · 发起攻击 · 结束回合' : '监视敌方行动',
+            sub: event.player === HUMAN ? '部署部队 · 移动 · 发起攻击 · 结束回合' : '监视敌方行动',
             tone: event.player === HUMAN ? 'self' : 'enemy',
             at: Date.now(),
           };
@@ -376,7 +380,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
     }
 
     let command: GameCommand | null = null;
-    const engine = await ensureEngineAI();
+    const engine = ensureEngineAI();
     if (engine) {
       try {
         command = engine.choose(state, snapshot.registry, AI, get().difficulty);
@@ -437,7 +441,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
 
   /* ---------------- 开局 ---------------- */
 
-  const buildSetup = async (config: StartConfig): Promise<GameSetup | null> => {
+  const buildSetup = (config: StartConfig): GameSetup | null => {
     const { registry, cards } = get();
     if (!registry) return null;
     const seed = (config.seed ?? Date.now()) >>> 0;
@@ -448,7 +452,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       setHint('卡组里没有当前数据集可用的卡牌');
       return null;
     }
-    const engine = await ensureEngineAI();
+    const engine = ensureEngineAI();
     let aiCards: { cardId: string; count: number }[] = [];
     if (engine?.deckPreset) {
       try {
@@ -527,14 +531,15 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
         const cards = await loadAllCards();
         if (!cards.length) throw new Error('卡牌数据为空');
         const registry = buildRegistry(cards);
+        ensureEngineAI();
         set({
           cards,
           byId: buildCardIndex(cards),
           registry,
           phase: 'setup',
           booting: false,
+          aiEngineReady: true,
         });
-        void ensureEngineAI();
       } catch (error) {
         console.error('[battle] 初始化失败', error);
         set({
@@ -546,7 +551,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
     },
 
     startBattle: async (config) => {
-      const setup = await buildSetup(config);
+      const setup = buildSetup(config);
       if (!setup) return;
       const registry = get().registry;
       if (!registry) return;
@@ -646,7 +651,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
         return byZh ?? null;
       };
 
-      // 卡组来源：已保存卡组 id/名称 → 阵营名（快速编组） → 第一套已保存 → 默认德国快速编组
+      // 卡组来源：已保存卡组 id/名称 → 阵营名（快速编组） → 第一套已保存 → 默认快速编组
       const savedDecks = useDeckStore.getState().decks;
       const deckParam = norm(query.deck);
       let deck: DeckData | null = null;
@@ -659,7 +664,9 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
           deckName = saved.name;
         }
       }
-      let playerFaction = deck ? (deck.faction as string) : resolveFaction(deckParam) ?? savedDecks[0]?.faction ?? 'Germany';
+      let playerFaction = deck
+        ? (deck.faction as string)
+        : resolveFaction(deckParam) ?? savedDecks[0]?.faction ?? 'Germany';
       if (!deck) {
         if (savedDecks.length && !resolveFaction(deckParam)) {
           deck = savedDecks[0];
@@ -672,9 +679,12 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       }
 
       const requestedAi = resolveFaction(norm(query.faction));
-      const aiCandidate = requestedAi && requestedAi !== factionMeta(playerFaction).key ? requestedAi : null;
+      const aiCandidate =
+        requestedAi && requestedAi !== factionMeta(playerFaction).key ? requestedAi : null;
       const aiFaction =
-        aiCandidate ?? DECK_FACTIONS.find((faction) => faction !== factionMeta(playerFaction).key) ?? 'Soviet';
+        aiCandidate ??
+        DECK_FACTIONS.find((faction) => faction !== factionMeta(playerFaction).key) ??
+        'Soviet';
 
       await get().startBattle({ deck, deckName, aiFaction, difficulty, seed });
     },
@@ -731,7 +741,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
 
       const handCard = state.players[HUMAN].hand.find((card) => card.instanceId === instanceId);
       if (!handCard) return;
-      const actions = legalActions(state, registry, HUMAN);
+      const actions = visibleLegalActions(state, registry, HUMAN);
       const action = actions.find(
         (item) => item.kind === 'playCard' && item.cardInstanceId === instanceId,
       );
@@ -744,8 +754,10 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
         else if (cost > state.players[HUMAN].kredits) reason = `克雷迪特不足：需要 ${cost}`;
         else {
           const would = legalActionsForCard(state, registry, HUMAN, handCard);
-          if (would.targets?.mode === 'target') reason = '没有合法目标';
+          if (would.targets?.mode === 'target' && would.targets.refs.length < (would.targets.count ?? 1))
+            reason = '没有合法目标';
           else if (would.deployLines && would.deployLines.length === 0) reason = '战场已满';
+          else reason = '本回合无法部署单位（受反制影响）';
         }
         set({ shakeKey: `card:${instanceId}`, hint: { text: reason, at: Date.now() } });
         window.setTimeout(() => set({ shakeKey: null }), 340);
@@ -786,10 +798,12 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       if (!unit) return;
       if (unit.owner !== HUMAN) {
         const def = registry.cardDefs[unit.cardId];
-        setHint(`${def?.nameZh ?? '单位'} · ${unit.attack}/${unit.hp}${unit.armor ? ` · 护甲 ${unit.armor}` : ''}`);
+        setHint(
+          `${def?.nameZh ?? '单位'} · ${unit.attack}/${unit.hp}${unit.armor ? ` · 护甲 ${unit.armor}` : ''}`,
+        );
         return;
       }
-      const actions = legalActions(state, registry, HUMAN);
+      const actions = visibleLegalActions(state, registry, HUMAN);
       const action = actions.find((item) => item.kind === 'attack' && item.attackerId === unitId);
       const moveAction = actions.find((item) => item.kind === 'moveUnit' && item.unitId === unitId);
       if (!action) {
@@ -919,7 +933,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       if (!unitId) return;
       const unit = state.units[unitId];
       if (!unit) return;
-      const moveAction = legalActions(state, registry, HUMAN).find(
+      const moveAction = visibleLegalActions(state, registry, HUMAN).find(
         (item) => item.kind === 'moveUnit' && item.unitId === unitId,
       );
       if (!moveAction) {
