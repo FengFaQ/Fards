@@ -1,41 +1,30 @@
-# ---- dependencies ----
+# 依赖与构建产物
 node_modules/
-
-# ---- build output ----
 dist/
 dist-ssr/
-*.local
-
-# ---- internal scratch / tooling workspace (not part of the product) ----
-_work/
-
-# ---- logs ----
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# ---- editor / OS ----
-.DS_Store
-Thumbs.db
-.idea/
-.vscode/*
-!.vscode/extensions.json
-*.suo
-*.sw?
-
-# ---- test output / coverage ----
 coverage/
-.vitest/
+.vite/
+*.tsbuildinfo
 
-# ---- env files ----
+# 临时工作区（脚本下载缓存、截图、分析草稿）
+_work/
+src/assets/screenshots/
+*.log
+
+# 环境变量（禁止入库任何密钥）
 .env
 .env.*
 !.env.example
 
-# ---- TS incremental build info ----
-*.tsbuildinfo
+# KARDS 素材（版权归 1939 Games；运行时使用 wsrv.nl 远程地址，本地下载不入库）
+public/cards/
+public/cardbacks/
+public/data/images-manifest.json
+public/data/image-missing.json
 
-# ---- GitHub Pages artifacts ----
-.deploy/
+# 文档草稿（仅保留正式 md）
+docs/_*
+
+# 系统文件
+.DS_Store
+Thumbs.db

@@ -1,0 +1,106 @@
+{
+  "source": "https://1939.kardsdecker.com/api/v1/cards",
+  "fetchedAt": "2026-11-07T03:10:27.571Z",
+  "startedAt": "2026-11-07T03:08:17.846Z",
+  "durationMs": 129725,
+  "apiTotal": 1646,
+  "apiTotalPages": 33,
+  "pageLimit": 50,
+  "fetchedCount": 1646,
+  "uniqueCount": 1646,
+  "schema": "camelCase == src/data/types.ts Card (CardDef 字段 + imageLocal + keywordsNormalized)",
+  "duplicateCardIds": [],
+  "missingRequiredFields": [],
+  "importIdConflicts": [],
+  "imageBase": "public/cards/<cardId>.avif",
+  "files": {
+    "public/data/cards.json": "1141.9KB",
+    "_work/cards.raw.json": "1050.8KB"
+  },
+  "stats": {
+    "faction": {
+      "USA": 284,
+      "Soviet": 277,
+      "Germany": 276,
+      "Britain": 266,
+      "Japan": 264,
+      "France": 64,
+      "Italy": 62,
+      "Poland": 60,
+      "Finland": 44,
+      "Anzac": 33,
+      "Neutral": 16
+    },
+    "hostFactionsLength": {
+      "1": 1630,
+      "2": 16
+    },
+    "type": {
+      "order": 636,
+      "infantry": 527,
+      "fighter": 141,
+      "tank": 139,
+      "bomber": 95,
+      "artillery": 57,
+      "countermeasure": 51
+    },
+    "rarity": {
+      "Standard": 553,
+      "Limited": 437,
+      "Special": 381,
+      "Elite": 275
+    },
+    "set": {
+      "Base": 350,
+      "Allegiance": 150,
+      "OceaniaStorm": 118,
+      "Homefront": 111,
+      "BloodAndIron": 111,
+      "NavalWarfare": 106,
+      "Legions": 105,
+      "Breakthrough": 105,
+      "BrothersInArms": 94,
+      "CovertOps": 87,
+      "WinterWar": 87,
+      "OnlySpawnable": 85,
+      "WorldAtWar": 53,
+      "Special": 44,
+      "TheatersOfWar": 40
+    },
+    "pool": {
+      "active": 954,
+      "reserve": 563,
+      "derived": 129
+    },
+    "isReserved": {
+      "false": 1083,
+      "true": 563
+    },
+    "isExile": {
+      "false": 1630,
+      "true": 16
+    },
+    "isDerived": {
+      "false": 1517,
+      "true": 129
+    },
+    "kredits": {
+      "0": 41,
+      "1": 282,
+      "2": 345,
+      "3": 341,
+      "4": 278,
+      "5": 149,
+      "6": 99,
+      "7": 46,
+      "8": 26,
+      "9": 17,
+      "10": 14,
+      "12": 8
+    },
+    "importIdChars": {
+      "len2": 1645,
+      "len1": 1
+    }
+  }
+}

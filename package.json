@@ -1,0 +1,37 @@
+{
+  "name": "fards",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Fards — 开源网页版 KARDS 卡组对战测试平台（非官方同人项目，仅供娱乐与卡组测试）",
+  "license": "AGPL-3.0-or-later",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "data:cards": "node scripts/fetch-cards.mjs",
+    "data:images": "node scripts/fetch-images.mjs",
+    "data:verify": "node scripts/verify-data.mjs"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.5",
+    "zustand": "^5.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/node": "^24.13.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.2.1",
+    "sharp": "^0.35.5",
+    "tailwindcss": "^4.3.5",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.6",
+    "vitest": "^5.1.0"
+  }
+}

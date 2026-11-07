@@ -28,8 +28,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          # npm cache is re-enabled once package-lock.json is committed;
-          # with no lockfile present the cache step fails hard.
+          cache: npm
+          cache-dependency-path: package-lock.json
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
