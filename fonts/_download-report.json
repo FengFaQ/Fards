@@ -1,0 +1,51 @@
+{
+  "generatedAt": "2026-11-07T03:22:53.421Z",
+  "results": [
+    {
+      "name": "Black Ops One",
+      "file": "BlackOpsOne-Regular.woff2",
+      "license": "OFL-1.1",
+      "urls": [
+        "https://raw.githubusercontent.com/google/fonts/main/ofl/blackopsone/BlackOpsOne-Regular.ttf",
+        "https://cdn.jsdelivr.net/npm/@fontsource/black-ops-one@5/files/black-ops-one-latin-400-normal.woff2"
+      ],
+      "bytes": 31408,
+      "source": "https://cdn.jsdelivr.net/npm/@fontsource/black-ops-one@5/files/black-ops-one-latin-400-normal.woff2",
+      "format": "woff2"
+    },
+    {
+      "name": "Oswald",
+      "file": "Oswald-VariableFont_wght.woff2",
+      "license": "OFL-1.1",
+      "urls": [
+        "https://raw.githubusercontent.com/google/fonts/main/ofl/oswald/Oswald%5Bwght%5D.ttf",
+        "https://cdn.jsdelivr.net/npm/@fontsource-variable/oswald@5/files/oswald-latin-wght-normal.woff2"
+      ],
+      "bytes": 28488,
+      "source": "https://cdn.jsdelivr.net/npm/@fontsource-variable/oswald@5/files/oswald-latin-wght-normal.woff2",
+      "format": "woff2"
+    },
+    {
+      "name": "Black Ops One (license)",
+      "file": "OFL-BlackOpsOne.txt",
+      "license": "OFL-1.1",
+      "licenseOnly": true,
+      "urls": [
+        "https://raw.githubusercontent.com/google/fonts/main/ofl/blackopsone/OFL.txt"
+      ],
+      "bytes": 0,
+      "failed": true
+    },
+    {
+      "name": "Oswald (license)",
+      "file": "OFL-Oswald.txt",
+      "license": "OFL-1.1",
+      "licenseOnly": true,
+      "urls": [
+        "https://raw.githubusercontent.com/google/fonts/main/ofl/oswald/OFL.txt"
+      ],
+      "bytes": 0,
+      "failed": true
+    }
+  ]
+}

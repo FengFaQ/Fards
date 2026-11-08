@@ -1,0 +1,31 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Fards · P2P 联机</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <meta http-equiv="refresh" content="0; url=../#/p2p" />
+    <script>
+      // GitHub Pages 是静态托管：/p2p 重定向到 hash 路由 #/p2p（保留查询参数）
+      (function () {
+        var search = window.location.search || '';
+        var target = '../#/p2p';
+        // 把 ?p2p=1 之类的参数转成 hash 内查询参数（可选）
+        if (search) {
+          var params = new URLSearchParams(search);
+          var inner = new URLSearchParams();
+          params.forEach(function (value, key) {
+            if (key !== 'p2p') inner.set(key, value);
+          });
+          var suffix = inner.toString();
+          if (suffix) target += '?' + suffix;
+        }
+        window.location.replace(target);
+      })();
+    </script>
+  </head>
+  <body style="background:#0e0d07;color:#e6e2cd;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
+    <p>正在进入 Fards P2P 联机… 若未自动跳转，请点击 <a style="color:#d8b45f" href="../#/p2p">这里</a>。</p>
+  </body>
+</html>

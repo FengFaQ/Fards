@@ -1,0 +1,1 @@
+var e=null;function t(t){e={...t,createdAt:Date.now()}}function n(){return e}export{t as n,n as t};

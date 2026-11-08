@@ -1,0 +1,3462 @@
+{
+  "source": "https://1939.kardsdecker.com/api/v1/card-backs",
+  "fetchedAt": "2026-11-07T03:45:32.253Z",
+  "total": 493,
+  "downloaded": 493,
+  "failed": 0,
+  "localDir": "public/cardbacks",
+  "fileFormat": "webp(512w)",
+  "data": [
+    {
+      "id": "CardBacks_Resized/11_infantry_division_a_512.png",
+      "name": "11 infantry division a 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/11_infantry_division_a_512.png",
+      "file": "11_infantry_division_a_512.webp",
+      "localPath": "/cardbacks/11_infantry_division_a_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/11_infantry_division_b_512.png",
+      "name": "11 infantry division b 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/11_infantry_division_b_512.png",
+      "file": "11_infantry_division_b_512.webp",
+      "localPath": "/cardbacks/11_infantry_division_b_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/11_infantry_division_c_512.png",
+      "name": "11 infantry division c 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/11_infantry_division_c_512.png",
+      "file": "11_infantry_division_c_512.webp",
+      "localPath": "/cardbacks/11_infantry_division_c_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/13th_mechanized_brigade_a.png",
+      "name": "13th mechanized brigade a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/13th_mechanized_brigade_a.png",
+      "file": "13th_mechanized_brigade_a.webp",
+      "localPath": "/cardbacks/13th_mechanized_brigade_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/13th_mechanized_brigade_b.png",
+      "name": "13th mechanized brigade b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/13th_mechanized_brigade_b.png",
+      "file": "13th_mechanized_brigade_b.webp",
+      "localPath": "/cardbacks/13th_mechanized_brigade_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/13th_mechanized_brigade_c.png",
+      "name": "13th mechanized brigade c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/13th_mechanized_brigade_c.png",
+      "file": "13th_mechanized_brigade_c.webp",
+      "localPath": "/cardbacks/13th_mechanized_brigade_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/16th_pz_a.png",
+      "name": "16th pz a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/16th_pz_a.png",
+      "file": "16th_pz_a.webp",
+      "localPath": "/cardbacks/16th_pz_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/16th_pz_b.png",
+      "name": "16th pz b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/16th_pz_b.png",
+      "file": "16th_pz_b.webp",
+      "localPath": "/cardbacks/16th_pz_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/16th_pz_c.png",
+      "name": "16th pz c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/16th_pz_c.png",
+      "file": "16th_pz_c.webp",
+      "localPath": "/cardbacks/16th_pz_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/25th_tank_brigade_a.png",
+      "name": "25th tank brigade a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/25th_tank_brigade_a.png",
+      "file": "25th_tank_brigade_a.webp",
+      "localPath": "/cardbacks/25th_tank_brigade_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/25th_tank_brigade_b.png",
+      "name": "25th tank brigade b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/25th_tank_brigade_b.png",
+      "file": "25th_tank_brigade_b.webp",
+      "localPath": "/cardbacks/25th_tank_brigade_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/25th_tank_brigade_c.png",
+      "name": "25th tank brigade c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/25th_tank_brigade_c.png",
+      "file": "25th_tank_brigade_c.webp",
+      "localPath": "/cardbacks/25th_tank_brigade_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/27th_armored_brigade_a_512.png",
+      "name": "27th armored brigade a 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/27th_armored_brigade_a_512.png",
+      "file": "27th_armored_brigade_a_512.webp",
+      "localPath": "/cardbacks/27th_armored_brigade_a_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/27th_armored_brigade_b_512.png",
+      "name": "27th armored brigade b 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/27th_armored_brigade_b_512.png",
+      "file": "27th_armored_brigade_b_512.webp",
+      "localPath": "/cardbacks/27th_armored_brigade_b_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/27th_armored_brigade_c_512.png",
+      "name": "27th armored brigade c 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/27th_armored_brigade_c_512.png",
+      "file": "27th_armored_brigade_c_512.webp",
+      "localPath": "/cardbacks/27th_armored_brigade_c_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/2nd_armored_division_a_512.png",
+      "name": "2nd armored division a 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/2nd_armored_division_a_512.png",
+      "file": "2nd_armored_division_a_512.webp",
+      "localPath": "/cardbacks/2nd_armored_division_a_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/2nd_armored_division_b_512.png",
+      "name": "2nd armored division b 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/2nd_armored_division_b_512.png",
+      "file": "2nd_armored_division_b_512.webp",
+      "localPath": "/cardbacks/2nd_armored_division_b_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/2nd_armored_division_c_512.png",
+      "name": "2nd armored division c 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/2nd_armored_division_c_512.png",
+      "file": "2nd_armored_division_c_512.webp",
+      "localPath": "/cardbacks/2nd_armored_division_c_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/2nd_japan_final_Ax512.png",
+      "name": "2nd japan final Ax512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/2nd_japan_final_Ax512.png",
+      "file": "2nd_japan_final_Ax512.webp",
+      "localPath": "/cardbacks/2nd_japan_final_Ax512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/2nd_japan_final_Bx512.png",
+      "name": "2nd japan final Bx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/2nd_japan_final_Bx512.png",
+      "file": "2nd_japan_final_Bx512.webp",
+      "localPath": "/cardbacks/2nd_japan_final_Bx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/2nd_japan_final_Cx512.png",
+      "name": "2nd japan final Cx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/2nd_japan_final_Cx512.png",
+      "file": "2nd_japan_final_Cx512.webp",
+      "localPath": "/cardbacks/2nd_japan_final_Cx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/43rd_vessex_a_512.png",
+      "name": "43rd vessex a 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/43rd_vessex_a_512.png",
+      "file": "43rd_vessex_a_512.webp",
+      "localPath": "/cardbacks/43rd_vessex_a_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/43rd_vessex_b_512.png",
+      "name": "43rd vessex b 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/43rd_vessex_b_512.png",
+      "file": "43rd_vessex_b_512.webp",
+      "localPath": "/cardbacks/43rd_vessex_b_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/43rd_vessex_c_512.png",
+      "name": "43rd vessex c 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/43rd_vessex_c_512.png",
+      "file": "43rd_vessex_c_512.webp",
+      "localPath": "/cardbacks/43rd_vessex_c_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/46th_Division_Ghost_Units_Ax512.png",
+      "name": "46th Division Ghost Units Ax512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/46th_Division_Ghost_Units_Ax512.png",
+      "file": "46th_Division_Ghost_Units_Ax512.webp",
+      "localPath": "/cardbacks/46th_Division_Ghost_Units_Ax512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/46th_Division_Ghost_Units_Bx512.png",
+      "name": "46th Division Ghost Units Bx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/46th_Division_Ghost_Units_Bx512.png",
+      "file": "46th_Division_Ghost_Units_Bx512.webp",
+      "localPath": "/cardbacks/46th_Division_Ghost_Units_Bx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/46th_Division_Ghost_Units_Cx512.png",
+      "name": "46th Division Ghost Units Cx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/46th_Division_Ghost_Units_Cx512.png",
+      "file": "46th_Division_Ghost_Units_Cx512.webp",
+      "localPath": "/cardbacks/46th_Division_Ghost_Units_Cx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/502nd_pir_cardback_a.png",
+      "name": "502nd pir cardback a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/502nd_pir_cardback_a.png",
+      "file": "502nd_pir_cardback_a.webp",
+      "localPath": "/cardbacks/502nd_pir_cardback_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/502nd_pir_cardback_b.png",
+      "name": "502nd pir cardback b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/502nd_pir_cardback_b.png",
+      "file": "502nd_pir_cardback_b.webp",
+      "localPath": "/cardbacks/502nd_pir_cardback_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/502nd_pir_cardback_c.png",
+      "name": "502nd pir cardback c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/502nd_pir_cardback_c.png",
+      "file": "502nd_pir_cardback_c.webp",
+      "localPath": "/cardbacks/502nd_pir_cardback_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/507th_vfinal.png",
+      "name": "507th vfinal",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/507th_vfinal.png",
+      "file": "507th_vfinal.webp",
+      "localPath": "/cardbacks/507th_vfinal.webp"
+    },
+    {
+      "id": "CardBacks_Resized/507th_vfinal2.png",
+      "name": "507th vfinal2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/507th_vfinal2.png",
+      "file": "507th_vfinal2.webp",
+      "localPath": "/cardbacks/507th_vfinal2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/507th_vfinal3.png",
+      "name": "507th vfinal3",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/507th_vfinal3.png",
+      "file": "507th_vfinal3.webp",
+      "localPath": "/cardbacks/507th_vfinal3.webp"
+    },
+    {
+      "id": "CardBacks_Resized/53rd_fighter_group_a_512.png",
+      "name": "53rd fighter group a 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/53rd_fighter_group_a_512.png",
+      "file": "53rd_fighter_group_a_512.webp",
+      "localPath": "/cardbacks/53rd_fighter_group_a_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/53rd_fighter_group_b_512.png",
+      "name": "53rd fighter group b 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/53rd_fighter_group_b_512.png",
+      "file": "53rd_fighter_group_b_512.webp",
+      "localPath": "/cardbacks/53rd_fighter_group_b_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/53rd_fighter_group_c_512.png",
+      "name": "53rd fighter group c 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/53rd_fighter_group_c_512.png",
+      "file": "53rd_fighter_group_c_512.webp",
+      "localPath": "/cardbacks/53rd_fighter_group_c_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/78th_infantry_a.png",
+      "name": "78th infantry a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/78th_infantry_a.png",
+      "file": "78th_infantry_a.webp",
+      "localPath": "/cardbacks/78th_infantry_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/78th_infantry_b.png",
+      "name": "78th infantry b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/78th_infantry_b.png",
+      "file": "78th_infantry_b.webp",
+      "localPath": "/cardbacks/78th_infantry_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/78th_infantry_c.png",
+      "name": "78th infantry c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/78th_infantry_c.png",
+      "file": "78th_infantry_c.webp",
+      "localPath": "/cardbacks/78th_infantry_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/9th_airforce_a.png",
+      "name": "9th airforce a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/9th_airforce_a.png",
+      "file": "9th_airforce_a.webp",
+      "localPath": "/cardbacks/9th_airforce_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/9th_airforce_b.png",
+      "name": "9th airforce b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/9th_airforce_b.png",
+      "file": "9th_airforce_b.webp",
+      "localPath": "/cardbacks/9th_airforce_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/9th_airforce_c.png",
+      "name": "9th airforce c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/9th_airforce_c.png",
+      "file": "9th_airforce_c.webp",
+      "localPath": "/cardbacks/9th_airforce_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Allegiance_set_card_back_e.png",
+      "name": "Allegiance set card back e",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Allegiance_set_card_back_e.png",
+      "file": "Allegiance_set_card_back_e.webp",
+      "localPath": "/cardbacks/Allegiance_set_card_back_e.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Allegiance_set_card_back_f.png",
+      "name": "Allegiance set card back f",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Allegiance_set_card_back_f.png",
+      "file": "Allegiance_set_card_back_f.webp",
+      "localPath": "/cardbacks/Allegiance_set_card_back_f.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Allegiance_set_card_back_g.png",
+      "name": "Allegiance set card back g",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Allegiance_set_card_back_g.png",
+      "file": "Allegiance_set_card_back_g.webp",
+      "localPath": "/cardbacks/Allegiance_set_card_back_g.webp"
+    },
+    {
+      "id": "CardBacks_Resized/AlphaA.png",
+      "name": "AlphaA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/AlphaA.png",
+      "file": "AlphaA.webp",
+      "localPath": "/cardbacks/AlphaA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/AlphaB.png",
+      "name": "AlphaB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/AlphaB.png",
+      "file": "AlphaB.webp",
+      "localPath": "/cardbacks/AlphaB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/AlphaC.png",
+      "name": "AlphaC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/AlphaC.png",
+      "file": "AlphaC.webp",
+      "localPath": "/cardbacks/AlphaC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Armoured_Guards_Division_Ax512.png",
+      "name": "Armoured Guards Division Ax512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Armoured_Guards_Division_Ax512.png",
+      "file": "Armoured_Guards_Division_Ax512.webp",
+      "localPath": "/cardbacks/Armoured_Guards_Division_Ax512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Armoured_Guards_Division_Bx512.png",
+      "name": "Armoured Guards Division Bx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Armoured_Guards_Division_Bx512.png",
+      "file": "Armoured_Guards_Division_Bx512.webp",
+      "localPath": "/cardbacks/Armoured_Guards_Division_Bx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Armoured_Guards_Division_Cx512.png",
+      "name": "Armoured Guards Division Cx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Armoured_Guards_Division_Cx512.png",
+      "file": "Armoured_Guards_Division_Cx512.webp",
+      "localPath": "/cardbacks/Armoured_Guards_Division_Cx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/artillery_soviet_final_A_green_x512__1_.png",
+      "name": "artillery soviet final A green x512 1",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/artillery_soviet_final_A_green_x512__1_.png",
+      "file": "artillery_soviet_final_A_green_x512__1_.webp",
+      "localPath": "/cardbacks/artillery_soviet_final_A_green_x512__1_.webp"
+    },
+    {
+      "id": "CardBacks_Resized/artillery_soviet_final_B_green_x512__1_.png",
+      "name": "artillery soviet final B green x512 1",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/artillery_soviet_final_B_green_x512__1_.png",
+      "file": "artillery_soviet_final_B_green_x512__1_.webp",
+      "localPath": "/cardbacks/artillery_soviet_final_B_green_x512__1_.webp"
+    },
+    {
+      "id": "CardBacks_Resized/artillery_soviet_final_C_green_x512__1_.png",
+      "name": "artillery soviet final C green x512 1",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/artillery_soviet_final_C_green_x512__1_.png",
+      "file": "artillery_soviet_final_C_green_x512__1_.webp",
+      "localPath": "/cardbacks/artillery_soviet_final_C_green_x512__1_.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Base_set_card_back_a.png",
+      "name": "Base set card back a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Base_set_card_back_a.png",
+      "file": "Base_set_card_back_a.webp",
+      "localPath": "/cardbacks/Base_set_card_back_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Base_set_card_back_b.png",
+      "name": "Base set card back b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Base_set_card_back_b.png",
+      "file": "Base_set_card_back_b.webp",
+      "localPath": "/cardbacks/Base_set_card_back_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Base_set_card_back_c.png",
+      "name": "Base set card back c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Base_set_card_back_c.png",
+      "file": "Base_set_card_back_c.webp",
+      "localPath": "/cardbacks/Base_set_card_back_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BasicBetaA.png",
+      "name": "BasicBetaA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BasicBetaA.png",
+      "file": "BasicBetaA.webp",
+      "localPath": "/cardbacks/BasicBetaA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BasicBetaB.png",
+      "name": "BasicBetaB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BasicBetaB.png",
+      "file": "BasicBetaB.webp",
+      "localPath": "/cardbacks/BasicBetaB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BasicBetaC.png",
+      "name": "BasicBetaC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BasicBetaC.png",
+      "file": "BasicBetaC.webp",
+      "localPath": "/cardbacks/BasicBetaC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BasicBritainA.png",
+      "name": "BasicBritainA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BasicBritainA.png",
+      "file": "BasicBritainA.webp",
+      "localPath": "/cardbacks/BasicBritainA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BasicBritainB.png",
+      "name": "BasicBritainB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BasicBritainB.png",
+      "file": "BasicBritainB.webp",
+      "localPath": "/cardbacks/BasicBritainB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BasicBritainC.png",
+      "name": "BasicBritainC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BasicBritainC.png",
+      "file": "BasicBritainC.webp",
+      "localPath": "/cardbacks/BasicBritainC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BasicGermanA.png",
+      "name": "BasicGermanA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BasicGermanA.png",
+      "file": "BasicGermanA.webp",
+      "localPath": "/cardbacks/BasicGermanA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BasicGermanB.png",
+      "name": "BasicGermanB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BasicGermanB.png",
+      "file": "BasicGermanB.webp",
+      "localPath": "/cardbacks/BasicGermanB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BasicGermanC.png",
+      "name": "BasicGermanC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BasicGermanC.png",
+      "file": "BasicGermanC.webp",
+      "localPath": "/cardbacks/BasicGermanC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BattleOfMoscow_A.png",
+      "name": "BattleOfMoscow A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BattleOfMoscow_A.png",
+      "file": "BattleOfMoscow_A.webp",
+      "localPath": "/cardbacks/BattleOfMoscow_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BattleOfMoscow_B.png",
+      "name": "BattleOfMoscow B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BattleOfMoscow_B.png",
+      "file": "BattleOfMoscow_B.webp",
+      "localPath": "/cardbacks/BattleOfMoscow_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BattleOfMoscow_C.png",
+      "name": "BattleOfMoscow C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BattleOfMoscow_C.png",
+      "file": "BattleOfMoscow_C.webp",
+      "localPath": "/cardbacks/BattleOfMoscow_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BiA_set_cardback_Cx512.png",
+      "name": "BiA set cardback Cx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BiA_set_cardback_Cx512.png",
+      "file": "BiA_set_cardback_Cx512.webp",
+      "localPath": "/cardbacks/BiA_set_cardback_Cx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Blood_and_Iron_cardback_A_2.png",
+      "name": "Blood and Iron cardback A 2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Blood_and_Iron_cardback_A_2.png",
+      "file": "Blood_and_Iron_cardback_A_2.webp",
+      "localPath": "/cardbacks/Blood_and_Iron_cardback_A_2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Blood_and_Iron_cardback_B_2.png",
+      "name": "Blood and Iron cardback B 2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Blood_and_Iron_cardback_B_2.png",
+      "file": "Blood_and_Iron_cardback_B_2.webp",
+      "localPath": "/cardbacks/Blood_and_Iron_cardback_B_2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Blood_and_Iron_cardback_C_2.png",
+      "name": "Blood and Iron cardback C 2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Blood_and_Iron_cardback_C_2.png",
+      "file": "Blood_and_Iron_cardback_C_2.webp",
+      "localPath": "/cardbacks/Blood_and_Iron_cardback_C_2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Blood-and-Iron_cardback_A.png",
+      "name": "Blood and Iron cardback A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Blood-and-Iron_cardback_A.png",
+      "file": "Blood-and-Iron_cardback_A.webp",
+      "localPath": "/cardbacks/Blood-and-Iron_cardback_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Blood-and-Iron_cardback_B.png",
+      "name": "Blood and Iron cardback B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Blood-and-Iron_cardback_B.png",
+      "file": "Blood-and-Iron_cardback_B.webp",
+      "localPath": "/cardbacks/Blood-and-Iron_cardback_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Blood-and-Iron_cardback_C.png",
+      "name": "Blood and Iron cardback C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Blood-and-Iron_cardback_C.png",
+      "file": "Blood-and-Iron_cardback_C.webp",
+      "localPath": "/cardbacks/Blood-and-Iron_cardback_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/blue_and_gray_a_512.png",
+      "name": "blue and gray a 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/blue_and_gray_a_512.png",
+      "file": "blue_and_gray_a_512.webp",
+      "localPath": "/cardbacks/blue_and_gray_a_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/blue_and_gray_b_512.png",
+      "name": "blue and gray b 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/blue_and_gray_b_512.png",
+      "file": "blue_and_gray_b_512.webp",
+      "localPath": "/cardbacks/blue_and_gray_b_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/blue_and_gray_c_512.png",
+      "name": "blue and gray c 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/blue_and_gray_c_512.png",
+      "file": "blue_and_gray_c_512.webp",
+      "localPath": "/cardbacks/blue_and_gray_c_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Breakthrough_a_color_po2.png",
+      "name": "Breakthrough a color po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Breakthrough_a_color_po2.png",
+      "file": "Breakthrough_a_color_po2.webp",
+      "localPath": "/cardbacks/Breakthrough_a_color_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Breakthrough_b_color_po2.png",
+      "name": "Breakthrough b color po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Breakthrough_b_color_po2.png",
+      "file": "Breakthrough_b_color_po2.webp",
+      "localPath": "/cardbacks/Breakthrough_b_color_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Breakthrough_c_color_po2.png",
+      "name": "Breakthrough c color po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Breakthrough_c_color_po2.png",
+      "file": "Breakthrough_c_color_po2.webp",
+      "localPath": "/cardbacks/Breakthrough_c_color_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/britain_final_Ax512.png",
+      "name": "britain final Ax512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/britain_final_Ax512.png",
+      "file": "britain_final_Ax512.webp",
+      "localPath": "/cardbacks/britain_final_Ax512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/britain_final_Bx512.png",
+      "name": "britain final Bx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/britain_final_Bx512.png",
+      "file": "britain_final_Bx512.webp",
+      "localPath": "/cardbacks/britain_final_Bx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/britain_final_Cx512.png",
+      "name": "britain final Cx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/britain_final_Cx512.png",
+      "file": "britain_final_Cx512.webp",
+      "localPath": "/cardbacks/britain_final_Cx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BRITAIN_skirmish.png",
+      "name": "BRITAIN skirmish",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BRITAIN_skirmish.png",
+      "file": "BRITAIN_skirmish.webp",
+      "localPath": "/cardbacks/BRITAIN_skirmish.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BRITAIN_skirmish2.png",
+      "name": "BRITAIN skirmish2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BRITAIN_skirmish2.png",
+      "file": "BRITAIN_skirmish2.webp",
+      "localPath": "/cardbacks/BRITAIN_skirmish2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BRITAIN_skirmish3.png",
+      "name": "BRITAIN skirmish3",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BRITAIN_skirmish3.png",
+      "file": "BRITAIN_skirmish3.webp",
+      "localPath": "/cardbacks/BRITAIN_skirmish3.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BritBasicExtraA.png",
+      "name": "BritBasicExtraA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BritBasicExtraA.png",
+      "file": "BritBasicExtraA.webp",
+      "localPath": "/cardbacks/BritBasicExtraA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BritBasicExtraB.png",
+      "name": "BritBasicExtraB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BritBasicExtraB.png",
+      "file": "BritBasicExtraB.webp",
+      "localPath": "/cardbacks/BritBasicExtraB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/BritBasicExtraC.png",
+      "name": "BritBasicExtraC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/BritBasicExtraC.png",
+      "file": "BritBasicExtraC.webp",
+      "localPath": "/cardbacks/BritBasicExtraC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_42nd_divisionA.png",
+      "name": "cardback 42nd divisionA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_42nd_divisionA.png",
+      "file": "cardback_42nd_divisionA.webp",
+      "localPath": "/cardbacks/cardback_42nd_divisionA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_42nd_divisionB.png",
+      "name": "cardback 42nd divisionB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_42nd_divisionB.png",
+      "file": "cardback_42nd_divisionB.webp",
+      "localPath": "/cardbacks/cardback_42nd_divisionB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_42nd_divisionC.png",
+      "name": "cardback 42nd divisionC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_42nd_divisionC.png",
+      "file": "cardback_42nd_divisionC.webp",
+      "localPath": "/cardbacks/cardback_42nd_divisionC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_britain_airA.png",
+      "name": "cardback britain airA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_britain_airA.png",
+      "file": "cardback_britain_airA.webp",
+      "localPath": "/cardbacks/cardback_britain_airA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_britain_airB.png",
+      "name": "cardback britain airB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_britain_airB.png",
+      "file": "cardback_britain_airB.webp",
+      "localPath": "/cardbacks/cardback_britain_airB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_britain_airC.png",
+      "name": "cardback britain airC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_britain_airC.png",
+      "file": "cardback_britain_airC.webp",
+      "localPath": "/cardbacks/cardback_britain_airC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_german_airA.png",
+      "name": "cardback german airA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_german_airA.png",
+      "file": "cardback_german_airA.webp",
+      "localPath": "/cardbacks/cardback_german_airA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_german_airB.png",
+      "name": "cardback german airB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_german_airB.png",
+      "file": "cardback_german_airB.webp",
+      "localPath": "/cardbacks/cardback_german_airB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_german_airC.png",
+      "name": "cardback german airC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_german_airC.png",
+      "file": "cardback_german_airC.webp",
+      "localPath": "/cardbacks/cardback_german_airC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_jap_airA.png",
+      "name": "cardback jap airA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_jap_airA.png",
+      "file": "cardback_jap_airA.webp",
+      "localPath": "/cardbacks/cardback_jap_airA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_jap_airB.png",
+      "name": "cardback jap airB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_jap_airB.png",
+      "file": "cardback_jap_airB.webp",
+      "localPath": "/cardbacks/cardback_jap_airB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_jap_airC.png",
+      "name": "cardback jap airC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_jap_airC.png",
+      "file": "cardback_jap_airC.webp",
+      "localPath": "/cardbacks/cardback_jap_airC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_soviet_airA.png",
+      "name": "cardback soviet airA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_soviet_airA.png",
+      "file": "cardback_soviet_airA.webp",
+      "localPath": "/cardbacks/cardback_soviet_airA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_soviet_airB.png",
+      "name": "cardback soviet airB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_soviet_airB.png",
+      "file": "cardback_soviet_airB.webp",
+      "localPath": "/cardbacks/cardback_soviet_airB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_soviet_airC.png",
+      "name": "cardback soviet airC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_soviet_airC.png",
+      "file": "cardback_soviet_airC.webp",
+      "localPath": "/cardbacks/cardback_soviet_airC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_us_airA.png",
+      "name": "cardback us airA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_us_airA.png",
+      "file": "cardback_us_airA.webp",
+      "localPath": "/cardbacks/cardback_us_airA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_us_airB.png",
+      "name": "cardback us airB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_us_airB.png",
+      "file": "cardback_us_airB.webp",
+      "localPath": "/cardbacks/cardback_us_airB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/cardback_us_airC.png",
+      "name": "cardback us airC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/cardback_us_airC.png",
+      "file": "cardback_us_airC.webp",
+      "localPath": "/cardbacks/cardback_us_airC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Catalys_b_po2.png",
+      "name": "Catalys b po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Catalys_b_po2.png",
+      "file": "Catalys_b_po2.webp",
+      "localPath": "/cardbacks/Catalys_b_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Catalyst_a_po2.png",
+      "name": "Catalyst a po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Catalyst_a_po2.png",
+      "file": "Catalyst_a_po2.webp",
+      "localPath": "/cardbacks/Catalyst_a_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Catalyst_c_po2.png",
+      "name": "Catalyst c po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Catalyst_c_po2.png",
+      "file": "Catalyst_c_po2.webp",
+      "localPath": "/cardbacks/Catalyst_c_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/championship_2021_a_po2.png",
+      "name": "championship 2021 a po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/championship_2021_a_po2.png",
+      "file": "championship_2021_a_po2.webp",
+      "localPath": "/cardbacks/championship_2021_a_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/championship_2021_b_po2.png",
+      "name": "championship 2021 b po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/championship_2021_b_po2.png",
+      "file": "championship_2021_b_po2.webp",
+      "localPath": "/cardbacks/championship_2021_b_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/championship_2021_c_po2.png",
+      "name": "championship 2021 c po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/championship_2021_c_po2.png",
+      "file": "championship_2021_c_po2.webp",
+      "localPath": "/cardbacks/championship_2021_c_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/chinese_new_year_2025_a_po2.png",
+      "name": "chinese new year 2025 a po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/chinese_new_year_2025_a_po2.png",
+      "file": "chinese_new_year_2025_a_po2.webp",
+      "localPath": "/cardbacks/chinese_new_year_2025_a_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/chinese_new_year_2025_b_po2.png",
+      "name": "chinese new year 2025 b po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/chinese_new_year_2025_b_po2.png",
+      "file": "chinese_new_year_2025_b_po2.webp",
+      "localPath": "/cardbacks/chinese_new_year_2025_b_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/chinese_new_year_2025_c_po2.png",
+      "name": "chinese new year 2025 c po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/chinese_new_year_2025_c_po2.png",
+      "file": "chinese_new_year_2025_c_po2.webp",
+      "localPath": "/cardbacks/chinese_new_year_2025_c_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Covert_cardback_A_512x512.png",
+      "name": "Covert cardback A 512x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Covert_cardback_A_512x512.png",
+      "file": "Covert_cardback_A_512x512.webp",
+      "localPath": "/cardbacks/Covert_cardback_A_512x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Covert_cardback_B_512x512.png",
+      "name": "Covert cardback B 512x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Covert_cardback_B_512x512.png",
+      "file": "Covert_cardback_B_512x512.webp",
+      "localPath": "/cardbacks/Covert_cardback_B_512x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Covert_cardback_C_512x512.png",
+      "name": "Covert cardback C 512x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Covert_cardback_C_512x512.png",
+      "file": "Covert_cardback_C_512x512.webp",
+      "localPath": "/cardbacks/Covert_cardback_C_512x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Covert_cardback_Reverse_A_512x512.png",
+      "name": "Covert cardback Reverse A 512x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Covert_cardback_Reverse_A_512x512.png",
+      "file": "Covert_cardback_Reverse_A_512x512.webp",
+      "localPath": "/cardbacks/Covert_cardback_Reverse_A_512x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Covert_cardback_Reverse_B_512x512.png",
+      "name": "Covert cardback Reverse B 512x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Covert_cardback_Reverse_B_512x512.png",
+      "file": "Covert_cardback_Reverse_B_512x512.webp",
+      "localPath": "/cardbacks/Covert_cardback_Reverse_B_512x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Covert_cardback_Reverse_C_512x512.png",
+      "name": "Covert cardback Reverse C 512x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Covert_cardback_Reverse_C_512x512.png",
+      "file": "Covert_cardback_Reverse_C_512x512.webp",
+      "localPath": "/cardbacks/Covert_cardback_Reverse_C_512x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ddayA.png",
+      "name": "ddayA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ddayA.png",
+      "file": "ddayA.webp",
+      "localPath": "/cardbacks/ddayA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ddayB.png",
+      "name": "ddayB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ddayB.png",
+      "file": "ddayB.webp",
+      "localPath": "/cardbacks/ddayB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ddayC.png",
+      "name": "ddayC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ddayC.png",
+      "file": "ddayC.webp",
+      "localPath": "/cardbacks/ddayC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/desert_rats_desert_camo_a.png",
+      "name": "desert rats desert camo a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/desert_rats_desert_camo_a.png",
+      "file": "desert_rats_desert_camo_a.webp",
+      "localPath": "/cardbacks/desert_rats_desert_camo_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/desert_rats_desert_camo_b.png",
+      "name": "desert rats desert camo b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/desert_rats_desert_camo_b.png",
+      "file": "desert_rats_desert_camo_b.webp",
+      "localPath": "/cardbacks/desert_rats_desert_camo_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/desert_rats_desert_camo_c.png",
+      "name": "desert rats desert camo c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/desert_rats_desert_camo_c.png",
+      "file": "desert_rats_desert_camo_c.webp",
+      "localPath": "/cardbacks/desert_rats_desert_camo_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/finland_a.png",
+      "name": "finland a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/finland_a.png",
+      "file": "finland_a.webp",
+      "localPath": "/cardbacks/finland_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/finland_b.png",
+      "name": "finland b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/finland_b.png",
+      "file": "finland_b.webp",
+      "localPath": "/cardbacks/finland_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/finland_c.png",
+      "name": "finland c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/finland_c.png",
+      "file": "finland_c.webp",
+      "localPath": "/cardbacks/finland_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/france_a.png",
+      "name": "france a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/france_a.png",
+      "file": "france_a.webp",
+      "localPath": "/cardbacks/france_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/france_b.png",
+      "name": "france b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/france_b.png",
+      "file": "france_b.webp",
+      "localPath": "/cardbacks/france_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/france_c.png",
+      "name": "france c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/france_c.png",
+      "file": "france_c.webp",
+      "localPath": "/cardbacks/france_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Gefreiter_Ax5122.png",
+      "name": "Gefreiter Ax5122",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Gefreiter_Ax5122.png",
+      "file": "Gefreiter_Ax5122.webp",
+      "localPath": "/cardbacks/Gefreiter_Ax5122.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Gefreiter_Bx5122.png",
+      "name": "Gefreiter Bx5122",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Gefreiter_Bx5122.png",
+      "file": "Gefreiter_Bx5122.webp",
+      "localPath": "/cardbacks/Gefreiter_Bx5122.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Gefreiter_Cx512.png",
+      "name": "Gefreiter Cx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Gefreiter_Cx512.png",
+      "file": "Gefreiter_Cx512.webp",
+      "localPath": "/cardbacks/Gefreiter_Cx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/general_stars_a_po2.png",
+      "name": "general stars a po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/general_stars_a_po2.png",
+      "file": "general_stars_a_po2.webp",
+      "localPath": "/cardbacks/general_stars_a_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/general_stars_b_po2.png",
+      "name": "general stars b po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/general_stars_b_po2.png",
+      "file": "general_stars_b_po2.webp",
+      "localPath": "/cardbacks/general_stars_b_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/general_stars_c_po2.png",
+      "name": "general stars c po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/general_stars_c_po2.png",
+      "file": "general_stars_c_po2.webp",
+      "localPath": "/cardbacks/general_stars_c_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/GerBasicExtraA.png",
+      "name": "GerBasicExtraA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/GerBasicExtraA.png",
+      "file": "GerBasicExtraA.webp",
+      "localPath": "/cardbacks/GerBasicExtraA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/GerBasicExtraB.png",
+      "name": "GerBasicExtraB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/GerBasicExtraB.png",
+      "file": "GerBasicExtraB.webp",
+      "localPath": "/cardbacks/GerBasicExtraB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/GerBasicExtraC.png",
+      "name": "GerBasicExtraC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/GerBasicExtraC.png",
+      "file": "GerBasicExtraC.webp",
+      "localPath": "/cardbacks/GerBasicExtraC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/germany_final_Ax512.png",
+      "name": "germany final Ax512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/germany_final_Ax512.png",
+      "file": "germany_final_Ax512.webp",
+      "localPath": "/cardbacks/germany_final_Ax512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/germany_final_Bx512.png",
+      "name": "germany final Bx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/germany_final_Bx512.png",
+      "file": "germany_final_Bx512.webp",
+      "localPath": "/cardbacks/germany_final_Bx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/germany_final_Cx512.png",
+      "name": "germany final Cx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/germany_final_Cx512.png",
+      "file": "germany_final_Cx512.webp",
+      "localPath": "/cardbacks/germany_final_Cx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/GERMANY_skirmish.png",
+      "name": "GERMANY skirmish",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/GERMANY_skirmish.png",
+      "file": "GERMANY_skirmish.webp",
+      "localPath": "/cardbacks/GERMANY_skirmish.webp"
+    },
+    {
+      "id": "CardBacks_Resized/GERMANY_skirmish2.png",
+      "name": "GERMANY skirmish2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/GERMANY_skirmish2.png",
+      "file": "GERMANY_skirmish2.webp",
+      "localPath": "/cardbacks/GERMANY_skirmish2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/GERMANY_skirmish3.png",
+      "name": "GERMANY skirmish3",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/GERMANY_skirmish3.png",
+      "file": "GERMANY_skirmish3.webp",
+      "localPath": "/cardbacks/GERMANY_skirmish3.webp"
+    },
+    {
+      "id": "CardBacks_Resized/holiday_cardback_22_A512.png",
+      "name": "holiday cardback 22 A512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/holiday_cardback_22_A512.png",
+      "file": "holiday_cardback_22_A512.webp",
+      "localPath": "/cardbacks/holiday_cardback_22_A512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/holiday_cardback_22_B512.png",
+      "name": "holiday cardback 22 B512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/holiday_cardback_22_B512.png",
+      "file": "holiday_cardback_22_B512.webp",
+      "localPath": "/cardbacks/holiday_cardback_22_B512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/holiday_cardback_22_C512.png",
+      "name": "holiday cardback 22 C512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/holiday_cardback_22_C512.png",
+      "file": "holiday_cardback_22_C512.webp",
+      "localPath": "/cardbacks/holiday_cardback_22_C512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Holidays_cardback_-_flake_1.png",
+      "name": "Holidays cardback flake 1",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Holidays_cardback_-_flake_1.png",
+      "file": "Holidays_cardback_-_flake_1.webp",
+      "localPath": "/cardbacks/Holidays_cardback_-_flake_1.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Holidays_cardback_-_flake_2.png",
+      "name": "Holidays cardback flake 2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Holidays_cardback_-_flake_2.png",
+      "file": "Holidays_cardback_-_flake_2.webp",
+      "localPath": "/cardbacks/Holidays_cardback_-_flake_2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Holidays_cardback_-_flake_3.png",
+      "name": "Holidays cardback flake 3",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Holidays_cardback_-_flake_3.png",
+      "file": "Holidays_cardback_-_flake_3.webp",
+      "localPath": "/cardbacks/Holidays_cardback_-_flake_3.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Infantry_Emblem_Ax512.png",
+      "name": "Infantry Emblem Ax512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Infantry_Emblem_Ax512.png",
+      "file": "Infantry_Emblem_Ax512.webp",
+      "localPath": "/cardbacks/Infantry_Emblem_Ax512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Infantry_Emblem_Bx512.png",
+      "name": "Infantry Emblem Bx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Infantry_Emblem_Bx512.png",
+      "file": "Infantry_Emblem_Bx512.webp",
+      "localPath": "/cardbacks/Infantry_Emblem_Bx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Infantry_Emblem_Cx512.png",
+      "name": "Infantry Emblem Cx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Infantry_Emblem_Cx512.png",
+      "file": "Infantry_Emblem_Cx512.webp",
+      "localPath": "/cardbacks/Infantry_Emblem_Cx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ISBNCardbacks/T_cardback_britain_ISBN_512.png",
+      "name": "T cardback britain ISBN 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ISBNCardbacks/T_cardback_britain_ISBN_512.png",
+      "file": "T_cardback_britain_ISBN_512.webp",
+      "localPath": "/cardbacks/T_cardback_britain_ISBN_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ISBNCardbacks/T_cardback_german_ISBN_512.png",
+      "name": "T cardback german ISBN 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ISBNCardbacks/T_cardback_german_ISBN_512.png",
+      "file": "T_cardback_german_ISBN_512.webp",
+      "localPath": "/cardbacks/T_cardback_german_ISBN_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ISBNCardbacks/T_cardback_japan_ISBN_512.png",
+      "name": "T cardback japan ISBN 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ISBNCardbacks/T_cardback_japan_ISBN_512.png",
+      "file": "T_cardback_japan_ISBN_512.webp",
+      "localPath": "/cardbacks/T_cardback_japan_ISBN_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ISBNCardbacks/T_cardback_soviet_ISBN_512.png",
+      "name": "T cardback soviet ISBN 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ISBNCardbacks/T_cardback_soviet_ISBN_512.png",
+      "file": "T_cardback_soviet_ISBN_512.webp",
+      "localPath": "/cardbacks/T_cardback_soviet_ISBN_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ISBNCardbacks/T_cardback_usa_ISBN_512.png",
+      "name": "T cardback usa ISBN 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ISBNCardbacks/T_cardback_usa_ISBN_512.png",
+      "file": "T_cardback_usa_ISBN_512.webp",
+      "localPath": "/cardbacks/T_cardback_usa_ISBN_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/italy_a.png",
+      "name": "italy a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/italy_a.png",
+      "file": "italy_a.webp",
+      "localPath": "/cardbacks/italy_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/italy_b.png",
+      "name": "italy b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/italy_b.png",
+      "file": "italy_b.webp",
+      "localPath": "/cardbacks/italy_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/italy_c.png",
+      "name": "italy c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/italy_c.png",
+      "file": "italy_c.webp",
+      "localPath": "/cardbacks/italy_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/japan_final_Ax512.png",
+      "name": "japan final Ax512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/japan_final_Ax512.png",
+      "file": "japan_final_Ax512.webp",
+      "localPath": "/cardbacks/japan_final_Ax512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/japan_final_Bx512.png",
+      "name": "japan final Bx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/japan_final_Bx512.png",
+      "file": "japan_final_Bx512.webp",
+      "localPath": "/cardbacks/japan_final_Bx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/japan_final_Cx512.png",
+      "name": "japan final Cx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/japan_final_Cx512.png",
+      "file": "japan_final_Cx512.webp",
+      "localPath": "/cardbacks/japan_final_Cx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/JAPAN_skirmish.png",
+      "name": "JAPAN skirmish",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/JAPAN_skirmish.png",
+      "file": "JAPAN_skirmish.webp",
+      "localPath": "/cardbacks/JAPAN_skirmish.webp"
+    },
+    {
+      "id": "CardBacks_Resized/JAPAN_skirmish2.png",
+      "name": "JAPAN skirmish2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/JAPAN_skirmish2.png",
+      "file": "JAPAN_skirmish2.webp",
+      "localPath": "/cardbacks/JAPAN_skirmish2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/JAPAN_skirmish3.png",
+      "name": "JAPAN skirmish3",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/JAPAN_skirmish3.png",
+      "file": "JAPAN_skirmish3.webp",
+      "localPath": "/cardbacks/JAPAN_skirmish3.webp"
+    },
+    {
+      "id": "CardBacks_Resized/japan_tank_company_a.png",
+      "name": "japan tank company a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/japan_tank_company_a.png",
+      "file": "japan_tank_company_a.webp",
+      "localPath": "/cardbacks/japan_tank_company_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/japan_tank_company_b.png",
+      "name": "japan tank company b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/japan_tank_company_b.png",
+      "file": "japan_tank_company_b.webp",
+      "localPath": "/cardbacks/japan_tank_company_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/japan_tank_company_c.png",
+      "name": "japan tank company c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/japan_tank_company_c.png",
+      "file": "japan_tank_company_c.webp",
+      "localPath": "/cardbacks/japan_tank_company_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/JapanBasicA.png",
+      "name": "JapanBasicA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/JapanBasicA.png",
+      "file": "JapanBasicA.webp",
+      "localPath": "/cardbacks/JapanBasicA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/JapanBasicB.png",
+      "name": "JapanBasicB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/JapanBasicB.png",
+      "file": "JapanBasicB.webp",
+      "localPath": "/cardbacks/JapanBasicB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/JapanBasicC.png",
+      "name": "JapanBasicC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/JapanBasicC.png",
+      "file": "JapanBasicC.webp",
+      "localPath": "/cardbacks/JapanBasicC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/JapBasicExtraA.png",
+      "name": "JapBasicExtraA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/JapBasicExtraA.png",
+      "file": "JapBasicExtraA.webp",
+      "localPath": "/cardbacks/JapBasicExtraA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/JapBasicExtraB.png",
+      "name": "JapBasicExtraB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/JapBasicExtraB.png",
+      "file": "JapBasicExtraB.webp",
+      "localPath": "/cardbacks/JapBasicExtraB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/JapBasicExtraC.png",
+      "name": "JapBasicExtraC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/JapBasicExtraC.png",
+      "file": "JapBasicExtraC.webp",
+      "localPath": "/cardbacks/JapBasicExtraC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/jg_27_a.png",
+      "name": "jg 27 a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/jg_27_a.png",
+      "file": "jg_27_a.webp",
+      "localPath": "/cardbacks/jg_27_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/jg_27_b.png",
+      "name": "jg 27 b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/jg_27_b.png",
+      "file": "jg_27_b.webp",
+      "localPath": "/cardbacks/jg_27_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/jg_27_c.png",
+      "name": "jg 27 c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/jg_27_c.png",
+      "file": "jg_27_c.webp",
+      "localPath": "/cardbacks/jg_27_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Championship_2023_Ax512.png",
+      "name": "Kards Championship 2023 Ax512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Championship_2023_Ax512.png",
+      "file": "Kards_Championship_2023_Ax512.webp",
+      "localPath": "/cardbacks/Kards_Championship_2023_Ax512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Championship_2023_Bx512.png",
+      "name": "Kards Championship 2023 Bx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Championship_2023_Bx512.png",
+      "file": "Kards_Championship_2023_Bx512.webp",
+      "localPath": "/cardbacks/Kards_Championship_2023_Bx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Championship_2023_Cx512.png",
+      "name": "Kards Championship 2023 Cx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Championship_2023_Cx512.png",
+      "file": "Kards_Championship_2023_Cx512.webp",
+      "localPath": "/cardbacks/Kards_Championship_2023_Cx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_GBR_A.png",
+      "name": "Kards GBR A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_GBR_A.png",
+      "file": "Kards_GBR_A.webp",
+      "localPath": "/cardbacks/Kards_GBR_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_GBR_B.png",
+      "name": "Kards GBR B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_GBR_B.png",
+      "file": "Kards_GBR_B.webp",
+      "localPath": "/cardbacks/Kards_GBR_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_GBR_C.png",
+      "name": "Kards GBR C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_GBR_C.png",
+      "file": "Kards_GBR_C.webp",
+      "localPath": "/cardbacks/Kards_GBR_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_JPN_A.png",
+      "name": "Kards JPN A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_JPN_A.png",
+      "file": "Kards_JPN_A.webp",
+      "localPath": "/cardbacks/Kards_JPN_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_JPN_B.png",
+      "name": "Kards JPN B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_JPN_B.png",
+      "file": "Kards_JPN_B.webp",
+      "localPath": "/cardbacks/Kards_JPN_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_JPN_C.png",
+      "name": "Kards JPN C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_JPN_C.png",
+      "file": "Kards_JPN_C.webp",
+      "localPath": "/cardbacks/Kards_JPN_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2019_a2.png",
+      "name": "Kards Set Championship 2019 a2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2019_a2.png",
+      "file": "Kards_Set_-_Championship_2019_a2.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2019_a2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2019_b2.png",
+      "name": "Kards Set Championship 2019 b2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2019_b2.png",
+      "file": "Kards_Set_-_Championship_2019_b2.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2019_b2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2019_c2.png",
+      "name": "Kards Set Championship 2019 c2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2019_c2.png",
+      "file": "Kards_Set_-_Championship_2019_c2.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2019_c2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2019_finals_1.png",
+      "name": "Kards Set Championship 2019 finals 1",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2019_finals_1.png",
+      "file": "Kards_Set_-_Championship_2019_finals_1.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2019_finals_1.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2019_finals_2.png",
+      "name": "Kards Set Championship 2019 finals 2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2019_finals_2.png",
+      "file": "Kards_Set_-_Championship_2019_finals_2.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2019_finals_2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2019_finals_3.png",
+      "name": "Kards Set Championship 2019 finals 3",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2019_finals_3.png",
+      "file": "Kards_Set_-_Championship_2019_finals_3.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2019_finals_3.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2020_-_Finals_1.png",
+      "name": "Kards Set Championship 2020 Finals 1",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2020_-_Finals_1.png",
+      "file": "Kards_Set_-_Championship_2020_-_Finals_1.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2020_-_Finals_1.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2020_-_Finals_2.png",
+      "name": "Kards Set Championship 2020 Finals 2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2020_-_Finals_2.png",
+      "file": "Kards_Set_-_Championship_2020_-_Finals_2.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2020_-_Finals_2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2020_-_Finals_3.png",
+      "name": "Kards Set Championship 2020 Finals 3",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2020_-_Finals_3.png",
+      "file": "Kards_Set_-_Championship_2020_-_Finals_3.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2020_-_Finals_3.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2020_a.png",
+      "name": "Kards Set Championship 2020 a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2020_a.png",
+      "file": "Kards_Set_-_Championship_2020_a.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2020_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2020_b.png",
+      "name": "Kards Set Championship 2020 b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2020_b.png",
+      "file": "Kards_Set_-_Championship_2020_b.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2020_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2020_c.png",
+      "name": "Kards Set Championship 2020 c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2020_c.png",
+      "file": "Kards_Set_-_Championship_2020_c.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2020_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2022a_po2.png",
+      "name": "Kards Set Championship 2022a po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2022a_po2.png",
+      "file": "Kards_Set_-_Championship_2022a_po2.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2022a_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2022b_po2.png",
+      "name": "Kards Set Championship 2022b po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2022b_po2.png",
+      "file": "Kards_Set_-_Championship_2022b_po2.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2022b_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2022c_po2.png",
+      "name": "Kards Set Championship 2022c po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2022c_po2.png",
+      "file": "Kards_Set_-_Championship_2022c_po2.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2022c_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2024_a.png",
+      "name": "Kards Set Championship 2024 a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2024_a.png",
+      "file": "Kards_Set_-_Championship_2024_a.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2024_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2024_b.png",
+      "name": "Kards Set Championship 2024 b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2024_b.png",
+      "file": "Kards_Set_-_Championship_2024_b.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2024_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_Set_-_Championship_2024_c.png",
+      "name": "Kards Set Championship 2024 c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_Set_-_Championship_2024_c.png",
+      "file": "Kards_Set_-_Championship_2024_c.webp",
+      "localPath": "/cardbacks/Kards_Set_-_Championship_2024_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_USA_A.png",
+      "name": "Kards USA A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_USA_A.png",
+      "file": "Kards_USA_A.webp",
+      "localPath": "/cardbacks/Kards_USA_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_USA_B.png",
+      "name": "Kards USA B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_USA_B.png",
+      "file": "Kards_USA_B.webp",
+      "localPath": "/cardbacks/Kards_USA_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards_USA_C.png",
+      "name": "Kards USA C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards_USA_C.png",
+      "file": "Kards_USA_C.webp",
+      "localPath": "/cardbacks/Kards_USA_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-GBR-A.png",
+      "name": "Kards Set 1 GBR A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-GBR-A.png",
+      "file": "Kards-Set-1-GBR-A.webp",
+      "localPath": "/cardbacks/Kards-Set-1-GBR-A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-GBR-B.png",
+      "name": "Kards Set 1 GBR B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-GBR-B.png",
+      "file": "Kards-Set-1-GBR-B.webp",
+      "localPath": "/cardbacks/Kards-Set-1-GBR-B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-GBR-C.png",
+      "name": "Kards Set 1 GBR C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-GBR-C.png",
+      "file": "Kards-Set-1-GBR-C.webp",
+      "localPath": "/cardbacks/Kards-Set-1-GBR-C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-GBR-D.png",
+      "name": "Kards Set 1 GBR D",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-GBR-D.png",
+      "file": "Kards-Set-1-GBR-D.webp",
+      "localPath": "/cardbacks/Kards-Set-1-GBR-D.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-GBR-E.png",
+      "name": "Kards Set 1 GBR E",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-GBR-E.png",
+      "file": "Kards-Set-1-GBR-E.webp",
+      "localPath": "/cardbacks/Kards-Set-1-GBR-E.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-GERMANY-A.png",
+      "name": "Kards Set 1 GERMANY A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-GERMANY-A.png",
+      "file": "Kards-Set-1-GERMANY-A.webp",
+      "localPath": "/cardbacks/Kards-Set-1-GERMANY-A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-GERMANY-B.png",
+      "name": "Kards Set 1 GERMANY B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-GERMANY-B.png",
+      "file": "Kards-Set-1-GERMANY-B.webp",
+      "localPath": "/cardbacks/Kards-Set-1-GERMANY-B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-GERMANY-C.png",
+      "name": "Kards Set 1 GERMANY C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-GERMANY-C.png",
+      "file": "Kards-Set-1-GERMANY-C.webp",
+      "localPath": "/cardbacks/Kards-Set-1-GERMANY-C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-GERMANY-D.png",
+      "name": "Kards Set 1 GERMANY D",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-GERMANY-D.png",
+      "file": "Kards-Set-1-GERMANY-D.webp",
+      "localPath": "/cardbacks/Kards-Set-1-GERMANY-D.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-GERMANY-E.png",
+      "name": "Kards Set 1 GERMANY E",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-GERMANY-E.png",
+      "file": "Kards-Set-1-GERMANY-E.webp",
+      "localPath": "/cardbacks/Kards-Set-1-GERMANY-E.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-USA-A.png",
+      "name": "Kards Set 1 USA A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-USA-A.png",
+      "file": "Kards-Set-1-USA-A.webp",
+      "localPath": "/cardbacks/Kards-Set-1-USA-A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-USA-B.png",
+      "name": "Kards Set 1 USA B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-USA-B.png",
+      "file": "Kards-Set-1-USA-B.webp",
+      "localPath": "/cardbacks/Kards-Set-1-USA-B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-USA-C.png",
+      "name": "Kards Set 1 USA C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-USA-C.png",
+      "file": "Kards-Set-1-USA-C.webp",
+      "localPath": "/cardbacks/Kards-Set-1-USA-C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-USA-D.png",
+      "name": "Kards Set 1 USA D",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-USA-D.png",
+      "file": "Kards-Set-1-USA-D.webp",
+      "localPath": "/cardbacks/Kards-Set-1-USA-D.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-USA-E.png",
+      "name": "Kards Set 1 USA E",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-USA-E.png",
+      "file": "Kards-Set-1-USA-E.webp",
+      "localPath": "/cardbacks/Kards-Set-1-USA-E.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-USSR-A.png",
+      "name": "Kards Set 1 USSR A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-USSR-A.png",
+      "file": "Kards-Set-1-USSR-A.webp",
+      "localPath": "/cardbacks/Kards-Set-1-USSR-A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-USSR-B.png",
+      "name": "Kards Set 1 USSR B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-USSR-B.png",
+      "file": "Kards-Set-1-USSR-B.webp",
+      "localPath": "/cardbacks/Kards-Set-1-USSR-B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-USSR-C.png",
+      "name": "Kards Set 1 USSR C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-USSR-C.png",
+      "file": "Kards-Set-1-USSR-C.webp",
+      "localPath": "/cardbacks/Kards-Set-1-USSR-C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-USSR-D.png",
+      "name": "Kards Set 1 USSR D",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-USSR-D.png",
+      "file": "Kards-Set-1-USSR-D.webp",
+      "localPath": "/cardbacks/Kards-Set-1-USSR-D.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-1-USSR-E.png",
+      "name": "Kards Set 1 USSR E",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-1-USSR-E.png",
+      "file": "Kards-Set-1-USSR-E.webp",
+      "localPath": "/cardbacks/Kards-Set-1-USSR-E.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-GBR-A.png",
+      "name": "Kards Set 2 GBR A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-GBR-A.png",
+      "file": "Kards-Set-2-GBR-A.webp",
+      "localPath": "/cardbacks/Kards-Set-2-GBR-A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-GBR-B.png",
+      "name": "Kards Set 2 GBR B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-GBR-B.png",
+      "file": "Kards-Set-2-GBR-B.webp",
+      "localPath": "/cardbacks/Kards-Set-2-GBR-B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-GBR-C.png",
+      "name": "Kards Set 2 GBR C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-GBR-C.png",
+      "file": "Kards-Set-2-GBR-C.webp",
+      "localPath": "/cardbacks/Kards-Set-2-GBR-C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-GBR-D.png",
+      "name": "Kards Set 2 GBR D",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-GBR-D.png",
+      "file": "Kards-Set-2-GBR-D.webp",
+      "localPath": "/cardbacks/Kards-Set-2-GBR-D.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-GBR-E.png",
+      "name": "Kards Set 2 GBR E",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-GBR-E.png",
+      "file": "Kards-Set-2-GBR-E.webp",
+      "localPath": "/cardbacks/Kards-Set-2-GBR-E.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-GERMANY-A.png",
+      "name": "Kards Set 2 GERMANY A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-GERMANY-A.png",
+      "file": "Kards-Set-2-GERMANY-A.webp",
+      "localPath": "/cardbacks/Kards-Set-2-GERMANY-A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-GERMANY-B.png",
+      "name": "Kards Set 2 GERMANY B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-GERMANY-B.png",
+      "file": "Kards-Set-2-GERMANY-B.webp",
+      "localPath": "/cardbacks/Kards-Set-2-GERMANY-B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-GERMANY-C.png",
+      "name": "Kards Set 2 GERMANY C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-GERMANY-C.png",
+      "file": "Kards-Set-2-GERMANY-C.webp",
+      "localPath": "/cardbacks/Kards-Set-2-GERMANY-C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-GERMANY-D.png",
+      "name": "Kards Set 2 GERMANY D",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-GERMANY-D.png",
+      "file": "Kards-Set-2-GERMANY-D.webp",
+      "localPath": "/cardbacks/Kards-Set-2-GERMANY-D.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-GERMANY-E.png",
+      "name": "Kards Set 2 GERMANY E",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-GERMANY-E.png",
+      "file": "Kards-Set-2-GERMANY-E.webp",
+      "localPath": "/cardbacks/Kards-Set-2-GERMANY-E.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-USA-A.png",
+      "name": "Kards Set 2 USA A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-USA-A.png",
+      "file": "Kards-Set-2-USA-A.webp",
+      "localPath": "/cardbacks/Kards-Set-2-USA-A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-USA-B.png",
+      "name": "Kards Set 2 USA B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-USA-B.png",
+      "file": "Kards-Set-2-USA-B.webp",
+      "localPath": "/cardbacks/Kards-Set-2-USA-B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-USA-C.png",
+      "name": "Kards Set 2 USA C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-USA-C.png",
+      "file": "Kards-Set-2-USA-C.webp",
+      "localPath": "/cardbacks/Kards-Set-2-USA-C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-USA-D.png",
+      "name": "Kards Set 2 USA D",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-USA-D.png",
+      "file": "Kards-Set-2-USA-D.webp",
+      "localPath": "/cardbacks/Kards-Set-2-USA-D.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-USA-E.png",
+      "name": "Kards Set 2 USA E",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-USA-E.png",
+      "file": "Kards-Set-2-USA-E.webp",
+      "localPath": "/cardbacks/Kards-Set-2-USA-E.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-USSR-A.png",
+      "name": "Kards Set 2 USSR A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-USSR-A.png",
+      "file": "Kards-Set-2-USSR-A.webp",
+      "localPath": "/cardbacks/Kards-Set-2-USSR-A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-USSR-B.png",
+      "name": "Kards Set 2 USSR B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-USSR-B.png",
+      "file": "Kards-Set-2-USSR-B.webp",
+      "localPath": "/cardbacks/Kards-Set-2-USSR-B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-USSR-C.png",
+      "name": "Kards Set 2 USSR C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-USSR-C.png",
+      "file": "Kards-Set-2-USSR-C.webp",
+      "localPath": "/cardbacks/Kards-Set-2-USSR-C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-USSR-D.png",
+      "name": "Kards Set 2 USSR D",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-USSR-D.png",
+      "file": "Kards-Set-2-USSR-D.webp",
+      "localPath": "/cardbacks/Kards-Set-2-USSR-D.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Kards-Set-2-USSR-E.png",
+      "name": "Kards Set 2 USSR E",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Kards-Set-2-USSR-E.png",
+      "file": "Kards-Set-2-USSR-E.webp",
+      "localPath": "/cardbacks/Kards-Set-2-USSR-E.webp"
+    },
+    {
+      "id": "CardBacks_Resized/kriegsmarine_germany_final_Ax512.png",
+      "name": "kriegsmarine germany final Ax512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/kriegsmarine_germany_final_Ax512.png",
+      "file": "kriegsmarine_germany_final_Ax512.webp",
+      "localPath": "/cardbacks/kriegsmarine_germany_final_Ax512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/kriegsmarine_germany_final_Bx512.png",
+      "name": "kriegsmarine germany final Bx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/kriegsmarine_germany_final_Bx512.png",
+      "file": "kriegsmarine_germany_final_Bx512.webp",
+      "localPath": "/cardbacks/kriegsmarine_germany_final_Bx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/kriegsmarine_germany_final_Cx512.png",
+      "name": "kriegsmarine germany final Cx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/kriegsmarine_germany_final_Cx512.png",
+      "file": "kriegsmarine_germany_final_Cx512.webp",
+      "localPath": "/cardbacks/kriegsmarine_germany_final_Cx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/kriegsmarine_pass_a_po2.png",
+      "name": "kriegsmarine pass a po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/kriegsmarine_pass_a_po2.png",
+      "file": "kriegsmarine_pass_a_po2.webp",
+      "localPath": "/cardbacks/kriegsmarine_pass_a_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/kriegsmarine_pass_b_po2.png",
+      "name": "kriegsmarine pass b po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/kriegsmarine_pass_b_po2.png",
+      "file": "kriegsmarine_pass_b_po2.webp",
+      "localPath": "/cardbacks/kriegsmarine_pass_b_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/kriegsmarine_pass_c_po2.png",
+      "name": "kriegsmarine pass c po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/kriegsmarine_pass_c_po2.png",
+      "file": "kriegsmarine_pass_c_po2.webp",
+      "localPath": "/cardbacks/kriegsmarine_pass_c_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Legions_a_po2.png",
+      "name": "Legions a po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Legions_a_po2.png",
+      "file": "Legions_a_po2.webp",
+      "localPath": "/cardbacks/Legions_a_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Legions_b_po2.png",
+      "name": "Legions b po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Legions_b_po2.png",
+      "file": "Legions_b_po2.webp",
+      "localPath": "/cardbacks/Legions_b_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Legions_c_po2.png",
+      "name": "Legions c po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Legions_c_po2.png",
+      "file": "Legions_c_po2.webp",
+      "localPath": "/cardbacks/Legions_c_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/MedicCardbackVs1.png",
+      "name": "MedicCardbackVs1",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/MedicCardbackVs1.png",
+      "file": "MedicCardbackVs1.webp",
+      "localPath": "/cardbacks/MedicCardbackVs1.webp"
+    },
+    {
+      "id": "CardBacks_Resized/MedicCardbackVs2.png",
+      "name": "MedicCardbackVs2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/MedicCardbackVs2.png",
+      "file": "MedicCardbackVs2.webp",
+      "localPath": "/cardbacks/MedicCardbackVs2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/MedicCardbackVs3.png",
+      "name": "MedicCardbackVs3",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/MedicCardbackVs3.png",
+      "file": "MedicCardbackVs3.webp",
+      "localPath": "/cardbacks/MedicCardbackVs3.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Oberstabsfeldwebel_Ax512.png",
+      "name": "Oberstabsfeldwebel Ax512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Oberstabsfeldwebel_Ax512.png",
+      "file": "Oberstabsfeldwebel_Ax512.webp",
+      "localPath": "/cardbacks/Oberstabsfeldwebel_Ax512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Oberstabsfeldwebel_Bx512.png",
+      "name": "Oberstabsfeldwebel Bx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Oberstabsfeldwebel_Bx512.png",
+      "file": "Oberstabsfeldwebel_Bx512.webp",
+      "localPath": "/cardbacks/Oberstabsfeldwebel_Bx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Oberstabsfeldwebel_Cx512.png",
+      "name": "Oberstabsfeldwebel Cx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Oberstabsfeldwebel_Cx512.png",
+      "file": "Oberstabsfeldwebel_Cx512.webp",
+      "localPath": "/cardbacks/Oberstabsfeldwebel_Cx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/OCC_gold_a.png",
+      "name": "OCC gold a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/OCC_gold_a.png",
+      "file": "OCC_gold_a.webp",
+      "localPath": "/cardbacks/OCC_gold_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/OCC_gold_b.png",
+      "name": "OCC gold b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/OCC_gold_b.png",
+      "file": "OCC_gold_b.webp",
+      "localPath": "/cardbacks/OCC_gold_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/OCC_gold_c.png",
+      "name": "OCC gold c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/OCC_gold_c.png",
+      "file": "OCC_gold_c.webp",
+      "localPath": "/cardbacks/OCC_gold_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/PanzerDivisionA.png",
+      "name": "PanzerDivisionA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/PanzerDivisionA.png",
+      "file": "PanzerDivisionA.webp",
+      "localPath": "/cardbacks/PanzerDivisionA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/PanzerDivisionB.png",
+      "name": "PanzerDivisionB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/PanzerDivisionB.png",
+      "file": "PanzerDivisionB.webp",
+      "localPath": "/cardbacks/PanzerDivisionB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/PanzerDivisionC.png",
+      "name": "PanzerDivisionC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/PanzerDivisionC.png",
+      "file": "PanzerDivisionC.webp",
+      "localPath": "/cardbacks/PanzerDivisionC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/poland_a.png",
+      "name": "poland a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/poland_a.png",
+      "file": "poland_a.webp",
+      "localPath": "/cardbacks/poland_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/poland_b.png",
+      "name": "poland b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/poland_b.png",
+      "file": "poland_b.webp",
+      "localPath": "/cardbacks/poland_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/poland_c.png",
+      "name": "poland c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/poland_c.png",
+      "file": "poland_c.webp",
+      "localPath": "/cardbacks/poland_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/RAF_a.png",
+      "name": "RAF a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/RAF_a.png",
+      "file": "RAF_a.webp",
+      "localPath": "/cardbacks/RAF_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/RAF_b.png",
+      "name": "RAF b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/RAF_b.png",
+      "file": "RAF_b.webp",
+      "localPath": "/cardbacks/RAF_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/RAF_c.png",
+      "name": "RAF c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/RAF_c.png",
+      "file": "RAF_c.webp",
+      "localPath": "/cardbacks/RAF_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/redesign_A.png",
+      "name": "redesign A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/redesign_A.png",
+      "file": "redesign_A.webp",
+      "localPath": "/cardbacks/redesign_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/redesign_B.png",
+      "name": "redesign B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/redesign_B.png",
+      "file": "redesign_B.webp",
+      "localPath": "/cardbacks/redesign_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/redesign_C.png",
+      "name": "redesign C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/redesign_C.png",
+      "file": "redesign_C.webp",
+      "localPath": "/cardbacks/redesign_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/redesign_final_B.png",
+      "name": "redesign final B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/redesign_final_B.png",
+      "file": "redesign_final_B.webp",
+      "localPath": "/cardbacks/redesign_final_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/redesign_final_C.png",
+      "name": "redesign final C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/redesign_final_C.png",
+      "file": "redesign_final_C.webp",
+      "localPath": "/cardbacks/redesign_final_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/redesign_finalA.png",
+      "name": "redesign finalA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/redesign_finalA.png",
+      "file": "redesign_finalA.webp",
+      "localPath": "/cardbacks/redesign_finalA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/screaming_eagles_a_po2.png",
+      "name": "screaming eagles a po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/screaming_eagles_a_po2.png",
+      "file": "screaming_eagles_a_po2.webp",
+      "localPath": "/cardbacks/screaming_eagles_a_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/screaming_eagles_c_po2.png",
+      "name": "screaming eagles c po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/screaming_eagles_c_po2.png",
+      "file": "screaming_eagles_c_po2.webp",
+      "localPath": "/cardbacks/screaming_eagles_c_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/screaming_eagles_po2.png",
+      "name": "screaming eagles po2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/screaming_eagles_po2.png",
+      "file": "screaming_eagles_po2.webp",
+      "localPath": "/cardbacks/screaming_eagles_po2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/soviet_final_Ax512.png",
+      "name": "soviet final Ax512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/soviet_final_Ax512.png",
+      "file": "soviet_final_Ax512.webp",
+      "localPath": "/cardbacks/soviet_final_Ax512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/soviet_final_Bx512.png",
+      "name": "soviet final Bx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/soviet_final_Bx512.png",
+      "file": "soviet_final_Bx512.webp",
+      "localPath": "/cardbacks/soviet_final_Bx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/soviet_final_Cx512.png",
+      "name": "soviet final Cx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/soviet_final_Cx512.png",
+      "file": "soviet_final_Cx512.webp",
+      "localPath": "/cardbacks/soviet_final_Cx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/soviet_general_a_512.png",
+      "name": "soviet general a 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/soviet_general_a_512.png",
+      "file": "soviet_general_a_512.webp",
+      "localPath": "/cardbacks/soviet_general_a_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/soviet_general_b_512.png",
+      "name": "soviet general b 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/soviet_general_b_512.png",
+      "file": "soviet_general_b_512.webp",
+      "localPath": "/cardbacks/soviet_general_b_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/soviet_general_c_512.png",
+      "name": "soviet general c 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/soviet_general_c_512.png",
+      "file": "soviet_general_c_512.webp",
+      "localPath": "/cardbacks/soviet_general_c_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/soviet_premium_winter_camouflage_2x512.png",
+      "name": "soviet premium winter camouflage 2x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/soviet_premium_winter_camouflage_2x512.png",
+      "file": "soviet_premium_winter_camouflage_2x512.webp",
+      "localPath": "/cardbacks/soviet_premium_winter_camouflage_2x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/soviet_premium_winter_camouflage_3x512.png",
+      "name": "soviet premium winter camouflage 3x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/soviet_premium_winter_camouflage_3x512.png",
+      "file": "soviet_premium_winter_camouflage_3x512.webp",
+      "localPath": "/cardbacks/soviet_premium_winter_camouflage_3x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/soviet_premium_winter_camouflagex512.png",
+      "name": "soviet premium winter camouflagex512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/soviet_premium_winter_camouflagex512.png",
+      "file": "soviet_premium_winter_camouflagex512.webp",
+      "localPath": "/cardbacks/soviet_premium_winter_camouflagex512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/SovietBasicA.png",
+      "name": "SovietBasicA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/SovietBasicA.png",
+      "file": "SovietBasicA.webp",
+      "localPath": "/cardbacks/SovietBasicA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/SovietBasicB.png",
+      "name": "SovietBasicB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/SovietBasicB.png",
+      "file": "SovietBasicB.webp",
+      "localPath": "/cardbacks/SovietBasicB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/SovietBasicC.png",
+      "name": "SovietBasicC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/SovietBasicC.png",
+      "file": "SovietBasicC.webp",
+      "localPath": "/cardbacks/SovietBasicC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/SovietBasicExtraA.png",
+      "name": "SovietBasicExtraA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/SovietBasicExtraA.png",
+      "file": "SovietBasicExtraA.webp",
+      "localPath": "/cardbacks/SovietBasicExtraA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/SovietBasicExtraB.png",
+      "name": "SovietBasicExtraB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/SovietBasicExtraB.png",
+      "file": "SovietBasicExtraB.webp",
+      "localPath": "/cardbacks/SovietBasicExtraB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/SovietBasicExtraC.png",
+      "name": "SovietBasicExtraC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/SovietBasicExtraC.png",
+      "file": "SovietBasicExtraC.webp",
+      "localPath": "/cardbacks/SovietBasicExtraC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/SteamBackA.png",
+      "name": "SteamBackA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/SteamBackA.png",
+      "file": "SteamBackA.webp",
+      "localPath": "/cardbacks/SteamBackA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/SteamBackB.png",
+      "name": "SteamBackB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/SteamBackB.png",
+      "file": "SteamBackB.webp",
+      "localPath": "/cardbacks/SteamBackB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/SteamBackC.png",
+      "name": "SteamBackC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/SteamBackC.png",
+      "file": "SteamBackC.webp",
+      "localPath": "/cardbacks/SteamBackC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_18th-infantry-division_britain_a_512.png",
+      "name": "T 18th infantry division britain a 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_18th-infantry-division_britain_a_512.png",
+      "file": "T_18th-infantry-division_britain_a_512.webp",
+      "localPath": "/cardbacks/T_18th-infantry-division_britain_a_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_18th-infantry-division_britain_b_512.png",
+      "name": "T 18th infantry division britain b 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_18th-infantry-division_britain_b_512.png",
+      "file": "T_18th-infantry-division_britain_b_512.webp",
+      "localPath": "/cardbacks/T_18th-infantry-division_britain_b_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_18th-infantry-division_britain_c_512.png",
+      "name": "T 18th infantry division britain c 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_18th-infantry-division_britain_c_512.png",
+      "file": "T_18th-infantry-division_britain_c_512.webp",
+      "localPath": "/cardbacks/T_18th-infantry-division_britain_c_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_306_infantry_division_german_a.png",
+      "name": "T 306 infantry division german a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_306_infantry_division_german_a.png",
+      "file": "T_306_infantry_division_german_a.webp",
+      "localPath": "/cardbacks/T_306_infantry_division_german_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_306_infantry_division_german_b.png",
+      "name": "T 306 infantry division german b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_306_infantry_division_german_b.png",
+      "file": "T_306_infantry_division_german_b.webp",
+      "localPath": "/cardbacks/T_306_infantry_division_german_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_306_infantry_division_german_c.png",
+      "name": "T 306 infantry division german c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_306_infantry_division_german_c.png",
+      "file": "T_306_infantry_division_german_c.webp",
+      "localPath": "/cardbacks/T_306_infantry_division_german_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_5th-Kresowa-Infantry-Division_cardback_A.png",
+      "name": "T 5th Kresowa Infantry Division cardback A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_5th-Kresowa-Infantry-Division_cardback_A.png",
+      "file": "T_5th-Kresowa-Infantry-Division_cardback_A.webp",
+      "localPath": "/cardbacks/T_5th-Kresowa-Infantry-Division_cardback_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_5th-Kresowa-Infantry-Division_cardback_B.png",
+      "name": "T 5th Kresowa Infantry Division cardback B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_5th-Kresowa-Infantry-Division_cardback_B.png",
+      "file": "T_5th-Kresowa-Infantry-Division_cardback_B.webp",
+      "localPath": "/cardbacks/T_5th-Kresowa-Infantry-Division_cardback_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_5th-Kresowa-Infantry-Division_cardback_C.png",
+      "name": "T 5th Kresowa Infantry Division cardback C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_5th-Kresowa-Infantry-Division_cardback_C.png",
+      "file": "T_5th-Kresowa-Infantry-Division_cardback_C.webp",
+      "localPath": "/cardbacks/T_5th-Kresowa-Infantry-Division_cardback_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_95th_infantry_usa_a.png",
+      "name": "T 95th infantry usa a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_95th_infantry_usa_a.png",
+      "file": "T_95th_infantry_usa_a.webp",
+      "localPath": "/cardbacks/T_95th_infantry_usa_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_95th_infantry_usa_b.png",
+      "name": "T 95th infantry usa b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_95th_infantry_usa_b.png",
+      "file": "T_95th_infantry_usa_b.webp",
+      "localPath": "/cardbacks/T_95th_infantry_usa_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_95th_infantry_usa_c.png",
+      "name": "T 95th infantry usa c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_95th_infantry_usa_c.png",
+      "file": "T_95th_infantry_usa_c.webp",
+      "localPath": "/cardbacks/T_95th_infantry_usa_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_air-supremacy_cardback_A.png",
+      "name": "t air supremacy cardback A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_air-supremacy_cardback_A.png",
+      "file": "t_air-supremacy_cardback_A.webp",
+      "localPath": "/cardbacks/t_air-supremacy_cardback_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_air-supremacy_cardback_B.png",
+      "name": "t air supremacy cardback B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_air-supremacy_cardback_B.png",
+      "file": "t_air-supremacy_cardback_B.webp",
+      "localPath": "/cardbacks/t_air-supremacy_cardback_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_air-supremacy_cardback_C.png",
+      "name": "t air supremacy cardback C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_air-supremacy_cardback_C.png",
+      "file": "t_air-supremacy_cardback_C.webp",
+      "localPath": "/cardbacks/t_air-supremacy_cardback_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_Americal-Division_usa_a_512.png",
+      "name": "T Americal Division usa a 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_Americal-Division_usa_a_512.png",
+      "file": "T_Americal-Division_usa_a_512.webp",
+      "localPath": "/cardbacks/T_Americal-Division_usa_a_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_Americal-Division_usa_b_512.png",
+      "name": "T Americal Division usa b 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_Americal-Division_usa_b_512.png",
+      "file": "T_Americal-Division_usa_b_512.webp",
+      "localPath": "/cardbacks/T_Americal-Division_usa_b_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_Americal-Division_usa_c_512.png",
+      "name": "T Americal Division usa c 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_Americal-Division_usa_c_512.png",
+      "file": "T_Americal-Division_usa_c_512.webp",
+      "localPath": "/cardbacks/T_Americal-Division_usa_c_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_Anzac_cardback_A.png",
+      "name": "T Anzac cardback A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_Anzac_cardback_A.png",
+      "file": "T_Anzac_cardback_A.webp",
+      "localPath": "/cardbacks/T_Anzac_cardback_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_Anzac_cardback_B.png",
+      "name": "T Anzac cardback B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_Anzac_cardback_B.png",
+      "file": "T_Anzac_cardback_B.webp",
+      "localPath": "/cardbacks/T_Anzac_cardback_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_Anzac_cardback_C.png",
+      "name": "T Anzac cardback C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_Anzac_cardback_C.png",
+      "file": "T_Anzac_cardback_C.webp",
+      "localPath": "/cardbacks/T_Anzac_cardback_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback__air_service_b.png",
+      "name": "T cardback air service b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback__air_service_b.png",
+      "file": "T_cardback__air_service_b.webp",
+      "localPath": "/cardbacks/T_cardback__air_service_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_3rd_tank_corps_a.png",
+      "name": "T cardback 3rd tank corps a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_3rd_tank_corps_a.png",
+      "file": "T_cardback_3rd_tank_corps_a.webp",
+      "localPath": "/cardbacks/T_cardback_3rd_tank_corps_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_3rd_tank_corps_b.png",
+      "name": "T cardback 3rd tank corps b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_3rd_tank_corps_b.png",
+      "file": "T_cardback_3rd_tank_corps_b.webp",
+      "localPath": "/cardbacks/T_cardback_3rd_tank_corps_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_3rd_tank_corps_c.png",
+      "name": "T cardback 3rd tank corps c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_3rd_tank_corps_c.png",
+      "file": "T_cardback_3rd_tank_corps_c.webp",
+      "localPath": "/cardbacks/T_cardback_3rd_tank_corps_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_6th_infantry_division_a.png",
+      "name": "T cardback 6th infantry division a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_6th_infantry_division_a.png",
+      "file": "T_cardback_6th_infantry_division_a.webp",
+      "localPath": "/cardbacks/T_cardback_6th_infantry_division_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_6th_infantry_division_b.png",
+      "name": "T cardback 6th infantry division b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_6th_infantry_division_b.png",
+      "file": "T_cardback_6th_infantry_division_b.webp",
+      "localPath": "/cardbacks/T_cardback_6th_infantry_division_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_6th_infantry_division_c.png",
+      "name": "T cardback 6th infantry division c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_6th_infantry_division_c.png",
+      "file": "T_cardback_6th_infantry_division_c.webp",
+      "localPath": "/cardbacks/T_cardback_6th_infantry_division_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_6th-Wing_A_512.png",
+      "name": "T cardback 6th Wing A 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_6th-Wing_A_512.png",
+      "file": "T_cardback_6th-Wing_A_512.webp",
+      "localPath": "/cardbacks/T_cardback_6th-Wing_A_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_6th-Wing_B_512.png",
+      "name": "T cardback 6th Wing B 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_6th-Wing_B_512.png",
+      "file": "T_cardback_6th-Wing_B_512.webp",
+      "localPath": "/cardbacks/T_cardback_6th-Wing_B_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_6th-Wing_C_512.png",
+      "name": "T cardback 6th Wing C 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_6th-Wing_C_512.png",
+      "file": "T_cardback_6th-Wing_C_512.webp",
+      "localPath": "/cardbacks/T_cardback_6th-Wing_C_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_air_service_a.png",
+      "name": "T cardback air service a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_air_service_a.png",
+      "file": "T_cardback_air_service_a.webp",
+      "localPath": "/cardbacks/T_cardback_air_service_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_air_service_c.png",
+      "name": "T cardback air service c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_air_service_c.png",
+      "file": "T_cardback_air_service_c.webp",
+      "localPath": "/cardbacks/T_cardback_air_service_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_cardback_early-war_1_A_512x512.png",
+      "name": "t cardback early war 1 A 512x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_cardback_early-war_1_A_512x512.png",
+      "file": "t_cardback_early-war_1_A_512x512.webp",
+      "localPath": "/cardbacks/t_cardback_early-war_1_A_512x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_cardback_early-war_1_B_512x512.png",
+      "name": "t cardback early war 1 B 512x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_cardback_early-war_1_B_512x512.png",
+      "file": "t_cardback_early-war_1_B_512x512.webp",
+      "localPath": "/cardbacks/t_cardback_early-war_1_B_512x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_cardback_early-war_1_C_512x512.png",
+      "name": "t cardback early war 1 C 512x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_cardback_early-war_1_C_512x512.png",
+      "file": "t_cardback_early-war_1_C_512x512.webp",
+      "localPath": "/cardbacks/t_cardback_early-war_1_C_512x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_cardback_early-war_2_A_512x512.png",
+      "name": "t cardback early war 2 A 512x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_cardback_early-war_2_A_512x512.png",
+      "file": "t_cardback_early-war_2_A_512x512.webp",
+      "localPath": "/cardbacks/t_cardback_early-war_2_A_512x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_cardback_early-war_2_B_512x512.png",
+      "name": "t cardback early war 2 B 512x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_cardback_early-war_2_B_512x512.png",
+      "file": "t_cardback_early-war_2_B_512x512.webp",
+      "localPath": "/cardbacks/t_cardback_early-war_2_B_512x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_cardback_early-war_2_C_512x512.png",
+      "name": "t cardback early war 2 C 512x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_cardback_early-war_2_C_512x512.png",
+      "file": "t_cardback_early-war_2_C_512x512.webp",
+      "localPath": "/cardbacks/t_cardback_early-war_2_C_512x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_Ger_25th_Infanterie-Division_A.png",
+      "name": "T cardback Ger 25th Infanterie Division A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_Ger_25th_Infanterie-Division_A.png",
+      "file": "T_cardback_Ger_25th_Infanterie-Division_A.webp",
+      "localPath": "/cardbacks/T_cardback_Ger_25th_Infanterie-Division_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_Ger_25th_Infanterie-Division_B.png",
+      "name": "T cardback Ger 25th Infanterie Division B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_Ger_25th_Infanterie-Division_B.png",
+      "file": "T_cardback_Ger_25th_Infanterie-Division_B.webp",
+      "localPath": "/cardbacks/T_cardback_Ger_25th_Infanterie-Division_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_Ger_25th_Infanterie-Division_C.png",
+      "name": "T cardback Ger 25th Infanterie Division C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_Ger_25th_Infanterie-Division_C.png",
+      "file": "T_cardback_Ger_25th_Infanterie-Division_C.webp",
+      "localPath": "/cardbacks/T_cardback_Ger_25th_Infanterie-Division_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_Ghost-Army_A_512.png",
+      "name": "T cardback Ghost Army A 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_Ghost-Army_A_512.png",
+      "file": "T_cardback_Ghost-Army_A_512.webp",
+      "localPath": "/cardbacks/T_cardback_Ghost-Army_A_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_Ghost-Army_B_512.png",
+      "name": "T cardback Ghost Army B 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_Ghost-Army_B_512.png",
+      "file": "T_cardback_Ghost-Army_B_512.webp",
+      "localPath": "/cardbacks/T_cardback_Ghost-Army_B_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_Ghost-Army_C_512.png",
+      "name": "T cardback Ghost Army C 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_Ghost-Army_C_512.png",
+      "file": "T_cardback_Ghost-Army_C_512.webp",
+      "localPath": "/cardbacks/T_cardback_Ghost-Army_C_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_JAP_25th-DC-Sqdn_A.png",
+      "name": "T cardback JAP 25th DC Sqdn A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_JAP_25th-DC-Sqdn_A.png",
+      "file": "T_cardback_JAP_25th-DC-Sqdn_A.webp",
+      "localPath": "/cardbacks/T_cardback_JAP_25th-DC-Sqdn_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_JAP_25th-DC-Sqdn_B.png",
+      "name": "T cardback JAP 25th DC Sqdn B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_JAP_25th-DC-Sqdn_B.png",
+      "file": "T_cardback_JAP_25th-DC-Sqdn_B.webp",
+      "localPath": "/cardbacks/T_cardback_JAP_25th-DC-Sqdn_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_JAP_25th-DC-Sqdn_C.png",
+      "name": "T cardback JAP 25th DC Sqdn C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_JAP_25th-DC-Sqdn_C.png",
+      "file": "T_cardback_JAP_25th-DC-Sqdn_C.webp",
+      "localPath": "/cardbacks/T_cardback_JAP_25th-DC-Sqdn_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_JG20_A_512.png",
+      "name": "T cardback JG20 A 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_JG20_A_512.png",
+      "file": "T_cardback_JG20_A_512.webp",
+      "localPath": "/cardbacks/T_cardback_JG20_A_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_JG20_B_512.png",
+      "name": "T cardback JG20 B 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_JG20_B_512.png",
+      "file": "T_cardback_JG20_B_512.webp",
+      "localPath": "/cardbacks/T_cardback_JG20_B_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_JG20_C_512.png",
+      "name": "T cardback JG20 C 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_JG20_C_512.png",
+      "file": "T_cardback_JG20_C_512.webp",
+      "localPath": "/cardbacks/T_cardback_JG20_C_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_mid-autumn-festival_a.png",
+      "name": "T cardback mid autumn festival a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_mid-autumn-festival_a.png",
+      "file": "T_cardback_mid-autumn-festival_a.webp",
+      "localPath": "/cardbacks/T_cardback_mid-autumn-festival_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_mid-autumn-festival_b.png",
+      "name": "T cardback mid autumn festival b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_mid-autumn-festival_b.png",
+      "file": "T_cardback_mid-autumn-festival_b.webp",
+      "localPath": "/cardbacks/T_cardback_mid-autumn-festival_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_mid-autumn-festival_c.png",
+      "name": "T cardback mid autumn festival c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_mid-autumn-festival_c.png",
+      "file": "T_cardback_mid-autumn-festival_c.webp",
+      "localPath": "/cardbacks/T_cardback_mid-autumn-festival_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_mobilebeta_a.png",
+      "name": "T cardback mobilebeta a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_mobilebeta_a.png",
+      "file": "T_cardback_mobilebeta_a.webp",
+      "localPath": "/cardbacks/T_cardback_mobilebeta_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_mobilebeta_b.png",
+      "name": "T cardback mobilebeta b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_mobilebeta_b.png",
+      "file": "T_cardback_mobilebeta_b.webp",
+      "localPath": "/cardbacks/T_cardback_mobilebeta_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_mobilebeta_c.png",
+      "name": "T cardback mobilebeta c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_mobilebeta_c.png",
+      "file": "T_cardback_mobilebeta_c.webp",
+      "localPath": "/cardbacks/T_cardback_mobilebeta_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_cardback_naval-jack_sov_a_512.png",
+      "name": "t cardback naval jack sov a 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_cardback_naval-jack_sov_a_512.png",
+      "file": "t_cardback_naval-jack_sov_a_512.webp",
+      "localPath": "/cardbacks/t_cardback_naval-jack_sov_a_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_cardback_naval-jack_sov_b_512.png",
+      "name": "t cardback naval jack sov b 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_cardback_naval-jack_sov_b_512.png",
+      "file": "t_cardback_naval-jack_sov_b_512.webp",
+      "localPath": "/cardbacks/t_cardback_naval-jack_sov_b_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_cardback_naval-jack_sov_c_512.png",
+      "name": "t cardback naval jack sov c 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_cardback_naval-jack_sov_c_512.png",
+      "file": "t_cardback_naval-jack_sov_c_512.webp",
+      "localPath": "/cardbacks/t_cardback_naval-jack_sov_c_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_Naval-Warfare_1_A_512.png",
+      "name": "T cardback Naval Warfare 1 A 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_Naval-Warfare_1_A_512.png",
+      "file": "T_cardback_Naval-Warfare_1_A_512.webp",
+      "localPath": "/cardbacks/T_cardback_Naval-Warfare_1_A_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_Naval-Warfare_1_B_512.png",
+      "name": "T cardback Naval Warfare 1 B 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_Naval-Warfare_1_B_512.png",
+      "file": "T_cardback_Naval-Warfare_1_B_512.webp",
+      "localPath": "/cardbacks/T_cardback_Naval-Warfare_1_B_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_Naval-Warfare_1_C_512.png",
+      "name": "T cardback Naval Warfare 1 C 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_Naval-Warfare_1_C_512.png",
+      "file": "T_cardback_Naval-Warfare_1_C_512.webp",
+      "localPath": "/cardbacks/T_cardback_Naval-Warfare_1_C_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_Naval-Warfare_2_A_512.png",
+      "name": "T cardback Naval Warfare 2 A 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_Naval-Warfare_2_A_512.png",
+      "file": "T_cardback_Naval-Warfare_2_A_512.webp",
+      "localPath": "/cardbacks/T_cardback_Naval-Warfare_2_A_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_Naval-Warfare_2_B_512.png",
+      "name": "T cardback Naval Warfare 2 B 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_Naval-Warfare_2_B_512.png",
+      "file": "T_cardback_Naval-Warfare_2_B_512.webp",
+      "localPath": "/cardbacks/T_cardback_Naval-Warfare_2_B_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_Naval-Warfare_2_C_512.png",
+      "name": "T cardback Naval Warfare 2 C 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_Naval-Warfare_2_C_512.png",
+      "file": "T_cardback_Naval-Warfare_2_C_512.webp",
+      "localPath": "/cardbacks/T_cardback_Naval-Warfare_2_C_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_Soviet_Communication_A.png",
+      "name": "T cardback Soviet Communication A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_Soviet_Communication_A.png",
+      "file": "T_cardback_Soviet_Communication_A.webp",
+      "localPath": "/cardbacks/T_cardback_Soviet_Communication_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_Soviet_Communication_B.png",
+      "name": "T cardback Soviet Communication B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_Soviet_Communication_B.png",
+      "file": "T_cardback_Soviet_Communication_B.webp",
+      "localPath": "/cardbacks/T_cardback_Soviet_Communication_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_Soviet_Communication_C.png",
+      "name": "T cardback Soviet Communication C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_Soviet_Communication_C.png",
+      "file": "T_cardback_Soviet_Communication_C.webp",
+      "localPath": "/cardbacks/T_cardback_Soviet_Communication_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_USA_44th-div_A.png",
+      "name": "T cardback USA 44th div A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_USA_44th-div_A.png",
+      "file": "T_cardback_USA_44th-div_A.webp",
+      "localPath": "/cardbacks/T_cardback_USA_44th-div_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_USA_44th-div_B.png",
+      "name": "T cardback USA 44th div B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_USA_44th-div_B.png",
+      "file": "T_cardback_USA_44th-div_B.webp",
+      "localPath": "/cardbacks/T_cardback_USA_44th-div_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_cardback_USA_44th-div_C.png",
+      "name": "T cardback USA 44th div C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_cardback_USA_44th-div_C.png",
+      "file": "T_cardback_USA_44th-div_C.webp",
+      "localPath": "/cardbacks/T_cardback_USA_44th-div_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_cardback_z-flag_jap_a_512.png",
+      "name": "t cardback z flag jap a 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_cardback_z-flag_jap_a_512.png",
+      "file": "t_cardback_z-flag_jap_a_512.webp",
+      "localPath": "/cardbacks/t_cardback_z-flag_jap_a_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_cardback_z-flag_jap_b_512.png",
+      "name": "t cardback z flag jap b 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_cardback_z-flag_jap_b_512.png",
+      "file": "t_cardback_z-flag_jap_b_512.webp",
+      "localPath": "/cardbacks/t_cardback_z-flag_jap_b_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_cardback_z-flag_jap_c_512.png",
+      "name": "t cardback z flag jap c 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_cardback_z-flag_jap_c_512.png",
+      "file": "t_cardback_z-flag_jap_c_512.webp",
+      "localPath": "/cardbacks/t_cardback_z-flag_jap_c_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_commander_major_soviet_a.png",
+      "name": "T commander major soviet a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_commander_major_soviet_a.png",
+      "file": "T_commander_major_soviet_a.webp",
+      "localPath": "/cardbacks/T_commander_major_soviet_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_commander_major_soviet_b.png",
+      "name": "T commander major soviet b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_commander_major_soviet_b.png",
+      "file": "T_commander_major_soviet_b.webp",
+      "localPath": "/cardbacks/T_commander_major_soviet_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_commander_major_soviet_c.png",
+      "name": "T commander major soviet c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_commander_major_soviet_c.png",
+      "file": "T_commander_major_soviet_c.webp",
+      "localPath": "/cardbacks/T_commander_major_soviet_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_dragonhead_cardback_A.png",
+      "name": "T dragonhead cardback A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_dragonhead_cardback_A.png",
+      "file": "T_dragonhead_cardback_A.webp",
+      "localPath": "/cardbacks/T_dragonhead_cardback_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_dragonhead_cardback_B.png",
+      "name": "T dragonhead cardback B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_dragonhead_cardback_B.png",
+      "file": "T_dragonhead_cardback_B.webp",
+      "localPath": "/cardbacks/T_dragonhead_cardback_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_dragonhead_cardback_C.png",
+      "name": "T dragonhead cardback C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_dragonhead_cardback_C.png",
+      "file": "T_dragonhead_cardback_C.webp",
+      "localPath": "/cardbacks/T_dragonhead_cardback_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_guards_armored_british_a.png",
+      "name": "T guards armored british a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_guards_armored_british_a.png",
+      "file": "T_guards_armored_british_a.webp",
+      "localPath": "/cardbacks/T_guards_armored_british_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_guards_armored_british_b.png",
+      "name": "T guards armored british b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_guards_armored_british_b.png",
+      "file": "T_guards_armored_british_b.webp",
+      "localPath": "/cardbacks/T_guards_armored_british_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_guards_armored_british_c.png",
+      "name": "T guards armored british c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_guards_armored_british_c.png",
+      "file": "T_guards_armored_british_c.webp",
+      "localPath": "/cardbacks/T_guards_armored_british_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_homefront_1st-cavalry-divison_A.png",
+      "name": "t homefront 1st cavalry divison A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_homefront_1st-cavalry-divison_A.png",
+      "file": "t_homefront_1st-cavalry-divison_A.webp",
+      "localPath": "/cardbacks/t_homefront_1st-cavalry-divison_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_homefront_1st-cavalry-divison_B.png",
+      "name": "t homefront 1st cavalry divison B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_homefront_1st-cavalry-divison_B.png",
+      "file": "t_homefront_1st-cavalry-divison_B.webp",
+      "localPath": "/cardbacks/t_homefront_1st-cavalry-divison_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_homefront_1st-cavalry-divison_C.png",
+      "name": "t homefront 1st cavalry divison C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_homefront_1st-cavalry-divison_C.png",
+      "file": "t_homefront_1st-cavalry-divison_C.webp",
+      "localPath": "/cardbacks/t_homefront_1st-cavalry-divison_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_homefront_alt_cardback_A.png",
+      "name": "t homefront alt cardback A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_homefront_alt_cardback_A.png",
+      "file": "t_homefront_alt_cardback_A.webp",
+      "localPath": "/cardbacks/t_homefront_alt_cardback_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_homefront_alt_cardback_B.png",
+      "name": "t homefront alt cardback B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_homefront_alt_cardback_B.png",
+      "file": "t_homefront_alt_cardback_B.webp",
+      "localPath": "/cardbacks/t_homefront_alt_cardback_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_homefront_alt_cardback_C.png",
+      "name": "t homefront alt cardback C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_homefront_alt_cardback_C.png",
+      "file": "t_homefront_alt_cardback_C.webp",
+      "localPath": "/cardbacks/t_homefront_alt_cardback_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_homefront_cardback_A.png",
+      "name": "t homefront cardback A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_homefront_cardback_A.png",
+      "file": "t_homefront_cardback_A.webp",
+      "localPath": "/cardbacks/t_homefront_cardback_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_homefront_cardback_B.png",
+      "name": "t homefront cardback B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_homefront_cardback_B.png",
+      "file": "t_homefront_cardback_B.webp",
+      "localPath": "/cardbacks/t_homefront_cardback_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_homefront_cardback_C.png",
+      "name": "t homefront cardback C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_homefront_cardback_C.png",
+      "file": "t_homefront_cardback_C.webp",
+      "localPath": "/cardbacks/t_homefront_cardback_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_homefront_first-team_A.png",
+      "name": "t homefront first team A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_homefront_first-team_A.png",
+      "file": "t_homefront_first-team_A.webp",
+      "localPath": "/cardbacks/t_homefront_first-team_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_homefront_first-team_B.png",
+      "name": "t homefront first team B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_homefront_first-team_B.png",
+      "file": "t_homefront_first-team_B.webp",
+      "localPath": "/cardbacks/t_homefront_first-team_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_homefront_first-team_C.png",
+      "name": "t homefront first team C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_homefront_first-team_C.png",
+      "file": "t_homefront_first-team_C.webp",
+      "localPath": "/cardbacks/t_homefront_first-team_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_japanese_navy_a_512.png",
+      "name": "T japanese navy a 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_japanese_navy_a_512.png",
+      "file": "T_japanese_navy_a_512.webp",
+      "localPath": "/cardbacks/T_japanese_navy_a_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_japanese_navy_b_512.png",
+      "name": "T japanese navy b 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_japanese_navy_b_512.png",
+      "file": "T_japanese_navy_b_512.webp",
+      "localPath": "/cardbacks/T_japanese_navy_b_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_japanese_navy_c_512.png",
+      "name": "T japanese navy c 512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_japanese_navy_c_512.png",
+      "file": "T_japanese_navy_c_512.webp",
+      "localPath": "/cardbacks/T_japanese_navy_c_512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_KCP_cardback_A_512x512.png",
+      "name": "t KCP cardback A 512x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_KCP_cardback_A_512x512.png",
+      "file": "t_KCP_cardback_A_512x512.webp",
+      "localPath": "/cardbacks/t_KCP_cardback_A_512x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_KCP_cardback_B_512x512.png",
+      "name": "t KCP cardback B 512x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_KCP_cardback_B_512x512.png",
+      "file": "t_KCP_cardback_B_512x512.webp",
+      "localPath": "/cardbacks/t_KCP_cardback_B_512x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/t_KCP_cardback_C_512x512.png",
+      "name": "t KCP cardback C 512x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/t_KCP_cardback_C_512x512.png",
+      "file": "t_KCP_cardback_C_512x512.webp",
+      "localPath": "/cardbacks/t_KCP_cardback_C_512x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_Oceania-Storm_alt_cardback_A.png",
+      "name": "T Oceania Storm alt cardback A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_Oceania-Storm_alt_cardback_A.png",
+      "file": "T_Oceania-Storm_alt_cardback_A.webp",
+      "localPath": "/cardbacks/T_Oceania-Storm_alt_cardback_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_Oceania-Storm_alt_cardback_B.png",
+      "name": "T Oceania Storm alt cardback B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_Oceania-Storm_alt_cardback_B.png",
+      "file": "T_Oceania-Storm_alt_cardback_B.webp",
+      "localPath": "/cardbacks/T_Oceania-Storm_alt_cardback_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_Oceania-Storm_alt_cardback_C.png",
+      "name": "T Oceania Storm alt cardback C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_Oceania-Storm_alt_cardback_C.png",
+      "file": "T_Oceania-Storm_alt_cardback_C.webp",
+      "localPath": "/cardbacks/T_Oceania-Storm_alt_cardback_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_Oceania-Storm_cardback_A.png",
+      "name": "T Oceania Storm cardback A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_Oceania-Storm_cardback_A.png",
+      "file": "T_Oceania-Storm_cardback_A.webp",
+      "localPath": "/cardbacks/T_Oceania-Storm_cardback_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_Oceania-Storm_cardback_B.png",
+      "name": "T Oceania Storm cardback B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_Oceania-Storm_cardback_B.png",
+      "file": "T_Oceania-Storm_cardback_B.webp",
+      "localPath": "/cardbacks/T_Oceania-Storm_cardback_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_Oceania-Storm_cardback_C.png",
+      "name": "T Oceania Storm cardback C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_Oceania-Storm_cardback_C.png",
+      "file": "T_Oceania-Storm_cardback_C.webp",
+      "localPath": "/cardbacks/T_Oceania-Storm_cardback_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_world-cup-26_cardback_A.png",
+      "name": "T world cup 26 cardback A",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_world-cup-26_cardback_A.png",
+      "file": "T_world-cup-26_cardback_A.webp",
+      "localPath": "/cardbacks/T_world-cup-26_cardback_A.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_world-cup-26_cardback_B.png",
+      "name": "T world cup 26 cardback B",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_world-cup-26_cardback_B.png",
+      "file": "T_world-cup-26_cardback_B.webp",
+      "localPath": "/cardbacks/T_world-cup-26_cardback_B.webp"
+    },
+    {
+      "id": "CardBacks_Resized/T_world-cup-26_cardback_C.png",
+      "name": "T world cup 26 cardback C",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/T_world-cup-26_cardback_C.png",
+      "file": "T_world-cup-26_cardback_C.webp",
+      "localPath": "/cardbacks/T_world-cup-26_cardback_C.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_-_British_a.png",
+      "name": "ToW set card back British a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_-_British_a.png",
+      "file": "ToW_set_card_back_-_British_a.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_-_British_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_-_British_b.png",
+      "name": "ToW set card back British b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_-_British_b.png",
+      "file": "ToW_set_card_back_-_British_b.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_-_British_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_-_British_c.png",
+      "name": "ToW set card back British c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_-_British_c.png",
+      "file": "ToW_set_card_back_-_British_c.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_-_British_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_-_German_a.png",
+      "name": "ToW set card back German a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_-_German_a.png",
+      "file": "ToW_set_card_back_-_German_a.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_-_German_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_-_German_b.png",
+      "name": "ToW set card back German b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_-_German_b.png",
+      "file": "ToW_set_card_back_-_German_b.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_-_German_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_-_German_c.png",
+      "name": "ToW set card back German c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_-_German_c.png",
+      "file": "ToW_set_card_back_-_German_c.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_-_German_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_-_Japan_a.png",
+      "name": "ToW set card back Japan a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_-_Japan_a.png",
+      "file": "ToW_set_card_back_-_Japan_a.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_-_Japan_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_-_Japan_b.png",
+      "name": "ToW set card back Japan b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_-_Japan_b.png",
+      "file": "ToW_set_card_back_-_Japan_b.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_-_Japan_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_-_Japan_c.png",
+      "name": "ToW set card back Japan c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_-_Japan_c.png",
+      "file": "ToW_set_card_back_-_Japan_c.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_-_Japan_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_-_Soviet_a.png",
+      "name": "ToW set card back Soviet a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_-_Soviet_a.png",
+      "file": "ToW_set_card_back_-_Soviet_a.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_-_Soviet_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_-_Soviet_b.png",
+      "name": "ToW set card back Soviet b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_-_Soviet_b.png",
+      "file": "ToW_set_card_back_-_Soviet_b.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_-_Soviet_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_-_Soviet_c.png",
+      "name": "ToW set card back Soviet c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_-_Soviet_c.png",
+      "file": "ToW_set_card_back_-_Soviet_c.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_-_Soviet_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_-_USA_a.png",
+      "name": "ToW set card back USA a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_-_USA_a.png",
+      "file": "ToW_set_card_back_-_USA_a.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_-_USA_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_-_USA_b.png",
+      "name": "ToW set card back USA b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_-_USA_b.png",
+      "file": "ToW_set_card_back_-_USA_b.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_-_USA_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_-_USA_c.png",
+      "name": "ToW set card back USA c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_-_USA_c.png",
+      "file": "ToW_set_card_back_-_USA_c.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_-_USA_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_a.png",
+      "name": "ToW set card back a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_a.png",
+      "file": "ToW_set_card_back_a.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_b.png",
+      "name": "ToW set card back b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_b.png",
+      "file": "ToW_set_card_back_b.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/ToW_set_card_back_c.png",
+      "name": "ToW set card back c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/ToW_set_card_back_c.png",
+      "file": "ToW_set_card_back_c.webp",
+      "localPath": "/cardbacks/ToW_set_card_back_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/AlphaAnniversary/T_AlphaCardback_color.png",
+      "name": "T AlphaCardback color",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/AlphaAnniversary/T_AlphaCardback_color.png",
+      "file": "T_AlphaCardback_color.webp",
+      "localPath": "/cardbacks/T_AlphaCardback_color.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/AlphaAnniversary/T_AlphaCardback_colorUIVersion.png",
+      "name": "T AlphaCardback colorUIVersion",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/AlphaAnniversary/T_AlphaCardback_colorUIVersion.png",
+      "file": "T_AlphaCardback_colorUIVersion.webp",
+      "localPath": "/cardbacks/T_AlphaCardback_colorUIVersion.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/AlphaAnniversary/T_AlphaCardback_metal.png",
+      "name": "T AlphaCardback metal",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/AlphaAnniversary/T_AlphaCardback_metal.png",
+      "file": "T_AlphaCardback_metal.webp",
+      "localPath": "/cardbacks/T_AlphaCardback_metal.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/AlphaAnniversary/T_AlphaCardback_normal.png",
+      "name": "T AlphaCardback normal",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/AlphaAnniversary/T_AlphaCardback_normal.png",
+      "file": "T_AlphaCardback_normal.webp",
+      "localPath": "/cardbacks/T_AlphaCardback_normal.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/AlphaAnniversary/T_AlphaCardback_Roughness.png",
+      "name": "T AlphaCardback Roughness",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/AlphaAnniversary/T_AlphaCardback_Roughness.png",
+      "file": "T_AlphaCardback_Roughness.webp",
+      "localPath": "/cardbacks/T_AlphaCardback_Roughness.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Bronze/T_Rank4_basecolor.png",
+      "name": "T Rank4 basecolor",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Bronze/T_Rank4_basecolor.png",
+      "file": "T_Rank4_basecolor.webp",
+      "localPath": "/cardbacks/T_Rank4_basecolor.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Bronze/T_Rank4_metallic.png",
+      "name": "T Rank4 metallic",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Bronze/T_Rank4_metallic.png",
+      "file": "T_Rank4_metallic.webp",
+      "localPath": "/cardbacks/T_Rank4_metallic.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Bronze/T_Rank4_Normal.png",
+      "name": "T Rank4 Normal",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Bronze/T_Rank4_Normal.png",
+      "file": "T_Rank4_Normal.webp",
+      "localPath": "/cardbacks/T_Rank4_Normal.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Bronze/T_Rank4_Roughness.png",
+      "name": "T Rank4 Roughness",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Bronze/T_Rank4_Roughness.png",
+      "file": "T_Rank4_Roughness.webp",
+      "localPath": "/cardbacks/T_Rank4_Roughness.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Elite/T_rank1_bc.png",
+      "name": "T rank1 bc",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Elite/T_rank1_bc.png",
+      "file": "T_rank1_bc.webp",
+      "localPath": "/cardbacks/T_rank1_bc.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Elite/T_rank1_metal.png",
+      "name": "T rank1 metal",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Elite/T_rank1_metal.png",
+      "file": "T_rank1_metal.webp",
+      "localPath": "/cardbacks/T_rank1_metal.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Elite/T_rank1_normal.png",
+      "name": "T rank1 normal",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Elite/T_rank1_normal.png",
+      "file": "T_rank1_normal.webp",
+      "localPath": "/cardbacks/T_rank1_normal.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Elite/T_rank1_roughness.png",
+      "name": "T rank1 roughness",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Elite/T_rank1_roughness.png",
+      "file": "T_rank1_roughness.webp",
+      "localPath": "/cardbacks/T_rank1_roughness.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Gold/T_rank2_bc.png",
+      "name": "T rank2 bc",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Gold/T_rank2_bc.png",
+      "file": "T_rank2_bc.webp",
+      "localPath": "/cardbacks/T_rank2_bc.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Gold/T_rank2_metallic.png",
+      "name": "T rank2 metallic",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Gold/T_rank2_metallic.png",
+      "file": "T_rank2_metallic.webp",
+      "localPath": "/cardbacks/T_rank2_metallic.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Gold/T_rank2_normal.png",
+      "name": "T rank2 normal",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Gold/T_rank2_normal.png",
+      "file": "T_rank2_normal.webp",
+      "localPath": "/cardbacks/T_rank2_normal.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Gold/T_rank2_roughness.png",
+      "name": "T rank2 roughness",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Gold/T_rank2_roughness.png",
+      "file": "T_rank2_roughness.webp",
+      "localPath": "/cardbacks/T_rank2_roughness.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Iron/T_Rank5_basecolor.png",
+      "name": "T Rank5 basecolor",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Iron/T_Rank5_basecolor.png",
+      "file": "T_Rank5_basecolor.webp",
+      "localPath": "/cardbacks/T_Rank5_basecolor.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Iron/T_Rank5_metallic.png",
+      "name": "T Rank5 metallic",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Iron/T_Rank5_metallic.png",
+      "file": "T_Rank5_metallic.webp",
+      "localPath": "/cardbacks/T_Rank5_metallic.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Iron/T_Rank5_Normal.png",
+      "name": "T Rank5 Normal",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Iron/T_Rank5_Normal.png",
+      "file": "T_Rank5_Normal.webp",
+      "localPath": "/cardbacks/T_Rank5_Normal.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Iron/T_Rank5_roughness.png",
+      "name": "T Rank5 roughness",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Iron/T_Rank5_roughness.png",
+      "file": "T_Rank5_roughness.webp",
+      "localPath": "/cardbacks/T_Rank5_roughness.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Silver/T_rank3_bc.png",
+      "name": "T rank3 bc",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Silver/T_rank3_bc.png",
+      "file": "T_rank3_bc.webp",
+      "localPath": "/cardbacks/T_rank3_bc.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Silver/T_rank3_metal.png",
+      "name": "T rank3 metal",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Silver/T_rank3_metal.png",
+      "file": "T_rank3_metal.webp",
+      "localPath": "/cardbacks/T_rank3_metal.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Silver/T_rank3_normal.png",
+      "name": "T rank3 normal",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Silver/T_rank3_normal.png",
+      "file": "T_rank3_normal.webp",
+      "localPath": "/cardbacks/T_rank3_normal.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UniqueMaterials/Silver/T_rank3_roughness.png",
+      "name": "T rank3 roughness",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UniqueMaterials/Silver/T_rank3_roughness.png",
+      "file": "T_rank3_roughness.webp",
+      "localPath": "/cardbacks/T_rank3_roughness.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Uprising_a.png",
+      "name": "Uprising a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Uprising_a.png",
+      "file": "Uprising_a.webp",
+      "localPath": "/cardbacks/Uprising_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Uprising_b.png",
+      "name": "Uprising b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Uprising_b.png",
+      "file": "Uprising_b.webp",
+      "localPath": "/cardbacks/Uprising_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Uprising_c.png",
+      "name": "Uprising c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Uprising_c.png",
+      "file": "Uprising_c.webp",
+      "localPath": "/cardbacks/Uprising_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/USA_skirmish.png",
+      "name": "USA skirmish",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/USA_skirmish.png",
+      "file": "USA_skirmish.webp",
+      "localPath": "/cardbacks/USA_skirmish.webp"
+    },
+    {
+      "id": "CardBacks_Resized/USA_skirmish2.png",
+      "name": "USA skirmish2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/USA_skirmish2.png",
+      "file": "USA_skirmish2.webp",
+      "localPath": "/cardbacks/USA_skirmish2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/USA_skirmish3.png",
+      "name": "USA skirmish3",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/USA_skirmish3.png",
+      "file": "USA_skirmish3.webp",
+      "localPath": "/cardbacks/USA_skirmish3.webp"
+    },
+    {
+      "id": "CardBacks_Resized/usaaf_a.png",
+      "name": "usaaf a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/usaaf_a.png",
+      "file": "usaaf_a.webp",
+      "localPath": "/cardbacks/usaaf_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/usaaf_b.png",
+      "name": "usaaf b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/usaaf_b.png",
+      "file": "usaaf_b.webp",
+      "localPath": "/cardbacks/usaaf_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/usaaf_c.png",
+      "name": "usaaf c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/usaaf_c.png",
+      "file": "usaaf_c.webp",
+      "localPath": "/cardbacks/usaaf_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UsaBasicA.png",
+      "name": "UsaBasicA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UsaBasicA.png",
+      "file": "UsaBasicA.webp",
+      "localPath": "/cardbacks/UsaBasicA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UsaBasicB.png",
+      "name": "UsaBasicB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UsaBasicB.png",
+      "file": "UsaBasicB.webp",
+      "localPath": "/cardbacks/UsaBasicB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UsaBasicC.png",
+      "name": "UsaBasicC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UsaBasicC.png",
+      "file": "UsaBasicC.webp",
+      "localPath": "/cardbacks/UsaBasicC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UsaBasicExtraA.png",
+      "name": "UsaBasicExtraA",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UsaBasicExtraA.png",
+      "file": "UsaBasicExtraA.webp",
+      "localPath": "/cardbacks/UsaBasicExtraA.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UsaBasicExtraB.png",
+      "name": "UsaBasicExtraB",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UsaBasicExtraB.png",
+      "file": "UsaBasicExtraB.webp",
+      "localPath": "/cardbacks/UsaBasicExtraB.webp"
+    },
+    {
+      "id": "CardBacks_Resized/UsaBasicExtraC.png",
+      "name": "UsaBasicExtraC",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/UsaBasicExtraC.png",
+      "file": "UsaBasicExtraC.webp",
+      "localPath": "/cardbacks/UsaBasicExtraC.webp"
+    },
+    {
+      "id": "CardBacks_Resized/USSR_skirmish.png",
+      "name": "USSR skirmish",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/USSR_skirmish.png",
+      "file": "USSR_skirmish.webp",
+      "localPath": "/cardbacks/USSR_skirmish.webp"
+    },
+    {
+      "id": "CardBacks_Resized/USSR_skirmish2.png",
+      "name": "USSR skirmish2",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/USSR_skirmish2.png",
+      "file": "USSR_skirmish2.webp",
+      "localPath": "/cardbacks/USSR_skirmish2.webp"
+    },
+    {
+      "id": "CardBacks_Resized/USSR_skirmish3.png",
+      "name": "USSR skirmish3",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/USSR_skirmish3.png",
+      "file": "USSR_skirmish3.webp",
+      "localPath": "/cardbacks/USSR_skirmish3.webp"
+    },
+    {
+      "id": "CardBacks_Resized/wc22_premium_cardback_B1024.png",
+      "name": "wc22 premium cardback B1024",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/wc22_premium_cardback_B1024.png",
+      "file": "wc22_premium_cardback_B1024.webp",
+      "localPath": "/cardbacks/wc22_premium_cardback_B1024.webp"
+    },
+    {
+      "id": "CardBacks_Resized/wc22_premium_cardback_C1024.png",
+      "name": "wc22 premium cardback C1024",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/wc22_premium_cardback_C1024.png",
+      "file": "wc22_premium_cardback_C1024.webp",
+      "localPath": "/cardbacks/wc22_premium_cardback_C1024.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Winter_War_cardback_A_v2x512.png",
+      "name": "Winter War cardback A v2x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Winter_War_cardback_A_v2x512.png",
+      "file": "Winter_War_cardback_A_v2x512.webp",
+      "localPath": "/cardbacks/Winter_War_cardback_A_v2x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Winter_War_cardback_B_v2x512.png",
+      "name": "Winter War cardback B v2x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Winter_War_cardback_B_v2x512.png",
+      "file": "Winter_War_cardback_B_v2x512.webp",
+      "localPath": "/cardbacks/Winter_War_cardback_B_v2x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Winter_War_cardback_C_v2x512.png",
+      "name": "Winter War cardback C v2x512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Winter_War_cardback_C_v2x512.png",
+      "file": "Winter_War_cardback_C_v2x512.webp",
+      "localPath": "/cardbacks/Winter_War_cardback_C_v2x512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/xxx_corps_cardback_a.png",
+      "name": "xxx corps cardback a",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/xxx_corps_cardback_a.png",
+      "file": "xxx_corps_cardback_a.webp",
+      "localPath": "/cardbacks/xxx_corps_cardback_a.webp"
+    },
+    {
+      "id": "CardBacks_Resized/xxx_corps_cardback_b.png",
+      "name": "xxx corps cardback b",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/xxx_corps_cardback_b.png",
+      "file": "xxx_corps_cardback_b.webp",
+      "localPath": "/cardbacks/xxx_corps_cardback_b.webp"
+    },
+    {
+      "id": "CardBacks_Resized/xxx_corps_cardback_c.png",
+      "name": "xxx corps cardback c",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/xxx_corps_cardback_c.png",
+      "file": "xxx_corps_cardback_c.webp",
+      "localPath": "/cardbacks/xxx_corps_cardback_c.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Yokoshiba_Flying_School_Ax512.png",
+      "name": "Yokoshiba Flying School Ax512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Yokoshiba_Flying_School_Ax512.png",
+      "file": "Yokoshiba_Flying_School_Ax512.webp",
+      "localPath": "/cardbacks/Yokoshiba_Flying_School_Ax512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Yokoshiba_Flying_School_Bx512.png",
+      "name": "Yokoshiba Flying School Bx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Yokoshiba_Flying_School_Bx512.png",
+      "file": "Yokoshiba_Flying_School_Bx512.webp",
+      "localPath": "/cardbacks/Yokoshiba_Flying_School_Bx512.webp"
+    },
+    {
+      "id": "CardBacks_Resized/Yokoshiba_Flying_School_Cx512.png",
+      "name": "Yokoshiba Flying School Cx512",
+      "imageUrl": "https://kards-assets.kardsdecker.com/CardBacks_Resized/Yokoshiba_Flying_School_Cx512.png",
+      "file": "Yokoshiba_Flying_School_Cx512.webp",
+      "localPath": "/cardbacks/Yokoshiba_Flying_School_Cx512.webp"
+    }
+  ]
+}
