@@ -86,6 +86,7 @@ export default function BattlePage() {
   const debugArg = params.get('debug');
   const autoStarted = useRef(false);
   const lanInitRef = useRef(false);
+  const lanHelloTimerRef = useRef<number | null>(null);
   const debugRef = useRef(false);
 
   useEffect(() => {
@@ -104,7 +105,7 @@ export default function BattlePage() {
   useEffect(() => {
     if (!autostart || autoStarted.current) return;
     if (!hasRegistry || phase !== 'setup') return;
-    if (modeParam === 'lan') return;
+    if (modeParam === 'lan' || modeParam === 'p2p') return;
     autoStarted.current = true;
     void (async () => {
       await startFromQuery({ deck: deckArg, faction: factionArg, difficulty: difficultyArg, seed: seedArg });
@@ -117,10 +118,13 @@ export default function BattlePage() {
   // 局域网入口：#/battle?mode=lan&role=host|guest[&room=ABCD][&deck=Germany][&name=xxx][&seed=1]
   // 连接保持在 getLanSession() 单例里，路由切换不会断开；大厅已建房/加入时这里只挂监听。
   useEffect(() => {
-    if (modeParam !== 'lan' || (roleParam !== 'host' && roleParam !== 'guest')) return;
+    const modeKind: 'lan' | 'p2p' | null = modeParam === 'p2p' ? 'p2p' : modeParam === 'lan' ? 'lan' : null;
+    if (!modeKind || (roleParam !== 'host' && roleParam !== 'guest')) return;
     if (!hasRegistry || lanInitRef.current) return;
     lanInitRef.current = true;
     void (async () => {
+      const isP2P = modeKind === 'p2p';
+      useBattleStore.setState({ netKind: isP2P ? 'p2p' : 'lan' });
       const session = getLanSession();
       const role: 'host' | 'guest' = roleParam === 'guest' ? 'guest' : 'host';
       const name = (nameParam ?? '').trim() || (role === 'host' ? '房主' : '客机');
@@ -139,7 +143,31 @@ export default function BattlePage() {
         lanDeckForFaction(wanted || (role === 'host' ? 'Germany' : 'Soviet'), cards, seed).deck;
       const deckName = sessionDeck?.name ?? saved?.name ?? `${deck.faction} 局域网战斗群`;
       try {
-        if (role === 'host') {
+        if (isP2P) {
+          // P2P：连接已由 P2P 大厅建立，这里只挂对战监听
+          if (!session.snapshot.role) throw new Error('P2P 连接未建立，请回到 P2P 大厅重新连接');
+          if (role === 'host') {
+            store.lanAttachHost({ selfDeck: deck, selfName: name, autoStart: true, seed });
+          } else {
+            store.lanAttachGuest({ selfDeck: deck, selfName: name });
+            // 客机周期重发 hello：避免房主晚于本页挂监听而错过报到
+            if (lanHelloTimerRef.current) window.clearInterval(lanHelloTimerRef.current);
+            let tries = 0;
+            lanHelloTimerRef.current = window.setInterval(() => {
+              tries += 1;
+              if (useBattleStore.getState().state || tries > 30) {
+                if (lanHelloTimerRef.current) window.clearInterval(lanHelloTimerRef.current);
+                lanHelloTimerRef.current = null;
+                return;
+              }
+              try {
+                getLanSession().sendHello();
+              } catch {
+                /* 忽略 */
+              }
+            }, 900);
+          }
+        } else if (role === 'host') {
           if (!session.snapshot.roomCode) {
             await session.createRoom(name, toDeckPayload(deck, name));
           }
@@ -166,6 +194,12 @@ export default function BattlePage() {
         useBattleStore.getState().lanFail(err instanceof Error ? err.message : '局域网连接失败');
       }
     })();
+    return () => {
+      if (lanHelloTimerRef.current) {
+        window.clearInterval(lanHelloTimerRef.current);
+        lanHelloTimerRef.current = null;
+      }
+    };
   }, [modeParam, roleParam, roomParam, deckArg, nameParam, seedArg, hasRegistry]);
 
   // QA 场景：#/battle?debug=duel —— 直接摆一个双方都有兵、可攻击/布防/检视的战场

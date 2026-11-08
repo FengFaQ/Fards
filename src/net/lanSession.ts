@@ -407,12 +407,29 @@ export class LanSession {
 /** 全局单例：跨页面（大厅 → 对战）保持连接 */
 let singleton: LanSession | null = null;
 
+/**
+ * 传输层覆盖：P2P（WebRTC DataChannel）与 LAN（WebSocket）实现同一套收发语义，
+ * 对战相关代码只需调用 getLanSession()，由这里决定实际传输。
+ * 由 P2P 页面在进入战场前设置；离开/重置时清空。
+ */
+let transportOverride: LanSession | null = null;
+
+export function setLanTransportOverride(transport: LanSession | null): void {
+  transportOverride = transport;
+}
+
+export function getLanTransportOverride(): LanSession | null {
+  return transportOverride;
+}
+
 export function getLanSession(): LanSession {
+  if (transportOverride) return transportOverride;
   if (!singleton) singleton = new LanSession({ name: '' });
   return singleton;
 }
 
 export function resetLanSession(): void {
+  transportOverride = null;
   if (singleton) {
     singleton.close();
     singleton = null;

@@ -7,11 +7,13 @@
  * 只做「传输层自检」，不驱动规则引擎；接进正式对战见 docs/P2P.md §6.2。
  */
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { PageHeader } from '../ui/components/PageHeader';
 import { DEFAULT_SIGNAL_BROKERS, MqttSignalChannel } from '@/net/p2pSignalMqtt';
-import { createRoomCode } from '@/net/p2pSignal';
+import { createNumericRoomCode } from '@/net/p2pSignal';
 import { P2PTransport, type P2PSnapshot } from '@/net/p2pTransport';
+import { setLanTransportOverride } from '@/net/lanSession';
+import { P2PLobby } from '@/ui/p2p/P2PLobby';
 import { savePlayerName, loadPlayerName } from '../ui/lan/lanText';
 
 type Mode = 'manual' | 'mqtt';
@@ -66,9 +68,10 @@ function CopyRow({ value, label }: { value: string; label: string }) {
 
 export default function P2PTestPage() {
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
-  const gated = params.get('p2p') !== '1';
+  const gated = false;
+  const navigate = useNavigate();
 
-  const [mode, setMode] = useState<Mode>('manual');
+  const [mode, setMode] = useState<Mode>('mqtt');
   const [role, setRole] = useState<Role | null>(null);
   const [name, setName] = useState(() => loadPlayerName() || '玩家');
   const [busy, setBusy] = useState(false);
@@ -83,6 +86,7 @@ export default function P2PTestPage() {
   const [brokerState, setBrokerState] = useState<string>('');
 
   const transportRef = useRef<P2PTransport | null>(null);
+  const offerRetryRef = useRef<number | null>(null);
   const channelRef = useRef<MqttSignalChannel | null>(null);
   const [transport, setTransport] = useState<P2PTransport | null>(null);
   const snapshot = useSnapshot(transport);
@@ -96,6 +100,10 @@ export default function P2PTestPage() {
   }, [name]);
 
   const teardown = useCallback(() => {
+    if (offerRetryRef.current) {
+      window.clearInterval(offerRetryRef.current);
+      offerRetryRef.current = null;
+    }
     channelRef.current?.close();
     channelRef.current = null;
     transportRef.current?.close('离开');
@@ -108,7 +116,9 @@ export default function P2PTestPage() {
     setError(null);
   }, []);
 
-  useEffect(() => teardown, [teardown]);
+  // 注意：进入战场会卸载本页，但连接必须保留（由 battleStore 接管），因此不在卸载时 teardown。
+  // 仅在用户点「重置/断开」或连接失败时主动清理。
+  useEffect(() => () => { /* 连接保留给战场页 */ }, []);
 
   const start = useCallback(
     (nextRole: Role): P2PTransport => {
@@ -181,7 +191,7 @@ export default function P2PTestPage() {
     setError(null);
     try {
       const created = start('host');
-      const room = createRoomCode(12);
+      const room = createNumericRoomCode(6);
       setRoomCode(room);
       const channel = new MqttSignalChannel({
         room,
@@ -202,9 +212,25 @@ export default function P2PTestPage() {
       });
       channelRef.current = channel;
       await channel.connect();
+      // 房间码展示用 6 位数字（信令载荷内部的 room 是随机盐，不用于展示）
+      created.snapshot = { ...created.snapshot, roomCode: room };
       const offer = await created.createOfferPayload();
+      created.snapshot = { ...created.snapshot, roomCode: room };
       await channel.publishSignal(offer.payload);
       pushLog(`已发布 offer（${offer.payload.sdp.length} 字节 SDP）`);
+      // 公网 MQTT 无 retained 消息：对手可能晚于本端订阅，定期重发 offer 直到收到 answer
+      let retries = 0;
+      if (offerRetryRef.current) window.clearInterval(offerRetryRef.current);
+      offerRetryRef.current = window.setInterval(() => {
+        retries += 1;
+        if (retries > 30 || created.snapshot.status === 'in-room' || created.snapshot.status === 'playing') {
+          if (offerRetryRef.current) window.clearInterval(offerRetryRef.current);
+          offerRetryRef.current = null;
+          return;
+        }
+        void channel.publishSignal(offer.payload).catch(() => undefined);
+        pushLog(`重发 offer（第 ${retries} 次，等待客机加入…）`);
+      }, 1500);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -216,8 +242,8 @@ export default function P2PTestPage() {
     setBusy(true);
     setError(null);
     try {
-      const room = roomInput.trim().toUpperCase();
-      if (room.length < 8) throw new Error('请输入完整的房间码（12 位）');
+      const room = roomInput.trim();
+      if (!/^\d{6}$/.test(room)) throw new Error('请输入完整的 6 位数字房间码');
       const created = start('guest');
       setRoomCode(room);
       const channel = new MqttSignalChannel({
@@ -231,7 +257,10 @@ export default function P2PTestPage() {
           if (payload.kind !== 'offer') return;
           void created
             .acceptOfferPayload(payload)
-            .then((result) => channel.publishSignal(result.payload))
+            .then((result) => {
+              created.snapshot = { ...created.snapshot, roomCode: room };
+              return channel.publishSignal(result.payload);
+            })
             .then(() => pushLog('已发回 answer，等待通道打开…'))
             .catch((err: unknown) => setError(err instanceof Error ? err.message : String(err)));
         },
@@ -239,6 +268,7 @@ export default function P2PTestPage() {
       });
       channelRef.current = channel;
       await channel.connect();
+      created.snapshot = { ...created.snapshot, roomCode: room };
       pushLog(`已加入房间 ${room}，等待房主 offer…`);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -253,9 +283,9 @@ export default function P2PTestPage() {
   return (
     <div className="mx-auto w-full max-w-[1000px] px-4 py-7 sm:px-6">
       <PageHeader
-        eyebrow="实验特性 / P2P WebRTC"
-        title="P2P 联机自检"
-        subtitle="不经过任何游戏服务器：房主权威引擎不变，只把 WebSocket 换成 WebRTC DataChannel。"
+        eyebrow="P2P 联机 / WebRTC"
+        title="P2P 联机对战"
+        subtitle="无需服务器：房主浏览器跑规则引擎，客机渲染；WebRTC DataChannel 直连。输入 6 位房间码即可开打。"
         actions={
           <>
             <span
@@ -272,6 +302,22 @@ export default function P2PTestPage() {
           </>
         }
       />
+
+      {connected && transport && snapshot && (
+        <P2PLobby
+          transport={transport}
+          snapshot={snapshot}
+          selfName={name}
+          onEnter={(role, deck, seed) => {
+            try {
+              setLanTransportOverride(transport as unknown as Parameters<typeof setLanTransportOverride>[0]);
+            } catch (err) {
+              console.warn('[p2p] 设置传输层失败', err);
+            }
+            navigate(`/battle?mode=p2p&role=${role}&name=${encodeURIComponent(name)}&seed=${seed}`);
+          }}
+        />
+      )}
 
       {gated && (
         <div className="mb-4 rounded-sm border border-amber-600/60 bg-amber-500/10 px-3 py-2 font-body text-[12px] text-amber-200">
@@ -356,18 +402,18 @@ export default function P2PTestPage() {
             )}
             {role === 'guest' && mode === 'mqtt' && (
               <div className="mt-3 space-y-2">
-                <Field label="房间码（12 位）">
+                <Field label="房间码（6 位数字）">
                   <input
                     className={inputClass}
                     value={roomInput}
-                    placeholder="XXXXXXXXXXXX"
+                    placeholder="000000"
                     onChange={(e) => setRoomInput(e.target.value)}
                   />
                 </Field>
                 <button
                   type="button"
                   className="fards-btn py-1.5 text-[11px]"
-                  disabled={busy || roomInput.trim().length < 8}
+                  disabled={busy || !/^\d{6}$/.test(roomInput.trim())}
                   onClick={() => void joinMqttGuest()}
                 >
                   加入

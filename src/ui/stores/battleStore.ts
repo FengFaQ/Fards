@@ -58,6 +58,9 @@ export const AI: PlayerIndex = 1;
 /** 对局运行模式：本地 AI / 局域网房主（权威端）/ 局域网客机（只渲染） */
 export type BattleMode = 'ai' | 'lan-host' | 'lan-guest';
 
+/** 网络类型（仅用于界面文案：局域网 / P2P） */
+export type BattleNetKind = 'lan' | 'p2p';
+
 export type BattlePhase = 'boot' | 'setup' | 'playing' | 'finished';
 
 export interface FloatFx {
@@ -153,6 +156,8 @@ export interface LanStartOptions {
 }
 
 interface BattleStore {
+  /** 网络类型（界面文案用） */
+  netKind: BattleNetKind;
   /* ---------------- 数据 ---------------- */
   phase: BattlePhase;
   booting: boolean;
@@ -833,6 +838,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
     shakeKey: null,
 
     mode: 'ai',
+    netKind: 'lan',
     myIndex: HUMAN,
     oppIndex: AI,
     lanRole: null,

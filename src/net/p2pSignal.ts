@@ -38,6 +38,15 @@ export const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
 /** Crockford Base32（去掉 I/L/O/U，避免手抄歧义） */
 const CROCKFORD = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
 
+/** 纯数字房间码（便于口头/短信传递），默认 6 位 */
+export function createNumericRoomCode(length = 6): string {
+  const bytes = new Uint8Array(length);
+  globalThis.crypto.getRandomValues(bytes);
+  let out = '';
+  for (let i = 0; i < length; i += 1) out += String(bytes[i] % 10);
+  return out;
+}
+
 export function createRoomCode(length = 12): string {
   const bytes = new Uint8Array(length);
   globalThis.crypto.getRandomValues(bytes);

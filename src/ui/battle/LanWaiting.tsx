@@ -8,6 +8,8 @@ import { useBattleStore } from '../stores/battleStore';
 import { IconAlert, IconArrowRight, IconCards, IconLink, IconSwords } from '../components/icons';
 
 export function LanWaiting() {
+  const netKind = useBattleStore((s) => s.netKind ?? 'lan');
+  const netLabel = netKind === 'p2p' ? 'P2P' : '局域网';
   const navigate = useNavigate();
   const role = useBattleStore((s) => s.lanRole);
   const roomCode = useBattleStore((s) => s.lanRoomCode);
@@ -45,7 +47,7 @@ export function LanWaiting() {
           <div className="px-6 py-6">
             <p className="fards-label flex items-center gap-2 text-[10px] text-brass-500">
               <span className="inline-block h-px w-6 bg-brass-600/70" />
-              LAN BATTLE · 局域网对战
+              {netLabel} BATTLE · {netLabel}对战
             </p>
 
             {broken ? (
@@ -57,10 +59,10 @@ export function LanWaiting() {
                   </h1>
                 </div>
                 <p className="mt-2 font-body text-[12px] leading-relaxed text-field-300">
-                  {error ?? '与局域网服务器或对手的连接已中断。'}
+                  {error ?? '与联机对手的连接已中断。'}
                 </p>
                 <p className="mt-1 font-body text-[10px] leading-relaxed text-field-500">
-                  请确认双方在同一局域网、且已运行 <span className="text-brass-300">npm run lan</span>，然后回到大厅重新建房/加入。
+                  对于局域网模式：请确认双方在同一局域网、且房主已运行 <span className="text-brass-300">npm run lan</span>；P2P 模式无需服务器，回到 P2P 大厅重新连接即可。
                 </p>
               </>
             ) : (
@@ -70,7 +72,7 @@ export function LanWaiting() {
                 </h1>
                 <p className="mt-2 font-body text-[12px] leading-relaxed text-field-400">
                   {isHost
-                    ? '把房间码发给同一局域网的对手；对手加入并准备后，房主点「开始对战」即可。'
+                    ? '把房间码发给对手；对手加入并准备后，房主点「开始对战」即可（P2P 无需同一局域网）。'
                     : '已加入房间，正在等待房主开局。开局后会自动进入战场。'}
                 </p>
 
@@ -110,7 +112,7 @@ export function LanWaiting() {
                 <ul className="mt-4 space-y-1.5 font-body text-[10px] leading-relaxed text-field-500">
                   <li className="flex items-center gap-1.5">
                     <IconSwords size={11} className="shrink-0 text-brass-500" />
-                    房主浏览器跑规则引擎，客机只渲染；指令经局域网服务器中转。
+                    房主浏览器跑规则引擎，客机只渲染；P2P 模式指令经 WebRTC DataChannel 直连。
                   </li>
                   <li className="flex items-center gap-1.5">
                     <IconCards size={11} className="shrink-0 text-brass-500" />
@@ -118,7 +120,7 @@ export function LanWaiting() {
                   </li>
                   <li className="flex items-center gap-1.5">
                     <span className="battle-pulse-dot h-1.5 w-1.5 shrink-0 rounded-full bg-brass-400" />
-                    {connecting ? '正在连接局域网服务器…' : '连接正常，保持此页面不要关闭。'}
+                    {connecting ? '正在建立联机…' : '连接正常，保持此页面不要关闭。'}
                   </li>
                 </ul>
               </>
@@ -139,7 +141,7 @@ export function LanWaiting() {
         </div>
 
         <p className="mt-3 text-center font-body text-[9px] tracking-[0.14em] text-field-600">
-          局域网直连 · 仅同网段可用 · 不经过互联网
+          局域网直连需同网段；P2P 可跨网络（受 NAT 限制）
         </p>
       </div>
     </div>

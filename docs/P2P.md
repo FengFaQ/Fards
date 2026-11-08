@@ -417,3 +417,12 @@ node _work/p2p/mqtt-probe.mjs       # 5 个公共 MQTT broker 的 CONNACK/回环
 - 已添加路由：`#/p2p`（`src/App.tsx` 懒加载 `src/pages/P2PTestPage.tsx`），**默认不放进导航**，仅在手动输入地址 / 带 `?p2p=1` 时使用。
 - 依赖策略：维持**零依赖自研**（`src/net/p2pSignal.ts` / `p2pSignalMqtt.ts` / `p2pTransport.ts`），暂不引入 trystero/peerjs。
 - 未改 `lanSession.ts` 与 battleStore 的 LAN 接线；P2P 目前是独立自检页，用于验证传输层。若要把 P2P 接入真实对战，按本文 §6.2 的 transport 抽象方案推进（需 Lead 批准改动 battleStore/lanSession）。
+
+---
+
+## 附：P2P 已转正（2026-11-08）
+
+- 正式入口：`https://fengfaq.github.io/Fards/p2p`（静态页重定向到 `#/p2p`），导航栏「P2P 联机」可见。
+- 房间码：默认 **6 位数字**（公共 MQTT 信令，AES-GCM 加密 SDP 载荷）；「手动对战码」保留为无第三方兜底。
+- 正式对战接入：`P2PTransport` 通过 `lanSession.setLanTransportOverride()` 成为对战传输层，battleStore 的 LAN 权威/脱敏逻辑零改动复用。
+- 实测：两无头 Edge 全流程通过（建房→加入→准备→进入战场→回合同步）。

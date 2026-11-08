@@ -29,6 +29,8 @@ export function GameOverDialog() {
   if (!open || !result) return null;
 
   const isLan = mode === 'lan-host' || mode === 'lan-guest';
+  const netKind = useBattleStore((s) => s.netKind ?? 'lan');
+  const netLabel = netKind === 'p2p' ? 'P2P' : '局域网';
   const won = result.winner === myIndex;
   const draw = result.winner === null;
   const title = draw ? '战局胶着' : won ? '胜利' : '败北';
@@ -42,7 +44,7 @@ export function GameOverDialog() {
     <Dialog
       open
       onClose={quit}
-      eyebrow={isLan ? '局域网对战结束' : '战斗结束'}
+      eyebrow={isLan ? `${netLabel}对战结束` : '战斗结束'}
       title={title}
       width="md"
       footer={
@@ -52,7 +54,7 @@ export function GameOverDialog() {
           </button>
           <div className="flex items-center gap-2">
             {isLan ? (
-              <Link to="/lan" className="fards-btn fards-btn-primary" onClick={() => quit()}>
+              <Link to={netKind === 'p2p' ? '/p2p' : '/lan'} className="fards-btn fards-btn-primary" onClick={() => quit()}>
                 返回大厅
               </Link>
             ) : (
@@ -121,7 +123,7 @@ export function GameOverDialog() {
         <p className="flex items-center gap-2 font-body text-[10px] leading-relaxed text-field-500">
           <IconSwords size={12} className="shrink-0 text-brass-500" />
           {isLan
-            ? '局域网对局不保存战绩；返回大厅可再开一局（双方卡组会重新交接）。'
+            ? '联机对局不保存战绩；返回大厅可再开一局（双方卡组会重新交接）。'
             : '本局使用同一套卡组重开；换卡组请返回卡组页调整编制。'}
         </p>
       </div>

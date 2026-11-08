@@ -7,6 +7,7 @@ const NAV = [
   { to: '/deck', label: '卡组构筑', hint: 'DECK BUILDER' },
   { to: '/battle', label: '开始对战', hint: 'BATTLE' },
   { to: '/lan', label: '局域网', hint: 'LAN' },
+  { to: '/p2p', label: 'P2P 联机', hint: 'PEER TO PEER' },
   { to: '/about', label: '关于', hint: 'ABOUT' },
 ];
 

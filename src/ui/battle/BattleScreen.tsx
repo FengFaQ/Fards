@@ -109,6 +109,8 @@ export function BattleScreen() {
     quitToSetup();
   };
   const isLan = mode === 'lan-host' || mode === 'lan-guest';
+  const netKind = useBattleStore((s) => s.netKind ?? 'lan');
+  const netLabel = netKind === 'p2p' ? 'P2P' : '局域网';
   const lanBroken = isLan && (lanStatus === 'closed' || lanStatus === 'error' || lanPeerLeft);
 
   const selectUnit = useBattleStore((s) => s.selectUnit);
@@ -403,10 +405,10 @@ export function BattleScreen() {
           {isLan && (
             <span
               className="flex items-center gap-1.5 rounded-sm border border-brass-500/50 bg-brass-500/10 px-2 py-[3px] font-body text-[9px] tracking-[0.14em] text-brass-200"
-              title={`局域网对战 · 我是${lanRole === 'host' ? '房主（权威端）' : '客机（渲染端）'}`}
+              title={`` + netLabel + `对战 · 我是${lanRole === 'host' ? '房主（权威端）' : '客机（渲染端）'}`}
             >
               <span className="battle-pulse-dot h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              局域网{lanRoomCode ? ` · 房间 ${lanRoomCode}` : ''}
+              {netLabel}{lanRoomCode ? ` · 房间 ${lanRoomCode}` : ''}
               {lanPeerName ? ` · 对手 ${lanPeerName}` : ''}
               <span className="text-brass-400/70">{lanRole === 'host' ? 'HOST' : 'GUEST'}</span>
             </span>
@@ -688,7 +690,7 @@ export function BattleScreen() {
       {lanBroken && (
         <div className="absolute inset-0 z-[70] flex items-center justify-center bg-field-950/85 backdrop-blur-sm">
           <div className="fards-panel w-[min(92vw,420px)] border-ink-red/40 p-5 text-center">
-            <p className="fards-label text-[10px] text-ink-red">局域网连接中断</p>
+            <p className="fards-label text-[10px] text-ink-red">{netLabel}连接中断</p>
             <h2 className="mt-1 font-display text-lg tracking-[0.14em] text-field-100">
               {lanPeerLeft ? '对手已离开房间' : lanStatus === 'closed' ? '连接已断开' : '连接异常'}
             </h2>
@@ -752,7 +754,7 @@ export function BattleScreen() {
           {confirm === 'surrender'
             ? '投降将立即判负并结束本局，战绩不会保存。准备换一套编制再战？'
             : isLan
-              ? '离开会断开与对手的局域网连接（对手会收到“对手已离开”提示），本局进度不会保留。'
+              ? '离开会断开与对手的联机连接（对手会收到“对手已离开”提示），本局进度不会保留。'
               : '撤离会放弃当前对局并返回部署界面，本局进度不会保留。'}
         </p>
       </Dialog>
