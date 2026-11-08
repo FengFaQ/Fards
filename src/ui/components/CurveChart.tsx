@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { memo, useMemo } from 'react';
 
 export interface CurveChartProps {
   /** 下标 = 费用，9 表示 9+ */
@@ -10,7 +10,7 @@ export interface CurveChartProps {
 }
 
 /** 费用曲线（克雷迪特曲线） */
-export function CurveChart({ counts, className = '', height = 78, target }: CurveChartProps) {
+function CurveChartInner({ counts, className = '', height = 78, target }: CurveChartProps) {
   const series = useMemo(() => {
     const padded = [...counts];
     while (padded.length < 10) padded.push(0);
@@ -46,7 +46,7 @@ export function CurveChart({ counts, className = '', height = 78, target }: Curv
                 {count}
               </span>
               <div
-                className="w-full rounded-t-[2px] transition-all duration-200 group-hover:brightness-125"
+                className="w-full rounded-t-[2px] transition-[filter] duration-200 group-hover:brightness-125"
                 style={{
                   height: h,
                   background:
@@ -73,4 +73,5 @@ export function CurveChart({ counts, className = '', height = 78, target }: Curv
   );
 }
 
+export const CurveChart = memo(CurveChartInner);
 export default CurveChart;

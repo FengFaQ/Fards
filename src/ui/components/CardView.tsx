@@ -1,10 +1,28 @@
-import { memo, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import type { UiCard } from '../lib/dataBridge';
 import { cardImageSources } from '../lib/dataBridge';
-import { cardTypeMeta, factionColor, factionMeta, rarityMeta } from '../lib/format';
+import { cardTypeMeta, factionMeta, rarityMeta } from '../lib/format';
 import { useInView } from '../lib/useInView';
 
 export type CardSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+
+/* ------------------------------------------------------------------
+ * 进程级缓存（减少 GC 与重复计算）
+ * 1) 卡图候选地址：cardImageSources 会查数据层模块并去重拼串，代价不低；
+ *    卡对象是稳定的（useCards 进程级缓存），按对象弱引用缓存即可。
+ * 2) 已解码成功的图片 URL：窗口化/筛选后卡片会卸载再挂载，命中缓存时
+ *    直接以「已加载」状态渲染，避免骨架屏闪烁与布局抖动。
+ * ------------------------------------------------------------------ */
+const SOURCES_CACHE = new WeakMap<UiCard, string[]>();
+const LOADED_IMAGES = new Set<string>();
+
+function sourcesOf(card: UiCard): string[] {
+  const cached = SOURCES_CACHE.get(card);
+  if (cached) return cached;
+  const next = cardImageSources(card);
+  SOURCES_CACHE.set(card, next);
+  return next;
+}
 
 export interface CardViewProps {
   card: UiCard;
@@ -48,9 +66,9 @@ function CardViewInner({
   selected = false,
   muted = false,
 }: CardViewProps) {
-  const sources = useMemo(() => cardImageSources(card), [card]);
+  const sources = useMemo(() => sourcesOf(card), [card]);
   const [sourceIndex, setSourceIndex] = useState(0);
-  const [loaded, setLoaded] = useState(false);
+  const [loaded, setLoaded] = useState(() => LOADED_IMAGES.has(sourcesOf(card)[0] ?? ''));
   const [failed, setFailed] = useState(false);
   const { ref, inView } = useInView<HTMLDivElement>();
 
@@ -59,23 +77,37 @@ function CardViewInner({
   const type = cardTypeMeta(card.type);
   const interactive = Boolean(onClick);
   const imageSrc = sources[sourceIndex];
+  const onClickRef = useRef(onClick);
+  onClickRef.current = onClick;
+  const cardRef = useRef(card);
+  cardRef.current = card;
 
-  const handleError = () => {
+  const handleLoad = useCallback(() => {
+    if (imageSrc) LOADED_IMAGES.add(imageSrc);
+    setLoaded(true);
+  }, [imageSrc]);
+
+  const handleError = useCallback(() => {
     setLoaded(false);
     setSourceIndex((index) => {
       const next = index + 1;
       if (next >= sources.length) setFailed(true);
       return next;
     });
-  };
+  }, [sources]);
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
-    if (!onClick) return;
+  const handleClick = useCallback(() => {
+    onClickRef.current?.(cardRef.current);
+  }, []);
+
+  const handleKeyDown = useCallback((event: React.KeyboardEvent<HTMLDivElement>) => {
+    const handler = onClickRef.current;
+    if (!handler) return;
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
-      onClick(card);
+      handler(cardRef.current);
     }
-  };
+  }, []);
 
   return (
     <div
@@ -84,7 +116,7 @@ function CardViewInner({
       tabIndex={interactive ? 0 : undefined}
       data-interactive={interactive}
       aria-label={`${card.nameZh}（${faction.zh} · ${type.zh} · ${rarity.zh}）`}
-      onClick={onClick ? () => onClick(card) : undefined}
+      onClick={interactive ? handleClick : undefined}
       onKeyDown={handleKeyDown}
       title={`${card.nameZh} · ${card.nameEn}`}
       className={`fards-card fards-card-hover group select-none ${selected ? 'ring-2 ring-brass-400/80' : ''} ${
@@ -99,7 +131,7 @@ function CardViewInner({
               alt={card.nameZh}
               loading={eager ? 'eager' : 'lazy'}
               decoding="async"
-              onLoad={() => setLoaded(true)}
+              onLoad={handleLoad}
               onError={handleError}
               className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
                 loaded ? 'opacity-100' : 'opacity-0'

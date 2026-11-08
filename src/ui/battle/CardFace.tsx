@@ -2,10 +2,14 @@
  * 战场卡面：图片多级兜底 + 骨架屏 + 阵营侧条。
  * 与 ui/components/CardView 的区别：战场需要自己叠动态攻防徽章、状态层与特效，
  * 所以这里只保留「卡面本体」，尺寸由外层（.unit-card / .hand-card）控制。
+ *
+ * 卡图优先命中对局预缓存（imageCache 的 objectURL），未命中回退到 dataBridge 的多级候选，
+ * onError 仍逐级回退；后台预载完成或缓存释放时通过订阅自动换源，不会出现白屏。
  */
-import { memo, useMemo, useState, type ReactNode } from 'react';
+import { memo, useEffect, useMemo, useReducer, useState, type ReactNode } from 'react';
 import { cardImageSources, type UiCard } from '../lib/dataBridge';
 import { factionMeta } from '../lib/format';
+import { getCachedCardImage, subscribeCardImage } from './imageCache';
 
 export interface CardFaceProps {
   card: UiCard | undefined;
@@ -17,10 +21,31 @@ export interface CardFaceProps {
 }
 
 function CardFaceInner({ card, className = '', eager = false, children, imageClassName = '' }: CardFaceProps) {
-  const sources = useMemo(() => (card ? cardImageSources(card) : []), [card]);
+  const cardId = card?.cardId ?? '';
+  const cachedSrc = cardId ? getCachedCardImage(cardId) : null;
+  // 缓存命中/释放时强制重渲染，让 <img> 平滑切换来源
+  const [, bumpCacheVersion] = useReducer((version: number) => version + 1, 0);
+  useEffect(() => {
+    if (!cardId) return undefined;
+    return subscribeCardImage(cardId, bumpCacheVersion);
+  }, [cardId]);
+
+  const sources = useMemo(() => {
+    const list = card ? cardImageSources(card) : [];
+    if (!cachedSrc) return list;
+    return [cachedSrc, ...list.filter((url) => url !== cachedSrc)];
+  }, [card, cachedSrc]);
+
   const [index, setIndex] = useState(0);
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+
+  // 图片来源变化（缓存命中/释放）→ 重新从第一张开始加载
+  useEffect(() => {
+    setIndex(0);
+    setLoaded(false);
+    setFailed(false);
+  }, [cachedSrc]);
 
   if (!card) {
     return (

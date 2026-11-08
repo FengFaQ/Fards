@@ -66,7 +66,7 @@ export function AppShell() {
                       {item.hint}
                     </span>
                     <span
-                      className={`absolute inset-x-1.5 bottom-0 h-[2px] transition-all duration-200 ${
+                      className={`absolute inset-x-1.5 bottom-0 h-[2px] transition-colors duration-200 ${
                         isActive
                           ? 'bg-brass-500 shadow-[0_0_8px_rgb(195_155_58/0.6)]'
                           : 'bg-transparent group-hover:bg-field-600'

@@ -20,6 +20,7 @@ import CardFace from './CardFace';
 import ChoiceDialog from './ChoiceDialog';
 import GameOverDialog from './GameOverDialog';
 import HandFan from './HandFan';
+import { getCachedCardImage, releaseImageCache, subscribeCardImage } from './imageCache';
 import LogPanel from './LogPanel';
 import PlayerBar from './PlayerBar';
 
@@ -41,6 +42,12 @@ type InspectTarget =
   | { kind: 'unit'; unitId: string }
   | { kind: 'hq'; player: PlayerIndex }
   | null;
+
+/** 预览来源：hover（移开即消失）/ click（保持到手动关闭） */
+type InspectSource = 'hover' | 'click';
+
+/** 悬停多久才弹出检视面板（毫秒） */
+const HOVER_INSPECT_DELAY_MS = 1000;
 
 function CardInspector({ card, fallback }: { card: UiCard | null; fallback: React.ReactNode }) {
   if (!card) return <>{fallback}</>;
@@ -117,6 +124,9 @@ export function BattleScreen() {
   const [confirm, setConfirm] = useState<null | 'surrender' | 'exit'>(null);
   /** 右下角卡片检视面板（点击任意卡 / 悬停 1 秒触发） */
   const [inspect, setInspect] = useState<InspectTarget>(null);
+  /** 预览来源：hover = 移开鼠标自动消失；click = 保持到 Esc / 点击空白 / 关闭按钮 */
+  const [inspectSource, setInspectSource] = useState<InspectSource | null>(null);
+  const inspectSourceRef = useRef<InspectSource | null>(null);
   const inspectTimer = useRef<number | null>(null);
 
   const clearInspectTimer = () => {
@@ -126,14 +136,43 @@ export function BattleScreen() {
     }
   };
 
-  /** 悬停 1 秒后才弹出，避免扫过卡片时闪烁 */
-  const hoverInspect = (target: InspectTarget) => {
+  const applyInspect = (target: InspectTarget, source: InspectSource | null) => {
+    inspectSourceRef.current = source;
+    setInspectSource(source);
+    setInspect(target);
+  };
+
+  /** 关闭检视面板（Esc / 点击空白 / 关闭按钮） */
+  const closeInspect = () => {
     clearInspectTimer();
+    applyInspect(null, null);
+  };
+
+  /** 点击打开的检视：保持当前行为，移到别的卡不自动关闭 */
+  const openInspectByClick = (target: InspectTarget) => {
     if (!target) return;
+    clearInspectTimer();
+    applyInspect(target, 'click');
+  };
+
+  /**
+   * 悬停检视：停留 1 秒才弹出（避免扫过卡片时闪烁）。
+   * - 移开该卡（target=null）→ 立即取消计时；若面板本身就是悬停打开的，立即关闭；
+   * - 从一张卡移到另一张卡 → 先取消旧计时再按新卡重新计时；
+   * - 点击打开的面板不受悬停影响（保持到手动关闭）。
+   */
+  const hoverInspect = (target: InspectTarget) => {
+    if (inspectSourceRef.current === 'click') return;
+    clearInspectTimer();
+    if (!target) {
+      if (inspectSourceRef.current === 'hover') applyInspect(null, null);
+      return;
+    }
     inspectTimer.current = window.setTimeout(() => {
       inspectTimer.current = null;
-      setInspect(target);
-    }, 1000);
+      if (inspectSourceRef.current === 'click') return;
+      applyInspect(target, 'hover');
+    }, HOVER_INSPECT_DELAY_MS);
   };
 
   const legal = useMemo(() => {
@@ -176,17 +215,17 @@ export function BattleScreen() {
   /** 统一单位点击：攻击目标 > 选中己方单位 > 检视 */
   const handleUnitClick = (unitId: string) => {
     const unit = state?.units[unitId];
-    setInspect({ kind: 'unit', unitId });
+    openInspectByClick({ kind: 'unit', unitId });
     if (selection) {
       const ref: TargetRef = { kind: 'unit', unitId };
       const legalTarget = selection.refs.some(
         (item) => item.kind === 'unit' && item.unitId === unitId,
       );
-      if (legalTarget && selection.kind === 'attack') {
+      if (legalTarget) {
+        // 攻击目标与指令目标统一：只要在合法目标列表里就提交（修复“指令选中单位时点击无效”）
         clickTarget(ref);
         return;
       }
-      if (legalTarget) return;
       notify('该单位不是当前合法目标（可能被守护 / 烟幕 / 伏击 / 隐蔽保护，或战线不相邻）');
       return;
     }
@@ -195,7 +234,7 @@ export function BattleScreen() {
 
   /** 统一 HQ 点击：可攻击时作为目标；否则检视/提示 */
   const handleHqClick = (player: PlayerIndex) => {
-    setInspect({ kind: 'hq', player });
+    openInspectByClick({ kind: 'hq', player });
     if (targetKeys.has(`hq:${player}`)) {
       clickTarget({ kind: 'hq', player });
       return;
@@ -204,55 +243,91 @@ export function BattleScreen() {
     else notify('敌方总部：地面单位需位于前线才能攻击（炮兵/空军不受限）');
   };
 
-  const inspectData = useMemo<InspectCardData | null>(() => {
+  /** 当前检视目标对应的卡牌 cardId（HQ 没有卡图 → null） */
+  const inspectCardId = useMemo<string | null>(() => {
     if (!inspect || !state) return null;
-    if (inspect.kind === 'card') {
-      const card = byId.get(inspect.cardId);
-      return card ? inspectFromCard(card) : null;
-    }
-    if (inspect.kind === 'unit') {
-      const unit = state.units[inspect.unitId];
-      if (!unit) return null;
-      const card = byId.get(unit.cardId);
-      if (!card) return null;
-      const notes: string[] = [];
-      if (unit.statuses.pinned) notes.push('被压制');
-      if ((unit.statuses.cannotAttackTurns ?? 0) > 0) notes.push('无法攻击');
-      if (unit.attacksUsed >= unit.maxAttacks) notes.push('本回合已行动');
-      const blitz = hasKeyword(unit, 'blitz') || hasKeyword(unit, 'shock');
-      if (unit.deployedTurn === state.turn && !blitz) notes.push('召唤病：本回合无法行动');
-      if (unit.deployedTurn === state.turn && blitz) notes.push('闪击：本回合可行动');
-      if (unit.movedThisTurn) notes.push('本回合已移动');
-      return inspectFromCard(card, {
-        attack: unit.attack,
-        hp: unit.hp,
-        maxHp: unit.maxHp,
-        armor: unit.armor,
-        keywords: unit.keywords,
-        note: notes.join(' · '),
-        side: unit.owner === myIndex ? 'self' : 'enemy',
-        isUnit: true,
-      });
-    }
-    const info = state.players[inspect.player];
-    const faction = factionMeta(info.faction);
-    return {
-      cardId: `hq:${inspect.player}`,
-      nameZh: `${faction.zh} 总部`,
-      factionZh: faction.zh,
-      typeZh: '总部',
-      keywords: [],
-      kredits: 0,
-      operationCost: 0,
-      hp: info.hq.hp,
-      maxHp: info.hq.maxHp,
-      armor: info.hq.armor,
-      description: '总部耐久归零即告负。总部不可被移动或主动选中；敌方地面单位需位于前线才能攻击（炮兵/空军不受限）。',
-      isUnit: false,
-      side: inspect.player === myIndex ? 'self' : 'enemy',
-      note: `耐久 ${info.hq.hp}/${info.hq.maxHp}${info.hq.armor > 0 ? ` · 装甲 ${info.hq.armor}` : ''}`,
+    if (inspect.kind === 'card') return inspect.cardId;
+    if (inspect.kind === 'unit') return state.units[inspect.unitId]?.cardId ?? null;
+    return null;
+  }, [inspect, state]);
+
+  const [inspectCacheVersion, setInspectCacheVersion] = useState(0);
+  useEffect(() => {
+    if (!inspectCardId) return undefined;
+    return subscribeCardImage(inspectCardId, () => setInspectCacheVersion((value) => value + 1));
+  }, [inspectCardId]);
+
+  const inspectData = useMemo<InspectCardData | null>(() => {
+    const build = (): InspectCardData | null => {
+      if (!inspect || !state) return null;
+      if (inspect.kind === 'card') {
+        const card = byId.get(inspect.cardId);
+        return card ? inspectFromCard(card) : null;
+      }
+      if (inspect.kind === 'unit') {
+        const unit = state.units[inspect.unitId];
+        if (!unit) return null;
+        const card = byId.get(unit.cardId);
+        if (!card) return null;
+        const notes: string[] = [];
+        if (unit.statuses.pinned) notes.push('被压制');
+        if ((unit.statuses.cannotAttackTurns ?? 0) > 0) notes.push('无法攻击');
+        if (unit.attacksUsed >= unit.maxAttacks) notes.push('本回合已行动');
+        const blitz = hasKeyword(unit, 'blitz') || hasKeyword(unit, 'shock');
+        if (unit.deployedTurn === state.turn && !blitz) notes.push('召唤病：本回合无法行动');
+        if (unit.deployedTurn === state.turn && blitz) notes.push('闪击：本回合可行动');
+        if (unit.movedThisTurn) notes.push('本回合已移动');
+        return inspectFromCard(card, {
+          attack: unit.attack,
+          hp: unit.hp,
+          maxHp: unit.maxHp,
+          armor: unit.armor,
+          keywords: unit.keywords,
+          note: notes.join(' · '),
+          side: unit.owner === myIndex ? 'self' : 'enemy',
+          isUnit: true,
+        });
+      }
+      const info = state.players[inspect.player];
+      const faction = factionMeta(info.faction);
+      return {
+        cardId: `hq:${inspect.player}`,
+        nameZh: `${faction.zh} 总部`,
+        factionZh: faction.zh,
+        typeZh: '总部',
+        keywords: [],
+        kredits: 0,
+        operationCost: 0,
+        hp: info.hq.hp,
+        maxHp: info.hq.maxHp,
+        armor: info.hq.armor,
+        description: '总部耐久归零即告负。总部不可被移动或主动选中；敌方地面单位需位于前线才能攻击（炮兵/空军不受限）。',
+        isUnit: false,
+        side: inspect.player === myIndex ? 'self' : 'enemy',
+        note: `耐久 ${info.hq.hp}/${info.hq.maxHp}${info.hq.armor > 0 ? ` · 装甲 ${info.hq.armor}` : ''}`,
+      };
     };
-  }, [inspect, state, byId, myIndex]);
+    const data = build();
+    if (!data) return null;
+    // 卡图优先命中预缓存（objectURL）；未命中沿用多级网络兜底
+    const cached = inspectCardId ? getCachedCardImage(inspectCardId) : null;
+    return cached ? { ...data, imageSrc: cached } : data;
+  }, [inspect, state, byId, myIndex, inspectCardId, inspectCacheVersion]);
+
+  // 被检视的单位阵亡后，悬停/点击面板都立即关闭（避免指向已不存在的单位）
+  useEffect(() => {
+    if (!inspect) return;
+    if (inspect.kind === 'unit' && !state?.units[inspect.unitId]) closeInspect();
+    // closeInspect 只读写 ref 与稳定 setter，无需进依赖
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, inspect]);
+
+  // 兜底：任何路径进入 finished（投降 / HQ 归零 / 客机收到结束视图 / 快进模拟）都确保卡图缓存被释放。
+  // store 里各结束路径已经调用过 releaseImageCache（幂等），这里防遗漏，保证 QA 断言 cached === 0。
+  useEffect(() => {
+    if (state?.status !== 'finished') return;
+    releaseImageCache();
+  }, [state?.status]);
 
   useEffect(() => {
     const timer = window.setInterval(() => pruneFx(Date.now()), 700);
@@ -263,8 +338,7 @@ export function BattleScreen() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         cancelSelection();
-        clearInspectTimer();
-        setInspect(null);
+        closeInspect();
         return;
       }
       if (event.code !== 'Space' || event.repeat) return;
@@ -299,7 +373,7 @@ export function BattleScreen() {
           )
         )
           return;
-        setInspect(null);
+        closeInspect();
       }}
       onContextMenu={(event) => {
         if (selection) {
@@ -459,6 +533,7 @@ export function BattleScreen() {
               setHoveredId(cardId);
               hoverInspect(cardId ? { kind: 'card', cardId } : null);
             }}
+            onCardClick={(cardId) => openInspectByClick({ kind: 'card', cardId })}
             hoveredId={hoveredId}
           />
         </div>
@@ -634,7 +709,14 @@ export function BattleScreen() {
         </div>
       )}
 
-      <CardInspectPanel card={inspectData} onClose={() => setInspect(null)} />
+      {/* 检视面板：data-inspect-source 便于 QA 区分「悬停自动消失 / 点击保持」 */}
+      <div
+        className="contents"
+        data-inspect-source={inspectSource ?? undefined}
+        data-inspect-open={inspectData ? 'true' : 'false'}
+      >
+        <CardInspectPanel card={inspectData} onClose={closeInspect} />
+      </div>
 
       <ChoiceDialog />
       <GameOverDialog />

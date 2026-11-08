@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FactionBadge } from '../ui/components/FactionBadge';
 import {
@@ -16,7 +17,7 @@ import {
 import { copyText } from '../ui/lib/clipboard';
 import { factionMeta } from '../ui/lib/format';
 import type { FeaturedDeck } from '../ui/lib/dataBridge';
-import { useCards, useFeaturedDecks } from '../ui/lib/useCards';
+import { useCardSummary, useFeaturedDecks } from '../ui/lib/useCards';
 import { toast } from '../ui/stores/toastStore';
 
 const REPO_URL = 'https://github.com/FengFaQ/Fards';
@@ -79,7 +80,7 @@ const ENTRIES = [
   },
 ];
 
-function HeroStat({ value, label }: { value: string; label: string }) {
+const HeroStat = memo(function HeroStat({ value, label }: { value: string; label: string }) {
   return (
     <div className="flex flex-col">
       <span className="font-display text-2xl leading-none tracking-wider text-brass-300 sm:text-3xl">
@@ -90,9 +91,9 @@ function HeroStat({ value, label }: { value: string; label: string }) {
       </span>
     </div>
   );
-}
+});
 
-function FeaturedDeckTile({ deck }: { deck: FeaturedDeck }) {
+const FeaturedDeckTile = memo(function FeaturedDeckTile({ deck }: { deck: FeaturedDeck }) {
   const navigate = useNavigate();
   const faction = factionMeta(deck.faction);
   const ally = deck.allyFaction ? factionMeta(deck.allyFaction) : null;
@@ -109,7 +110,7 @@ function FeaturedDeckTile({ deck }: { deck: FeaturedDeck }) {
 
   return (
     <article
-      className="group relative w-[286px] shrink-0 snap-start overflow-hidden rounded border border-field-700/70 bg-field-900/70 p-4 transition-all duration-200 hover:-translate-y-1 hover:border-brass-600/60 hover:shadow-[var(--shadow-lift)]"
+      className="group relative w-[286px] shrink-0 snap-start overflow-hidden rounded border border-field-700/70 bg-field-900/70 p-4 transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-brass-600/60 hover:shadow-[var(--shadow-lift)]"
       style={{
         backgroundImage: `linear-gradient(135deg, ${faction.color}1a 0%, transparent 45%)`,
       }}
@@ -156,10 +157,10 @@ function FeaturedDeckTile({ deck }: { deck: FeaturedDeck }) {
       </div>
     </article>
   );
-}
+});
 
 export default function HomePage() {
-  const { cards } = useCards();
+  const { total: cardTotal } = useCardSummary();
   const { decks } = useFeaturedDecks();
 
   return (
@@ -218,7 +219,7 @@ export default function HomePage() {
             </div>
 
             <div className="mt-9 flex flex-wrap items-center gap-x-9 gap-y-4 border-t border-field-700/60 pt-5">
-              <HeroStat value={cards.length ? String(cards.length) : '—'} label="卡牌档案" />
+              <HeroStat value={cardTotal ? String(cardTotal) : '—'} label="卡牌档案" />
               <HeroStat value="9" label="主战阵营" />
               <HeroStat value="39" label="标准编制" />
               <HeroStat value="4" label="同名上限" />
@@ -241,7 +242,7 @@ export default function HomePage() {
             </p>
             <dl className="mt-4 space-y-2.5">
               {[
-                ['数据快照', cards.length ? `${cards.length} 张卡牌` : '加载中…'],
+                ['数据快照', cardTotal ? `${cardTotal} 张卡牌` : '加载中…'],
                 ['卡池范围', '现役 / 预备 / 衍生'],
                 ['编制规则', '39 张 · 同名 4 · 精英 1'],
                 ['出图协议', '?action=overview_horizontal'],
@@ -274,7 +275,7 @@ export default function HomePage() {
               <Link
                 key={entry.to}
                 to={entry.to}
-                className="fards-panel group relative overflow-hidden p-5 transition-all duration-200 hover:-translate-y-1 hover:border-brass-600/50 hover:shadow-[var(--shadow-lift)]"
+                className="fards-panel group relative overflow-hidden p-5 transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-brass-600/50 hover:shadow-[var(--shadow-lift)]"
               >
                 <span className="pointer-events-none absolute -right-3 -bottom-3 font-display text-6xl text-brass-500/5 transition-colors group-hover:text-brass-500/10 select-none">
                   <Icon size={72} />

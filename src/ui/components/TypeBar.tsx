@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 export interface DistItem {
   key: string;
   label: string;
@@ -14,7 +16,7 @@ export interface TypeBarProps {
 }
 
 /** 类型 / 阵营分布条（堆叠 + 图例） */
-export function TypeBar({ items, total, className = '', compact = false }: TypeBarProps) {
+function TypeBarInner({ items, total, className = '', compact = false }: TypeBarProps) {
   const visible = items.filter((item) => item.count > 0);
   const sum = Math.max(1, total);
 
@@ -29,7 +31,7 @@ export function TypeBar({ items, total, className = '', compact = false }: TypeB
               width: `${(item.count / sum) * 100}%`,
               backgroundColor: item.color,
             }}
-            className="h-full transition-[width] duration-200"
+            className="h-full"
           />
         ))}
       </div>
@@ -59,4 +61,5 @@ export function TypeBar({ items, total, className = '', compact = false }: TypeB
   );
 }
 
+export const TypeBar = memo(TypeBarInner);
 export default TypeBar;

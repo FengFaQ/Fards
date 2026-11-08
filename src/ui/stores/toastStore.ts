@@ -29,7 +29,11 @@ export const useToastStore = create<ToastStore>((set, get) => ({
       }
     }, 2800);
   },
-  dismiss: (id) => set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
+  /* 幂等：id 不存在时返回原 state，避免无意义的数组新建导致整条提示列表重渲染 */
+  dismiss: (id) =>
+    set((state) => (state.toasts.some((t) => t.id === id)
+      ? { toasts: state.toasts.filter((t) => t.id !== id) }
+      : state)),
 }));
 
 /** 非组件环境下的快捷调用 */

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { factionMeta } from '../lib/format';
 
 export interface FactionBadgeProps {
@@ -14,7 +15,7 @@ const SIZES = {
 } as const;
 
 /** 阵营徽记：色点 + 中文阵营名（可选英文） */
-export function FactionBadge({ faction, size = 'sm', showEn = false, className = '' }: FactionBadgeProps) {
+function FactionBadgeInner({ faction, size = 'sm', showEn = false, className = '' }: FactionBadgeProps) {
   const meta = factionMeta(faction);
   const s = SIZES[size];
   return (
@@ -36,4 +37,5 @@ export function FactionBadge({ faction, size = 'sm', showEn = false, className =
   );
 }
 
+export const FactionBadge = memo(FactionBadgeInner);
 export default FactionBadge;

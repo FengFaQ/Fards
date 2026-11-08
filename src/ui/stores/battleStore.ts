@@ -36,6 +36,7 @@ import type { DeckData, UiCard } from '../lib/dataBridge';
 import { loadAllCards, validateDeckWithLayer } from '../lib/dataBridge';
 import { DECK_FACTIONS, factionMeta } from '../lib/format';
 import { getLanSession, type LanStatus } from '@/net/lanSession';
+import { isHiddenCardId } from '@/net/sanitize';
 import type { LanDeckPayload, LanGameView } from '@/net/protocol';
 import { useDeckStore } from './deckStore';
 import {
@@ -45,6 +46,7 @@ import {
   type AIDifficulty,
   type EngineAIModule,
 } from '../battle/aiBridge';
+import { imageCacheStats, preloadCardImages, releaseImageCache } from '../battle/imageCache';
 import { visibleLegalActions } from '../battle/legal';
 import { buildGuestView, fromDeckPayload, readLanHandoffSafe, toDeckPayload } from '../battle/lan';
 import { buildQuickDeck, divisionName, quickDeckName } from '../battle/decks';
@@ -125,6 +127,13 @@ export interface HintFx {
   at: number;
 }
 
+/** 卡图预载浮层状态（对局开局前把首屏卡图抓进 imageCache） */
+export interface ImagePreloadState {
+  active: boolean;
+  done: number;
+  total: number;
+}
+
 /** host/guest 挂载局域网监听时的可选参数（大厅与调试参数共用） */
 export interface LanAttachOptions {
   /** 自己的卡组（host 用于开局，guest 仅记录） */
@@ -160,6 +169,8 @@ interface BattleStore {
   aiFaction: string;
   playerDeck: { faction: string; allyFaction: string | null; name: string; count: number } | null;
   aiEngineReady: boolean;
+  /** 开局卡图预载浮层状态（null = 无浮层） */
+  imagePreload: ImagePreloadState | null;
 
   /* ---------------- 交互 ---------------- */
   selection: Selection | null;
@@ -205,6 +216,11 @@ interface BattleStore {
   startBattle: (config: StartConfig) => Promise<void>;
   restartBattle: () => Promise<void>;
   quitToSetup: () => void;
+  /**
+   * 开局卡图预载：先 await 双方卡组「前 10 张」的卡图（最多 20 张，去重），
+   * 完成后清浮层；剩余卡牌在后台继续预载，不阻塞 UI。失败/超时也继续，不会卡死。
+   */
+  preloadBattleImages: (gameState: GameState) => Promise<void>;
   startDemoBattle: (rounds?: number) => Promise<void>;
   /** 调试/QA 入口：#/battle?autostart=1&deck=<deckId|faction>&faction=...&difficulty=...&seed=... */
   startFromQuery: (query: StartQuery) => Promise<void>;
@@ -315,6 +331,51 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
     return engineAIModule;
   };
 
+  /* ---------------- 卡图预载 ---------------- */
+
+  /** 预载任务代际：新的预载 / 释放缓存都会让旧的后台任务失效 */
+  let preloadToken = 0;
+  /** 开局代际：离开战场 / 重开时作废尚未完成的 startBattle */
+  let startToken = 0;
+
+  const pushCardId = (out: string[], seen: Set<string>, cardId: string | undefined | null) => {
+    // 局域网客机视角下对手手牌/牌库是脱敏占位，跳过
+    if (!cardId || isHiddenCardId(cardId) || seen.has(cardId)) return;
+    seen.add(cardId);
+    out.push(cardId);
+  };
+
+  /**
+   * 双方「首屏 10 张」的 cardId（各 10 张，去重后最多 20 张）。
+   * 顺序按玩家真实可见顺序：起手手牌优先，再补即将抽到的牌库顶。
+   * （createGame 已经把起手牌从牌库挪进 hand，所以必须先算 hand，否则首屏手牌不会被预载。）
+   */
+  const firstScreenCardIds = (gameState: GameState): string[] => {
+    const out: string[] = [];
+    const seen = new Set<string>();
+    for (const player of gameState.players) {
+      const visible = [...player.hand, ...player.deck].slice(0, 10);
+      for (const instance of visible) pushCardId(out, seen, instance.cardId);
+    }
+    return out;
+  };
+
+  /** 除首屏外的剩余卡牌（去重，进入战场后后台预载；约各 29 张） */
+  const remainingCardIds = (gameState: GameState, firstIds: string[]): string[] => {
+    const out: string[] = [];
+    const seen = new Set<string>(firstIds);
+    for (const player of gameState.players) {
+      for (const instance of player.deck) pushCardId(out, seen, instance.cardId);
+    }
+    return out;
+  };
+
+  /** 释放本局卡图缓存并作废所有旧任务（对局结束 / 离开 / 重开） */
+  const invalidateImageWork = () => {
+    preloadToken += 1;
+    releaseImageCache();
+  };
+
   /* ---------------- 事件 → 特效 ---------------- */
 
   const buildFxPatch = (
@@ -423,6 +484,9 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       updates.phase = 'finished';
       updates.result = { winner: next.winner, reason: next.endReason ?? 'hq_destroyed' };
       updates.aiThinking = false;
+      // 对局结束：释放卡图预缓存（revoke objectURL）
+      invalidateImageWork();
+      updates.imagePreload = null;
     } else if (next.activePlayer === snapshot.myIndex && !next.pendingChoice) {
       aiActionCount = 0;
       updates.aiThinking = false;
@@ -481,7 +545,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
     const prev = snapshot.state;
     const fx = prev ? buildFxPatch(prev, view.state, events) : {};
     const finished = view.state.status === 'finished';
-    set({
+    const updates: Partial<BattleStore> = {
       state: view.state,
       lanLegal: view.legalActions ?? [],
       lanSeq: view.seq,
@@ -492,7 +556,17 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       selection: null,
       aiThinking: false,
       ...fx,
-    });
+    };
+    if (finished) {
+      // 对局结束：释放卡图预缓存（不影响网络消息处理，纯本机资源）
+      invalidateImageWork();
+      updates.imagePreload = null;
+    }
+    set(updates);
+    if (!prev && !finished) {
+      // 客机首次进入战场：本机同样先预载首屏卡图再开始操作（对手牌库已脱敏，只预载可见部分）
+      void get().preloadBattleImages(view.state);
+    }
   };
 
   /** host：构造并广播 guest 视图 */
@@ -750,6 +824,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
     aiFaction: 'Soviet',
     playerDeck: null,
     aiEngineReady: false,
+    imagePreload: null,
 
     selection: null,
     aiThinking: false,
@@ -811,6 +886,39 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       }
     },
 
+    preloadBattleImages: async (gameState) => {
+      const firstIds = firstScreenCardIds(gameState);
+      const restIds = remainingCardIds(gameState, firstIds);
+      if (!firstIds.length && !restIds.length) return;
+      const token = ++preloadToken;
+      if (firstIds.length) {
+        set({ imagePreload: { active: true, done: 0, total: firstIds.length } });
+        const result = await preloadCardImages(firstIds, {
+          onProgress: (done, total) => {
+            if (token !== preloadToken) return;
+            const current = get().imagePreload;
+            if (!current?.active) return;
+            set({ imagePreload: { active: true, done, total } });
+          },
+        });
+        if (token !== preloadToken) return;
+        console.info(
+          `[battle] 首屏卡图预载完成：成功 ${result.ok} / 失败 ${result.failed} / 共 ${firstIds.length} 张`,
+          imageCacheStats(),
+        );
+        set({ imagePreload: null });
+      }
+      if (!restIds.length) return;
+      // 剩余卡牌后台预载：不 await、不阻塞战场交互
+      void preloadCardImages(restIds).then((result) => {
+        if (token !== preloadToken) return;
+        console.info(
+          `[battle] 后台卡图预载完成：成功 ${result.ok} / 失败 ${result.failed} / 共 ${restIds.length} 张`,
+          imageCacheStats(),
+        );
+      });
+    },
+
     startBattle: async (config) => {
       const setup = buildSetup(config);
       if (!setup) return;
@@ -819,6 +927,12 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       const { state } = createGame(setup, registry);
       get().stopAI();
       get().lanDetach();
+      const token = ++startToken;
+      // 新一局：先释放上一局卡图缓存，再预载双方首屏卡图；完成（或失败/超时）后才真正进入战场
+      invalidateImageWork();
+      set({ imagePreload: null });
+      await get().preloadBattleImages(state);
+      if (token !== startToken) return; // 期间已离开 / 重开
       set({
         state,
         phase: 'playing',
@@ -839,6 +953,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
         difficulty: config.difficulty,
         aiFaction: config.aiFaction,
         lastConfig: config,
+        imagePreload: null,
         playerDeck: {
           faction: config.deck.faction,
           allyFaction: config.deck.allyFaction,
@@ -872,6 +987,9 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
     quitToSetup: () => {
       get().stopAI();
       if (get().mode !== 'ai') get().lanDetach();
+      // 离开战场：作废尚未完成的开局预载 + 释放卡图缓存
+      startToken += 1;
+      invalidateImageWork();
       set({
         phase: 'setup',
         mode: 'ai',
@@ -895,6 +1013,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
         attacks: {},
         hqHits: {},
         hint: null,
+        imagePreload: null,
         demoStarted: false,
       });
     },
@@ -977,6 +1096,9 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
     debugSetupScenario: () => {
       const snapshot = get();
       if (!snapshot.registry) return;
+      // QA 场景不预载，但先释放可能残留的上一局缓存
+      startToken += 1;
+      invalidateImageWork();
       const cards = snapshot.cards;
       const registry = snapshot.registry;
       const hostDeck = buildQuickDeck('Germany', cards, 11);
@@ -1088,6 +1210,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
           tone: 'system',
           at: Date.now(),
         },
+        imagePreload: null,
         fxByKey: {},
         ghosts: [],
         attacks: {},
@@ -1122,6 +1245,8 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
         }
         if (command.type === 'endTurn') turns += 1;
       }
+      const finishedNow = current.status === 'finished';
+      if (finishedNow) invalidateImageWork();
       set({
         state: current,
         selection: null,
@@ -1135,7 +1260,8 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
           current.status === 'finished'
             ? { winner: current.winner, reason: current.endReason ?? 'hq_destroyed' }
             : null,
-        phase: current.status === 'finished' ? 'finished' : 'playing',
+        phase: finishedNow ? 'finished' : 'playing',
+        imagePreload: finishedNow ? null : get().imagePreload,
       });
       if (current.status === 'playing' && current.activePlayer === AI) scheduleAI(500);
     },
@@ -1266,6 +1392,9 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
       }
       const seq = snapshot.lanSeq + 1;
       get().stopAI();
+      // 新一局：作废旧的开局任务并释放上一局卡图缓存
+      startToken += 1;
+      invalidateImageWork();
       set({
         mode: 'lan-host',
         myIndex: HUMAN,
@@ -1299,6 +1428,7 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
         hint: null,
         shakeKey: null,
         lastConfig: null,
+        imagePreload: null,
       });
       try {
         session.startGame(seed, firstPlayer, buildGuestView(state, snapshot.registry, seq));
@@ -1306,6 +1436,8 @@ export const useBattleStore = create<BattleStore>()((set, get) => {
         console.warn('[battle] 下发开局视图失败', error);
         set({ lanError: '下发开局信息失败' });
       }
+      // 房主本机预载首屏卡图（浮层盖在战场上；不阻塞视图下发与客机）
+      void get().preloadBattleImages(state);
     },
 
     lanFail: (message) => {

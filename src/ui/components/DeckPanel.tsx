@@ -1,11 +1,13 @@
-import type { SavedDeck } from '../stores/deckStore';
-import type { UiCard } from '../lib/dataBridge';
+import { memo, useMemo } from 'react';
+import type { DeckData, UiCard } from '../lib/dataBridge';
 import {
   computeDeckStats,
   groupDeckByKredit,
   RULES,
   validateDraft,
   type DraftIssue,
+  type DraftValidation,
+  type DeckStats,
 } from '../lib/deckUi';
 import { cardTypeMeta, cardTypeZh, factionMeta, rarityMeta, typeColor } from '../lib/format';
 import { CurveChart } from './CurveChart';
@@ -13,12 +15,16 @@ import { TypeBar } from './TypeBar';
 import { IconAlert, IconCheck, IconInfo, IconMinus, IconPlus, IconTrash } from './icons';
 
 export interface DeckPanelProps {
-  deck: SavedDeck | null;
+  /** 只依赖编制内容（faction/allyFaction/cards）：改名不会让整个面板重渲染 */
+  deck: DeckData | null;
   byId: Map<string, UiCard>;
   onAdd: (card: UiCard) => void;
   onRemove: (cardId: string) => void;
   onClear: () => void;
   className?: string;
+  /** 页面已算好的统计/校验：传进来避免同一份数据被算两遍 */
+  stats?: DeckStats;
+  validation?: DraftValidation;
 }
 
 const LEVEL_STYLE: Record<DraftIssue['level'], { color: string; icon: typeof IconInfo }> = {
@@ -28,17 +34,41 @@ const LEVEL_STYLE: Record<DraftIssue['level'], { color: string; icon: typeof Ico
 };
 
 /** 右侧卡组面板：编制总览 / 曲线 / 类型分布 / 校验 / 卡牌清单 */
-export function DeckPanel({ deck, byId, onAdd, onRemove, onClear, className = '' }: DeckPanelProps) {
-  const stats = computeDeckStats(deck, byId);
-  const validation = validateDraft(deck, byId);
-  const groups = groupDeckByKredit(deck, byId);
+function DeckPanelInner({
+  deck,
+  byId,
+  onAdd,
+  onRemove,
+  onClear,
+  className = '',
+  stats: statsProp,
+  validation: validationProp,
+}: DeckPanelProps) {
+  const stats = useMemo(() => statsProp ?? computeDeckStats(deck, byId), [statsProp, deck, byId]);
+  const validation = useMemo(
+    () => validationProp ?? validateDraft(deck, byId),
+    [validationProp, deck, byId],
+  );
+  const groups = useMemo(() => groupDeckByKredit(deck, byId), [deck, byId]);
   const total = stats.total;
   const progress = Math.min(100, Math.round((total / RULES.deckSize) * 100));
   const faction = deck ? factionMeta(deck.faction) : null;
+  const typeItems = useMemo(
+    () =>
+      stats.byType
+        .map((item) => ({
+          key: item.key,
+          label: cardTypeZh(item.key),
+          count: item.count,
+          color: typeColor(item.key),
+        }))
+        .sort((a, b) => b.count - a.count),
+    [stats],
+  );
 
   if (!deck) {
     return (
-      <aside className={`fards-panel p-4 ${className}`}>
+      <aside className={`fards-panel fards-no-blur p-4 ${className}`}>
         <p className="fards-label text-brass-500">战斗群编制</p>
         <p className="mt-3 font-body text-xs leading-relaxed text-field-400">
           先在左侧确定主阵营与盟军阵营，随后即可开始编入卡牌。编制进度、克雷迪特曲线与合法性校验会即时更新。
@@ -64,7 +94,7 @@ export function DeckPanel({ deck, byId, onAdd, onRemove, onClear, className = ''
   }
 
   return (
-    <aside className={`fards-panel flex max-h-[calc(100vh-88px)] flex-col overflow-hidden ${className}`}>
+    <aside className={`fards-panel fards-no-blur flex max-h-[calc(100vh-88px)] flex-col overflow-hidden ${className}`}>
       {/* 编制总览 */}
       <div className="shrink-0 border-b border-field-700/70 bg-field-950/50 p-3.5">
         <div className="flex items-end justify-between">
@@ -92,11 +122,12 @@ export function DeckPanel({ deck, byId, onAdd, onRemove, onClear, className = ''
           </div>
         </div>
 
+        {/* 进度条：用 scaleX 代替 width 过渡，避免每帧触发布局（原 transition-[width]） */}
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-field-800">
           <div
-            className="h-full rounded-full transition-[width] duration-300"
+            className="h-full w-full origin-left rounded-full transition-transform duration-300"
             style={{
-              width: `${progress}%`,
+              transform: `scaleX(${progress / 100})`,
               background:
                 total === RULES.deckSize
                   ? 'linear-gradient(to right, #5d7a3f, #9fc06a)'
@@ -123,14 +154,7 @@ export function DeckPanel({ deck, byId, onAdd, onRemove, onClear, className = ''
             <p className="fards-label mb-1.5 text-field-400">类型分布</p>
             <TypeBar
               total={Math.max(1, stats.total - stats.missing)}
-              items={stats.byType
-                .map((item) => ({
-                  key: item.key,
-                  label: cardTypeZh(item.key),
-                  count: item.count,
-                  color: typeColor(item.key),
-                }))
-                .sort((a, b) => b.count - a.count)}
+              items={typeItems}
             />
           </div>
         </div>
@@ -254,4 +278,5 @@ export function DeckPanel({ deck, byId, onAdd, onRemove, onClear, className = ''
   );
 }
 
+export const DeckPanel = memo(DeckPanelInner);
 export default DeckPanel;

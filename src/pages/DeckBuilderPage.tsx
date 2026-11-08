@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useShallow } from 'zustand/react/shallow';
 import { CardDetailDialog } from '../ui/components/CardDetailDialog';
 import { CardView } from '../ui/components/CardView';
 import { DeckPanel } from '../ui/components/DeckPanel';
@@ -8,6 +9,7 @@ import { EmptyState } from '../ui/components/EmptyState';
 import { FactionBadge } from '../ui/components/FactionBadge';
 import { PageHeader } from '../ui/components/PageHeader';
 import { SearchInput } from '../ui/components/SearchInput';
+import { VirtualCardGrid, type GridBreakpoints } from '../ui/components/VirtualCardGrid';
 import {
   IconAlert,
   IconArrowRight,
@@ -49,13 +51,19 @@ import {
   isFactionAllowed,
 } from '../ui/lib/format';
 import { useCards, useFeaturedDecks } from '../ui/lib/useCards';
-import { useInView } from '../ui/lib/useInView';
 import { useDeckStore, useSavedDecks } from '../ui/stores/deckStore';
 import { toast } from '../ui/stores/toastStore';
 
-const PAGE_SIZE = 90;
-
 type PoolSort = 'kredits' | 'name' | 'attack' | 'defense';
+
+/** 列数断点与改造前 Tailwind 类一致：grid-cols-2 sm:3 lg:4 xl:5 2xl:6 */
+const POOL_GRID_BREAKPOINTS: GridBreakpoints = [
+  [0, 2],
+  [640, 3],
+  [1024, 4],
+  [1280, 5],
+  [1536, 6],
+];
 
 /** 从 JSON 文本解析卡组（本工具导出的 JSON / 常见卡组 JSON） */
 function parseJsonDeck(text: string): DeckData | null {
@@ -100,6 +108,49 @@ function parseJsonDeck(text: string): DeckData | null {
   }
 }
 
+/* ------------------------------------------------------------------
+ * 卡池单卡：memo 化的纯展示单元
+ * - 传入的 onAdd/onInspect 是页面级稳定回调（useCallback），
+ *   因此加减卡/输入卡组名时，只有 count 变化的那张卡会重渲染。
+ * ------------------------------------------------------------------ */
+interface DeckPoolCardProps {
+  card: UiCard;
+  count: number;
+  allowed: boolean;
+  onAdd: (card: UiCard) => void;
+  onInspect: (card: UiCard) => void;
+}
+
+const DeckPoolCard = memo(function DeckPoolCard({
+  card,
+  count,
+  allowed,
+  onAdd,
+  onInspect,
+}: DeckPoolCardProps) {
+  const handleInspect = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation();
+      onInspect(card);
+    },
+    [onInspect, card],
+  );
+
+  return (
+    <div className="group relative">
+      <CardView card={card} size="sm" count={count} muted={!allowed} onClick={onAdd} />
+      <button
+        type="button"
+        aria-label={`查看 ${card.nameZh} 详情`}
+        onClick={handleInspect}
+        className="absolute right-1 bottom-1 z-[6] hidden rounded-sm border border-field-600/80 bg-field-950/90 p-1 text-field-300 transition-colors group-hover:block hover:text-brass-300"
+      >
+        <IconInfo size={11} />
+      </button>
+    </div>
+  );
+});
+
 export default function DeckBuilderPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -108,17 +159,34 @@ export default function DeckBuilderPage() {
 
   const current = useDeckStore((s) => s.current);
   const savedDecks = useSavedDecks();
-  const createDeck = useDeckStore((s) => s.createDeck);
-  const importDeck = useDeckStore((s) => s.importDeck);
-  const loadSavedDeck = useDeckStore((s) => s.loadSavedDeck);
-  const loadFeatured = useDeckStore((s) => s.loadFeatured);
-  const deleteSavedDeck = useDeckStore((s) => s.deleteSavedDeck);
-  const renameCurrent = useDeckStore((s) => s.renameCurrent);
-  const setFactions = useDeckStore((s) => s.setFactions);
-  const addCard = useDeckStore((s) => s.addCard);
-  const removeCard = useDeckStore((s) => s.removeCard);
-  const clearCards = useDeckStore((s) => s.clearCards);
-  const saveCurrent = useDeckStore((s) => s.saveCurrent);
+  /* 12 个 action 一次性订阅（useShallow 保证引用稳定，不会额外触发重渲染） */
+  const {
+    createDeck,
+    importDeck,
+    loadSavedDeck,
+    loadFeatured,
+    deleteSavedDeck,
+    renameCurrent,
+    setFactions,
+    addCard,
+    removeCard,
+    clearCards,
+    saveCurrent,
+  } = useDeckStore(
+    useShallow((s) => ({
+      createDeck: s.createDeck,
+      importDeck: s.importDeck,
+      loadSavedDeck: s.loadSavedDeck,
+      loadFeatured: s.loadFeatured,
+      deleteSavedDeck: s.deleteSavedDeck,
+      renameCurrent: s.renameCurrent,
+      setFactions: s.setFactions,
+      addCard: s.addCard,
+      removeCard: s.removeCard,
+      clearCards: s.clearCards,
+      saveCurrent: s.saveCurrent,
+    })),
+  );
 
   /* ---------------- 新手引导 / 阵营选择 ---------------- */
   const [pickMain, setPickMain] = useState<string>('Germany');
@@ -130,7 +198,6 @@ export default function DeckBuilderPage() {
   const [kreditFilter, setKreditFilter] = useState('all');
   const [sort, setSort] = useState<PoolSort>('kredits');
   const [onlyAllowed, setOnlyAllowed] = useState(true);
-  const [limit, setLimit] = useState(PAGE_SIZE);
 
   /* ---------------- 弹窗 ---------------- */
   const [importOpen, setImportOpen] = useState(false);
@@ -139,8 +206,6 @@ export default function DeckBuilderPage() {
   const [importText, setImportText] = useState('');
   const [importing, setImporting] = useState(false);
   const [selectedCard, setSelectedCard] = useState<UiCard | null>(null);
-
-  const { ref: sentinelRef, inView } = useInView<HTMLDivElement>({ once: false, rootMargin: '480px 0px' });
 
   /* ---------------- 深链载入（?code= / ?deck_code= / ?featured=） ---------------- */
   const bootRef = useRef(false);
@@ -170,10 +235,14 @@ export default function DeckBuilderPage() {
   }, [loading, featured, featuredLoading, searchParams, importDeck, loadFeatured, setSearchParams]);
 
   /* ---------------- 卡池 ---------------- */
+  const deckFaction = current?.faction ?? null;
+  const deckAlly = current?.allyFaction ?? null;
+  const hasDeck = Boolean(current);
+
   const poolCards = useMemo(() => {
     let list = cards;
-    if (current && onlyAllowed) {
-      list = list.filter((card) => isFactionAllowed(card, current.faction, current.allyFaction));
+    if (deckFaction && onlyAllowed) {
+      list = list.filter((card) => isFactionAllowed(card, deckFaction, deckAlly));
     }
     const q = search.trim().toLowerCase();
     if (q) {
@@ -206,19 +275,45 @@ export default function DeckBuilderPage() {
       }
     });
     return sorted;
-  }, [cards, current, onlyAllowed, search, typeFilter, kreditFilter, sort]);
+  }, [cards, deckFaction, deckAlly, onlyAllowed, search, typeFilter, kreditFilter, sort]);
 
-  const visibleCards = useMemo(() => poolCards.slice(0, limit), [poolCards, limit]);
+  /** 卡池内每张卡是否有禁止入场（muted）——只随阵营变化重算，避免逐卡重复判定 */
+  const allowedIds = useMemo(() => {
+    if (!deckFaction) return null;
+    const set = new Set<string>();
+    for (const card of cards) {
+      if (isFactionAllowed(card, deckFaction, deckAlly)) set.add(card.cardId);
+    }
+    return set;
+  }, [cards, deckFaction, deckAlly]);
 
-  useEffect(() => setLimit(PAGE_SIZE), [search, typeFilter, kreditFilter, sort, onlyAllowed, current?.faction, current?.allyFaction]);
+  /** 已编入张数索引：O(1) 查表，替代每张卡 find() 的 O(n×m) */
+  const deckCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const entry of current?.cards ?? []) map.set(entry.cardId, entry.count);
+    return map;
+  }, [current?.cards]);
 
-  useEffect(() => {
-    if (inView) setLimit((value) => Math.min(poolCards.length, value + PAGE_SIZE));
-  }, [inView, poolCards.length]);
 
   /* ---------------- 统计与校验 ---------------- */
-  const stats = useMemo(() => computeDeckStats(current, byId), [current, byId]);
-  const validation = useMemo(() => validateDraft(current, byId), [current, byId]);
+  /* 只依赖编制内容：改卡组名（高频输入）不该让统计/校验/右侧面板跟着重算重渲染 */
+  const deckCards = current?.cards;
+  const stats = useMemo(
+    () => computeDeckStats(current, byId),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [deckCards, deckFaction, deckAlly, byId, hasDeck],
+  );
+  const validation = useMemo(
+    () => validateDraft(current, byId),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [deckCards, deckFaction, deckAlly, byId, hasDeck],
+  );
+  /** 传给 DeckPanel 的稳定视图（不含 name/updatedAt），改名时引用不变 */
+  const panelDeck = useMemo(
+    () => (hasDeck ? { faction: deckFaction ?? '', allyFaction: deckAlly, cards: deckCards ?? [] } : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [deckCards, deckFaction, deckAlly, hasDeck],
+  );
   const savedVersion = current ? savedDecks.find((deck) => deck.id === current.id) : undefined;
   const isSaved = Boolean(savedVersion && current && savedVersion.updatedAt === current.updatedAt);
   const deckCode = useMemo(() => (current ? encodeDeck(current) : null), [current]);
@@ -239,14 +334,25 @@ export default function DeckBuilderPage() {
     toast(`战斗群已建立：${factionMeta(pickMain).zh}${pickAlly ? ` + ${factionMeta(pickAlly).zh}` : ''}`, 'success');
   };
 
-  const handleAdd = (card: UiCard) => {
-    if (!current) {
-      toast('请先选择主阵营，再编入卡牌', 'warn');
-      return;
-    }
-    const result = addCard(card, byId);
-    if (!result.ok) toast(result.reason ?? '无法编入', 'warn');
-  };
+  /** 稳定回调：卡池里每张卡共用同一个引用，memo 才不会被新闭包击穿 */
+  const handleAdd = useCallback(
+    (card: UiCard) => {
+      if (!hasDeck) {
+        toast('请先选择主阵营，再编入卡牌', 'warn');
+        return;
+      }
+      const result = addCard(card, byId);
+      if (!result.ok) toast(result.reason ?? '无法编入', 'warn');
+    },
+    [hasDeck, addCard, byId],
+  );
+
+  const handleInspect = useCallback((card: UiCard) => setSelectedCard(card), []);
+
+  const handleClear = useCallback(() => {
+    clearCards();
+    toast('编制已清空', 'info');
+  }, [clearCards]);
 
   const handleMainChange = (value: string) => {
     if (!current) return;
@@ -354,14 +460,35 @@ export default function DeckBuilderPage() {
     }
   };
 
-  const selectedDeckCount = selectedCard && current
-    ? current.cards.find((c) => c.cardId === selectedCard.cardId)?.count ?? 0
-    : 0;
-  const selectedAddReason = selectedCard
-    ? current
-      ? (checkAddCard(selectedCard, current, byId).ok ? undefined : checkAddCard(selectedCard, current, byId).reason)
-      : '请先选择主阵营'
-    : undefined;
+  const selectedDeckCount = selectedCard ? (deckCounts.get(selectedCard.cardId) ?? 0) : 0;
+  const selectedAddReason = useMemo(() => {
+    if (!selectedCard) return undefined;
+    if (!current) return '请先选择主阵营';
+    const check = checkAddCard(selectedCard, current, byId);
+    return check.ok ? undefined : check.reason;
+  }, [selectedCard, current, byId]);
+
+  /** 同名卡种类数：只在选中卡变化时扫一遍全库，避免每次渲染都 filter 1646 张 */
+  const selectedSameNameCount = useMemo(() => {
+    if (!selectedCard) return 0;
+    return new Set(cards.filter((card) => card.nameZh === selectedCard.nameZh).map((card) => card.cardId)).size;
+  }, [cards, selectedCard]);
+
+  /** 卡池单卡渲染：稳定引用 + 查表取数，滚动/输入时只有必要项重渲染 */
+  const renderPoolCard = useCallback(
+    (card: UiCard) => (
+      <DeckPoolCard
+        card={card}
+        count={deckCounts.get(card.cardId) ?? 0}
+        allowed={allowedIds ? allowedIds.has(card.cardId) : true}
+        onAdd={handleAdd}
+        onInspect={handleInspect}
+      />
+    ),
+    [deckCounts, allowedIds, handleAdd, handleInspect],
+  );
+
+  const poolCardKey = useCallback((card: UiCard) => card.cardId, []);
 
   const totalCopiesRemaining = Math.max(0, RULES.deckSize - stats.total);
 
@@ -523,7 +650,7 @@ export default function DeckBuilderPage() {
                         key={faction}
                         type="button"
                         onClick={() => setPickMain(faction)}
-                        className={`group relative overflow-hidden rounded border px-3 py-2.5 text-left transition-all ${
+                        className={`group relative overflow-hidden rounded border px-3 py-2.5 text-left transition-[transform,border-color,background-color,box-shadow] ${
                           active
                             ? 'border-brass-500/80 bg-field-800 shadow-[0_0_18px_rgb(195_155_58/0.12)]'
                             : 'border-field-700/70 bg-field-900/60 hover:border-field-500'
@@ -620,7 +747,7 @@ export default function DeckBuilderPage() {
             </div>
           ) : (
             /* ---------------- 卡池 ---------------- */
-            <div className="fards-panel flex flex-col overflow-hidden">
+            <div className="fards-panel fards-no-blur flex flex-col overflow-hidden">
               <div className="flex flex-wrap items-center gap-2 border-b border-field-700/60 p-2.5">
                 <SearchInput
                   value={search}
@@ -693,48 +820,17 @@ export default function DeckBuilderPage() {
                   <EmptyState title="卡池内没有符合条件的卡牌" hint="调整搜索或筛选条件后再试。" />
                 ) : (
                   <>
-                    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-                      {visibleCards.map((card) => {
-                        const count = current.cards.find((entry) => entry.cardId === card.cardId)?.count ?? 0;
-                        const allowed = isFactionAllowed(card, current.faction, current.allyFaction);
-                        return (
-                          <div key={card.cardId} className="group relative">
-                            <CardView
-                              card={card}
-                              size="sm"
-                              count={count}
-                              muted={!allowed}
-                              onClick={() => handleAdd(card)}
-                            />
-                            <button
-                              type="button"
-                              aria-label={`查看 ${card.nameZh} 详情`}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setSelectedCard(card);
-                              }}
-                              className="absolute right-1 bottom-1 z-[6] hidden rounded-sm border border-field-600/80 bg-field-950/90 p-1 text-field-300 transition-colors group-hover:block hover:text-brass-300"
-                            >
-                              <IconInfo size={11} />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div ref={sentinelRef} className="mt-4 flex flex-col items-center gap-1.5">
-                      {visibleCards.length < poolCards.length ? (
-                        <button
-                          type="button"
-                          className="fards-btn py-1.5"
-                          onClick={() => setLimit((value) => value + PAGE_SIZE)}
-                        >
-                          展开更多卡牌（{visibleCards.length}/{poolCards.length}）
-                        </button>
-                      ) : (
-                        <span className="py-1 font-body text-[10px] tracking-[0.16em] text-field-600 uppercase">
-                          卡池已全部展开
-                        </span>
-                      )}
+                    {/* 窗口化渲染：卡池数百张也只挂可视区 ±1 屏 */}
+                    <VirtualCardGrid
+                      items={poolCards}
+                      itemKey={poolCardKey}
+                      breakpoints={POOL_GRID_BREAKPOINTS}
+                      renderItem={renderPoolCard}
+                    />
+                    <div className="mt-4 flex flex-col items-center gap-1.5">
+                      <span className="py-1 font-body text-[10px] tracking-[0.16em] text-field-600 uppercase">
+                        卡池已全部展开（{poolCards.length} 张）
+                      </span>
                     </div>
                   </>
                 )}
@@ -745,14 +841,13 @@ export default function DeckBuilderPage() {
 
         {/* 右侧编制面板 */}
         <DeckPanel
-          deck={current}
+          deck={panelDeck}
           byId={byId}
           onAdd={handleAdd}
           onRemove={removeCard}
-          onClear={() => {
-            clearCards();
-            toast('编制已清空', 'info');
-          }}
+          onClear={handleClear}
+          stats={stats}
+          validation={validation}
           className="xl:sticky xl:top-[76px] xl:self-start"
         />
       </div>
@@ -1004,7 +1099,7 @@ export default function DeckBuilderPage() {
         card={selectedCard}
         open={Boolean(selectedCard)}
         onClose={() => setSelectedCard(null)}
-        sameNameCount={selectedCard ? cards.filter((c) => c.nameZh === selectedCard.nameZh).length : 0}
+        sameNameCount={selectedSameNameCount}
         deckCount={selectedDeckCount}
         onAdd={handleAdd}
         addDisabledReason={selectedAddReason}

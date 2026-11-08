@@ -1,3 +1,5 @@
+import { memo } from 'react';
+
 export type StatKind = 'kredit' | 'attack' | 'defense' | 'operation' | 'count';
 
 const META: Record<StatKind, { label: string; color: string; title: string }> = {
@@ -23,7 +25,7 @@ const SIZE = {
 } as const;
 
 /** 数值徽记：费用 / 攻击 / 防御 / 行动花费 */
-export function StatBadge({ kind, value, size = 'sm', className = '', hideLabel = false }: StatBadgeProps) {
+function StatBadgeInner({ kind, value, size = 'sm', className = '', hideLabel = false }: StatBadgeProps) {
   const meta = META[kind] ?? META.count;
   const s = SIZE[size];
   return (
@@ -41,7 +43,7 @@ export function StatBadge({ kind, value, size = 'sm', className = '', hideLabel 
 }
 
 /** 三个数值的组合（费用 / 攻击 / 防御） */
-export function StatRow({
+function StatRowInner({
   kredits,
   attack,
   defense,
@@ -63,4 +65,6 @@ export function StatRow({
   );
 }
 
+export const StatBadge = memo(StatBadgeInner);
+export const StatRow = memo(StatRowInner);
 export default StatBadge;

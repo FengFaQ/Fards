@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CardDetailDialog } from '../ui/components/CardDetailDialog';
 import { CardView } from '../ui/components/CardView';
@@ -6,9 +6,9 @@ import { EmptyState } from '../ui/components/EmptyState';
 import { FacetGroup, type FacetOption } from '../ui/components/FacetGroup';
 import { PageHeader } from '../ui/components/PageHeader';
 import { SearchInput } from '../ui/components/SearchInput';
+import { VirtualCardGrid, type GridBreakpoints } from '../ui/components/VirtualCardGrid';
 import { checkAddCard } from '../ui/lib/deckUi';
 import { useCards } from '../ui/lib/useCards';
-import { useInView } from '../ui/lib/useInView';
 import {
   CARD_TYPE_ORDER,
   FACTION_ORDER,
@@ -28,6 +28,7 @@ import type { UiCard } from '../ui/lib/dataBridge';
 import { useDeckStore } from '../ui/stores/deckStore';
 import { toast } from '../ui/stores/toastStore';
 import { IconFilter, IconRefresh, IconShield } from '../ui/components/icons';
+import { useShallow } from 'zustand/react/shallow';
 
 type SortKey = 'kredits' | 'name' | 'rarity' | 'attack' | 'defense' | 'faction';
 
@@ -40,7 +41,14 @@ const SORTS: { value: SortKey; label: string }[] = [
   { value: 'faction', label: '按阵营' },
 ];
 
-const PAGE_SIZE = 120;
+/** 列数断点与改造前 Tailwind 类完全一致：grid-cols-2 sm:3 md:4 xl:5 2xl:6 */
+const CARD_GRID_BREAKPOINTS: GridBreakpoints = [
+  [0, 2],
+  [640, 3],
+  [768, 4],
+  [1280, 5],
+  [1536, 6],
+];
 
 interface Filters {
   search: string;
@@ -119,16 +127,8 @@ export default function CardsPage() {
     types: searchParams.get('type') ? [searchParams.get('type') as string] : [],
   }));
   const [sort, setSort] = useState<SortKey>((searchParams.get('sort') as SortKey) ?? 'kredits');
-  const [limit, setLimit] = useState(PAGE_SIZE);
   const [showFilters, setShowFilters] = useState(false);
   const [selected, setSelected] = useState<UiCard | null>(null);
-
-  const currentDeck = useDeckStore((s) => s.current);
-  const addCard = useDeckStore((s) => s.addCard);
-  const { ref: sentinelRef, inView } = useInView<HTMLDivElement>({
-    once: false,
-    rootMargin: '520px 0px',
-  });
 
   /* ---------------- 统计与选项 ---------------- */
   const stats = useMemo(() => {
@@ -252,16 +252,6 @@ export default function CardsPage() {
     return sortCards(list, sort);
   }, [cards, filters, sort]);
 
-  const visible = useMemo(() => filtered.slice(0, limit), [filtered, limit]);
-
-  useEffect(() => {
-    setLimit(PAGE_SIZE);
-  }, [filters, sort]);
-
-  useEffect(() => {
-    if (inView) setLimit((value) => Math.min(filtered.length, value + PAGE_SIZE));
-  }, [inView]);
-
   /* ---------------- 派生 UI 数据 ---------------- */
   const activeFilterCount =
     filters.factions.length +
@@ -278,28 +268,22 @@ export default function CardsPage() {
     return new Set(cards.filter((card) => card.nameZh === selected.nameZh).map((card) => card.cardId)).size;
   }, [cards, selected]);
 
-  const deckCount = selected ? (currentDeck?.cards.find((c) => c.cardId === selected.cardId)?.count ?? 0) : 0;
-  const addDisabledReason = useMemo(() => {
-    if (!selected) return undefined;
-    if (!currentDeck) return '请先到「卡组构筑」建立战斗群';
-    const check = checkAddCard(selected, currentDeck, byId);
-    return check.ok ? undefined : check.reason;
-  }, [selected, currentDeck, byId]);
-
   const eliteCount = stats.rarityCount.get('Elite') ?? 0;
   const activePool = stats.poolCount.get('active') ?? 0;
   const reservePool = stats.poolCount.get('reserve') ?? 0;
 
-  const handleAdd = (card: UiCard) => {
-    const result = addCard(card, byId);
-    if (result.ok) toast(`已编入：${card.nameZh}`, 'success');
-    else toast(result.reason ?? '无法编入', 'warn');
-  };
+  const closeDetail = useCallback(() => setSelected(null), []);
 
   const update = <K extends keyof Filters>(key: K, value: Filters[K]) =>
     setFilters((prev) => ({ ...prev, [key]: value }));
 
   const resetFilters = () => setFilters(EMPTY_FILTERS);
+
+  /* 稳定的行回调：CardView 走 memo，滚动/筛选时不再因新闭包而整片重渲染 */
+  const renderCard = useCallback(
+    (card: UiCard) => <CardView card={card} size="sm" onClick={setSelected} />,
+    [],
+  );
 
   return (
     <div className="mx-auto w-full max-w-[1500px] px-4 py-7 sm:px-6 lg:px-8">
@@ -474,48 +458,89 @@ export default function CardsPage() {
             />
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-                {visible.map((card) => (
-                  <CardView key={card.cardId} card={card} size="sm" onClick={setSelected} />
-                ))}
-              </div>
+              {/* 窗口化渲染：只挂可视区 ±1 屏的卡片，1646 张也不再堆 DOM */}
+              <VirtualCardGrid
+                items={filtered}
+                itemKey={cardKey}
+                breakpoints={CARD_GRID_BREAKPOINTS}
+                renderItem={renderCard}
+              />
 
-              <div ref={sentinelRef} className="mt-5 flex flex-col items-center gap-2">
-                {visible.length < filtered.length ? (
-                  <>
-                    <div className="h-px w-full bg-field-700/60" />
-                    <span className="font-body text-[10px] tracking-[0.18em] text-field-500 uppercase">
-                      已显示 {visible.length} / {filtered.length}
-                    </span>
-                    <button
-                      type="button"
-                      className="fards-btn py-1.5"
-                      onClick={() => setLimit((value) => value + PAGE_SIZE)}
-                    >
-                      调阅更多档案
-                    </button>
-                  </>
-                ) : (
-                  <span className="flex items-center gap-2 py-2 font-body text-[10px] tracking-[0.18em] text-field-600 uppercase">
-                    <IconShield size={12} />
-                    全部 {filtered.length} 张档案已调阅完毕
-                  </span>
-                )}
+              <div className="mt-5 flex flex-col items-center gap-2">
+                <div className="h-px w-full bg-field-700/60" />
+                <span className="flex items-center gap-2 py-2 font-body text-[10px] tracking-[0.18em] text-field-600 uppercase">
+                  <IconShield size={12} />
+                  全部 {filtered.length} 张档案已调阅完毕
+                </span>
               </div>
             </>
           )}
         </section>
       </div>
 
-      <CardDetailDialog
+      <CardDetailWithDeck
         card={selected}
-        open={Boolean(selected)}
-        onClose={() => setSelected(null)}
+        byId={byId}
         sameNameCount={sameNameCount}
-        deckCount={deckCount}
-        onAdd={currentDeck ? handleAdd : undefined}
-        addDisabledReason={addDisabledReason}
+        onClose={closeDetail}
       />
     </div>
   );
 }
+
+/* ------------------------------------------------------------------
+ * 卡牌详情弹窗 + 卡组上下文
+ * 独立成组件后，只有它订阅 deckStore：在图鉴页编入/移除卡牌时，
+ * 不会把整页（含上千张卡的虚拟列表）一起重渲染。
+ * ------------------------------------------------------------------ */
+interface CardDetailWithDeckProps {
+  card: UiCard | null;
+  byId: Map<string, UiCard>;
+  sameNameCount: number;
+  onClose: () => void;
+}
+
+const CardDetailWithDeck = memo(function CardDetailWithDeck({
+  card,
+  byId,
+  sameNameCount,
+  onClose,
+}: CardDetailWithDeckProps) {
+  const { currentDeck, addCard } = useDeckStore(
+    useShallow((s) => ({ currentDeck: s.current, addCard: s.addCard })),
+  );
+
+  const deckCount = card
+    ? (currentDeck?.cards.find((entry) => entry.cardId === card.cardId)?.count ?? 0)
+    : 0;
+
+  const addDisabledReason = useMemo(() => {
+    if (!card) return undefined;
+    if (!currentDeck) return '请先到「卡组构筑」建立战斗群';
+    const check = checkAddCard(card, currentDeck, byId);
+    return check.ok ? undefined : check.reason;
+  }, [card, currentDeck, byId]);
+
+  const handleAdd = useCallback(
+    (target: UiCard) => {
+      const result = addCard(target, byId);
+      if (result.ok) toast(`已编入：${target.nameZh}`, 'success');
+      else toast(result.reason ?? '无法编入', 'warn');
+    },
+    [addCard, byId],
+  );
+
+  return (
+    <CardDetailDialog
+      card={card}
+      open={Boolean(card)}
+      onClose={onClose}
+      sameNameCount={sameNameCount}
+      deckCount={deckCount}
+      onAdd={currentDeck ? handleAdd : undefined}
+      addDisabledReason={addDisabledReason}
+    />
+  );
+});
+
+const cardKey = (card: UiCard) => card.cardId;

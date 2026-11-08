@@ -15,6 +15,8 @@ export interface HandFanProps {
   byId: Map<string, UiCard>;
   onHover: (cardId: string | null) => void;
   hoveredId: string | null;
+  /** 点击手牌（在选牌逻辑之后调用，用于打开「点击来源」的检视面板，不影响选牌/出牌） */
+  onCardClick?: (cardId: string) => void;
 }
 
 interface HandCardProps {
@@ -27,7 +29,11 @@ interface HandCardProps {
   hovered: boolean;
   style: CSSProperties;
   onHover: () => void;
+  /** 鼠标移出手牌（用于关闭悬停打开的检视面板 / 复位放大） */
+  onHoverEnd: () => void;
   onSelect: () => void;
+  /** 点击后打开检视（选牌逻辑不受影响） */
+  onInspect: () => void;
 }
 
 function HandCard({
@@ -40,7 +46,9 @@ function HandCard({
   hovered,
   style,
   onHover,
+  onHoverEnd,
   onSelect,
+  onInspect,
 }: HandCardProps) {
   const keywords = card ? cardKeywords(card).slice(0, 2) : [];
   const faction = factionMeta(card?.faction ?? 'Neutral');
@@ -54,7 +62,11 @@ function HandCard({
       data-hoverable={playable}
       data-lifted={hovered || selected}
       onMouseEnter={onHover}
-      onClick={onSelect}
+      onMouseLeave={onHoverEnd}
+      onClick={() => {
+        onSelect();
+        onInspect();
+      }}
       aria-label={`${card?.nameZh ?? instance.cardId}${playable ? '' : '（不可打出）'}`}
     >
       <CardFace card={card} className="h-full w-full" imageClassName={playable ? '' : 'saturate-50'}>
@@ -111,7 +123,7 @@ function HandCard({
   );
 }
 
-export function HandFan({ legalByCard, byId, onHover, hoveredId }: HandFanProps) {
+export function HandFan({ legalByCard, byId, onHover, hoveredId, onCardClick }: HandFanProps) {
   const state = useBattleStore((s) => s.state);
   const selection = useBattleStore((s) => s.selection);
   const selectCard = useBattleStore((s) => s.selectCard);
@@ -158,7 +170,9 @@ export function HandFan({ legalByCard, byId, onHover, hoveredId }: HandFanProps)
             hovered={hoveredId === instance.cardId}
             style={style}
             onHover={() => onHover(instance.cardId)}
+            onHoverEnd={() => onHover(null)}
             onSelect={() => selectCard(instance.instanceId)}
+            onInspect={() => onCardClick?.(instance.cardId)}
           />
         );
       })}

@@ -10,6 +10,7 @@ import { getLanSession } from '@/net/lanSession';
 import { useBattleStore } from '../ui/stores/battleStore';
 import { useDeckStore } from '../ui/stores/deckStore';
 import BattleScreen from '../ui/battle/BattleScreen';
+import CardImagePreloadOverlay from '../ui/battle/CardImagePreloadOverlay';
 import LanWaiting from '../ui/battle/LanWaiting';
 import SetupScreen from '../ui/battle/SetupScreen';
 import { lanDeckForFaction, fromDeckPayload, toDeckPayload } from '../ui/battle/lan';
@@ -177,12 +178,27 @@ export default function BattlePage() {
 
   const mode = useBattleStore((state) => state.mode);
   const storeState = useBattleStore((state) => state.state);
+  const imagePreload = useBattleStore((state) => state.imagePreload);
 
   if (phase === 'boot' || (booting && !hasRegistry)) return <BootScreen />;
   if (!hasRegistry) return <ErrorScreen message={error ?? '未加载到任何卡牌'} />;
+  // 开局卡图预载浮层：AI 对局在 setup/结束态之上盖住，LAN 双方在战场之上盖住
+  const preloadOverlay = imagePreload?.active ? (
+    <CardImagePreloadOverlay progress={imagePreload} />
+  ) : null;
   if (mode === 'lan-host' || mode === 'lan-guest') {
-    return storeState ? <BattleScreen /> : <LanWaiting />;
+    return (
+      <>
+        {storeState ? <BattleScreen /> : <LanWaiting />}
+        {preloadOverlay}
+      </>
+    );
   }
-  if (phase === 'setup') return <SetupScreen />;
-  return <BattleScreen />;
+  if (phase === 'setup') return <>{preloadOverlay ?? <SetupScreen />}</>;
+  return (
+    <>
+      <BattleScreen />
+      {preloadOverlay}
+    </>
+  );
 }

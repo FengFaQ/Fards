@@ -1,3 +1,4 @@
+import { memo, useMemo } from 'react';
 import type { UiCard } from '../lib/dataBridge';
 import { cardKeywords, cardTypeMeta, factionMeta, poolZh, rarityMeta, setZh } from '../lib/format';
 import { CardView } from './CardView';
@@ -28,7 +29,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 /** 卡牌详情弹窗：大图 + 全字段 + 效果文本 + 关键字 */
-export function CardDetailDialog({
+function CardDetailDialogInner({
   card,
   open,
   onClose,
@@ -40,7 +41,7 @@ export function CardDetailDialog({
   const faction = factionMeta(card?.faction);
   const rarity = rarityMeta(card?.rarity);
   const type = cardTypeMeta(card?.type);
-  const keywords = card ? cardKeywords(card) : [];
+  const keywords = useMemo(() => (card ? cardKeywords(card) : []), [card]);
 
   return (
     <Dialog
@@ -168,4 +169,5 @@ export function CardDetailDialog({
   );
 }
 
+export const CardDetailDialog = memo(CardDetailDialogInner);
 export default CardDetailDialog;
