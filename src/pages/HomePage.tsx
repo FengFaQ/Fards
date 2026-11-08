@@ -17,7 +17,7 @@ import {
 import { copyText } from '../ui/lib/clipboard';
 import { factionMeta } from '../ui/lib/format';
 import type { FeaturedDeck } from '../ui/lib/dataBridge';
-import { useCardSummary, useFeaturedDecks } from '../ui/lib/useCards';
+import { useCards, useFeaturedDecks } from '../ui/lib/useCards';
 import { toast } from '../ui/stores/toastStore';
 
 const REPO_URL = 'https://github.com/FengFaQ/Fards';
@@ -160,7 +160,7 @@ const FeaturedDeckTile = memo(function FeaturedDeckTile({ deck }: { deck: Featur
 });
 
 export default function HomePage() {
-  const { total: cardTotal } = useCardSummary();
+  const { cards } = useCards();
   const { decks } = useFeaturedDecks();
 
   return (
@@ -219,7 +219,7 @@ export default function HomePage() {
             </div>
 
             <div className="mt-9 flex flex-wrap items-center gap-x-9 gap-y-4 border-t border-field-700/60 pt-5">
-              <HeroStat value={cardTotal ? String(cardTotal) : '—'} label="卡牌档案" />
+              <HeroStat value={cards.length ? String(cards.length) : '—'} label="卡牌档案" />
               <HeroStat value="9" label="主战阵营" />
               <HeroStat value="39" label="标准编制" />
               <HeroStat value="4" label="同名上限" />
@@ -242,7 +242,7 @@ export default function HomePage() {
             </p>
             <dl className="mt-4 space-y-2.5">
               {[
-                ['数据快照', cardTotal ? `${cardTotal} 张卡牌` : '加载中…'],
+                ['数据快照', cards.length ? `${cards.length} 张卡牌` : '加载中…'],
                 ['卡池范围', '现役 / 预备 / 衍生'],
                 ['编制规则', '39 张 · 同名 4 · 精英 1'],
                 ['出图协议', '?action=overview_horizontal'],

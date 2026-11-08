@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   loadAllCards,
   loadFeaturedDecks,
-  withBase,
   type FeaturedDeck,
   type UiCard,
 } from './dataBridge';
@@ -69,74 +68,17 @@ export function useCards(): CardsState {
 }
 
 /* --------------------------------------------------------------------------
- * 卡牌总量（首页用）
- * 首页只显示「共 N 张卡牌」，没必要为了一个数字下载 + 解析 1.3MB 的 cards.json。
- * 优先读 public/data/meta.json（约 2KB，构建数据时生成的统计快照），
- * 只有在 meta 缺失/不可用时才回退到全量卡牌。
+ * 说明：曾尝试让首页只读 data/meta.json 的 2KB 摘要来避免加载 1.3MB 的 cards.json，
+ * 但首页「热门卡组」经 dataBridge.loadFeaturedDecks() 解析 importId 时仍会触发
+ * loadAllCards()（数据层行为，不在本次改动范围），因此该优化无实际收益，已回退。
  * -------------------------------------------------------------------------- */
-export interface CardSummaryState {
-  total: number;
-  loading: boolean;
-}
-
-let summaryCache: CardSummaryState | null = null;
-let summaryInflight: Promise<CardSummaryState> | null = null;
-
-async function loadCardSummary(): Promise<CardSummaryState> {
-  if (cardsSnapshot) return { total: cardsSnapshot.cards.length, loading: false };
-  try {
-    const res = await fetch(withBase('data/meta.json'));
-    if (res.ok) {
-      const json = (await res.json()) as Record<string, unknown>;
-      const total = Number(json.uniqueCount ?? json.apiTotal ?? json.fetchedCount ?? 0);
-      if (Number.isFinite(total) && total > 0) return { total, loading: false };
-    }
-  } catch {
-    /* 回退到全量卡牌 */
-  }
-  const cards = await loadAllCards();
-  return { total: cards.length, loading: false };
-}
-
-/** 轻量卡牌总数（不触发全量卡牌加载） */
-export function useCardSummary(): CardSummaryState {
-  const [state, setState] = useState<CardSummaryState>(
-    () =>
-      summaryCache ??
-      (cardsSnapshot
-        ? { total: cardsSnapshot.cards.length, loading: false }
-        : { total: 0, loading: true }),
-  );
-
-  useEffect(() => {
-    if (!state.loading) return;
-    let alive = true;
-    if (!summaryInflight) {
-      summaryInflight = loadCardSummary()
-        .then((next) => {
-          summaryCache = next;
-          return next;
-        })
-        .catch(() => {
-          summaryInflight = null;
-          return { total: 0, loading: false } satisfies CardSummaryState;
-        });
-    }
-    summaryInflight.then((next) => {
-      if (alive) setState(next);
-    });
-    return () => {
-      alive = false;
-    };
-  }, [state.loading]);
-
-  return state;
-}
 
 export interface FeaturedState {
   decks: FeaturedDeck[];
   loading: boolean;
-}/** 热门卡组（缺失时返回空数组，页面优雅隐藏） */
+}
+
+/** 热门卡组（缺失时返回空数组，页面优雅隐藏） */
 export function useFeaturedDecks(): FeaturedState {
   const [state, setState] = useState<FeaturedState>({ decks: [], loading: true });
   useEffect(() => {
